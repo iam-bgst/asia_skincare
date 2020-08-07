@@ -27,7 +27,7 @@ func (A *AccountControll) CheckAccount(c *gin.Context) {
 	phone, _ := strconv.Atoi(c.Query("phone"))
 	data, err := accountmodels.CheckAccount(phone)
 	if err != nil {
-		c.JSON(406, gin.H{"error": err.Error})
+		c.JSON(406, gin.H{"error": "notfound account"})
 	} else {
 		c.JSON(200, gin.H{"data": data, "status": "ok"})
 	}

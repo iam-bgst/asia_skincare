@@ -4,6 +4,7 @@ import (
 	"controllers"
 
 	"github.com/gin-gonic/gin"
+	cors "github.com/itsjamie/gin-cors"
 )
 
 var (
@@ -13,6 +14,15 @@ var (
 
 func Middleware() {
 	router := gin.Default()
+	// Cors
+	router.Use(cors.Middleware(cors.Config{
+		Origins:         "*",
+		Methods:         "GET, PUT, POST, DELETE",
+		RequestHeaders:  "Origin, Authorization, Content-Type, Device",
+		ExposedHeaders:  "",
+		Credentials:     true,
+		ValidateHeaders: false,
+	}))
 
 	account := router.Group("/account")
 	{

@@ -82,6 +82,17 @@ func (A *AccountModel) NonActiveAccount(id string) (err error) {
 	return
 }
 
+func (A *AccountModel) ActiveAccount(id string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
+			"status": "active",
+		},
+	})
+	return
+}
+
 func (A *AccountModel) Delete(id string) (err error) {
 	err = db.Collection["account"].Remove(bson.M{
 		"_id": id,

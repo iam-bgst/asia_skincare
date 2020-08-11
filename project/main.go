@@ -15,8 +15,11 @@ func init() {
 }
 
 func main() {
+	// Initial Membership
 	var membership = new(models.MembershipModel)
 	membership.InitMembership()
+
+	// Open Port Gin
 	middleware.Middleware()
 
 }

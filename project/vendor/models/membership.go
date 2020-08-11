@@ -2,7 +2,6 @@ package models
 
 import (
 	"db"
-	"log"
 
 	"github.com/pborman/uuid"
 	"gopkg.in/mgo.v2/bson"
@@ -30,7 +29,6 @@ func (MS *MembershipModel) InitMembership() (err error) {
 	// db.SetCollection("membership")
 	var data []Membership
 	db.Collection["membership"].Find(bson.M{}).All(&data)
-	log.Println(len(data))
 	if len(data) == 0 {
 		for _, member := range Memship {
 			id := uuid.New()
@@ -41,5 +39,19 @@ func (MS *MembershipModel) InitMembership() (err error) {
 		}
 		err = nil
 	}
+	return
+}
+
+func (MS *MembershipModel) ListAll() (data []MembershipModel, err error) {
+	err = db.Collection["membership"].Find(bson.M{}).All(&data)
+	return
+}
+
+func (MS *MembershipModel) Add(name string) (err error) {
+	id := uuid.New()
+	err = db.Collection[""].Insert(bson.M{
+		"_id":  id,
+		"name": name,
+	})
 	return
 }

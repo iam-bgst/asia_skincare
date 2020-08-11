@@ -73,3 +73,72 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 		c.Abort()
 	}
 }
+
+func (P *ProductControll) Get(c *gin.Context) {
+	id := c.Param("id")
+	data, err := productmodels.Get(id)
+	if err != nil {
+		c.JSON(406, gin.H{
+			"error": err,
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"status": "ok",
+			"data":   data,
+		})
+	}
+}
+
+func (P *ProductControll) Update(c *gin.Context) {
+	var forms forms.Product
+	if c.BindJSON(&forms) != nil {
+		c.JSON(405, gin.H{"error": "Error while binding json"})
+	} else {
+		id := c.Param("id")
+		err := productmodels.Update(id, forms)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": "error update product",
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "success update product",
+				"status":  "ok",
+			})
+		}
+	}
+}
+
+func (P *ProductControll) UpdatePrice(c *gin.Context) {
+	id_product := c.Param("product")
+	id_membership := c.Param("membership")
+
+	price, _ := strconv.Atoi(c.Query("price"))
+
+	err := productmodels.UpdatePriceByMembership(id_product, id_membership, price)
+	if err != nil {
+		c.JSON(406, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "Update Price",
+			"status":  "ok",
+		})
+	}
+}
+
+func (P *ProductControll) Delete(c *gin.Context) {
+	id_product := c.Param("product")
+	err := productmodels.Delete(id_product)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "Deleted Product",
+			"status":  "ok",
+		})
+	}
+}

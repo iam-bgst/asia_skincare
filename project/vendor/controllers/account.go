@@ -31,5 +31,56 @@ func (A *AccountControll) CheckAccount(c *gin.Context) {
 	} else {
 		c.JSON(200, gin.H{"data": data, "status": "ok"})
 	}
+}
 
+func (A *AccountControll) Update(c *gin.Context) {
+	var forms forms.Account
+	if c.BindJSON(&forms) != nil {
+		c.JSON(405, gin.H{
+			"error": "Error Binding json",
+		})
+	} else {
+		id := c.Param("id")
+		err := accountmodels.Update(id, forms)
+		if err != nil {
+			c.JSON(405, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "Updated",
+				"status":  "ok",
+			})
+		}
+	}
+}
+
+func (A *AccountControll) NonActiveAccount(c *gin.Context) {
+	id := c.Param("id")
+	err := accountmodels.NonActiveAccount(id)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "NonActived",
+			"status":  "ok",
+		})
+	}
+}
+
+func (A *AccountControll) ActiveAccount(c *gin.Context) {
+	id := c.Param("id")
+	err := accountmodels.ActiveAccount(id)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "NonActived",
+			"status":  "ok",
+		})
+	}
 }

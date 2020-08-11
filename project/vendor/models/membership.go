@@ -42,7 +42,7 @@ func (MS *MembershipModel) InitMembership() (err error) {
 	return
 }
 
-func (MS *MembershipModel) ListAll() (data []MembershipModel, err error) {
+func (MS *MembershipModel) ListAll() (data []Membership, err error) {
 	err = db.Collection["membership"].Find(bson.M{}).All(&data)
 	return
 }

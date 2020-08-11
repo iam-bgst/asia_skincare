@@ -18,7 +18,14 @@ type Product struct {
 	Point   int     `json:"point" bson:"point"`
 	Image   string  `json:"image" bson:"image"`
 }
-
+type Product1 struct {
+	Id      string    `json:"_id" bson:"_id,omitempty"`
+	Name    string    `json:"name" bson:"name"`
+	Pricing []Pricing `json:"pricing" bson:"pricing"`
+	Stoct   int       `json:"strock" bson:"stock"`
+	Point   int       `json:"point" bson:"point"`
+	Image   string    `json:"image" bson:"image"`
+}
 type Pricing struct {
 	Membership Membership `json:"membership" bson:"membership"`
 	Price      int        `json:"price" bson:"price"`
@@ -50,7 +57,7 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 	return
 }
 
-func (P *ProductModel) Get(id string) (data Product, err error) {
+func (P *ProductModel) Get(id string) (data Product1, err error) {
 	err = db.Collection["product"].Find(bson.M{
 		"_id": id,
 	}).One(&data)

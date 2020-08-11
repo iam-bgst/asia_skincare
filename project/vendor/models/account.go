@@ -1,8 +1,10 @@
 package models
 
 import (
+	"addon"
 	"db"
 	"forms"
+	"mime/multipart"
 	"strconv"
 
 	"github.com/pborman/uuid"
@@ -24,10 +26,12 @@ type Account struct {
 
 type AccountModel struct{}
 
-func (A *AccountModel) Create(data forms.Account) (err error) {
+func (A *AccountModel) Create(data forms.Account, file multipart.File) (err error) {
 	id := uuid.New()
 	data_membership := membership_model.GetOneMembership(data.Membership)
 	phone, _ := strconv.Atoi(data.PhoneNumber)
+
+	path, _ := addon.Upload("account", id, file)
 	err = db.Collection["account"].Insert(bson.M{
 		"_id":         id,
 		"name":        data.Name,
@@ -37,6 +41,7 @@ func (A *AccountModel) Create(data forms.Account) (err error) {
 		"point":       0,
 		"address":     data.Address,
 		"comfirmcode": 0,
+		"image":       path,
 		"status":      "active",
 	})
 	return

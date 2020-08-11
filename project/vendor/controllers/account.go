@@ -10,17 +10,21 @@ import (
 type AccountControll struct{}
 
 func (A *AccountControll) Register(c *gin.Context) {
-	var forms forms.Account
-	if c.BindJSON(&forms) != nil {
-		c.JSON(406, gin.H{"error": "Error Binding"})
+	var data forms.Account
+	file, _, _ := c.Request.FormFile("image")
+	data.Address = c.PostForm("address")
+	data.Email = c.PostForm("email")
+	data.Membership = c.PostForm("membership")
+	data.Name = c.PostForm("name")
+	data.PhoneNumber = c.PostForm("phonenumber")
+
+	err := accountmodels.Create(data, file)
+	if err != nil {
+		c.JSON(406, gin.H{"error": err.Error})
 	} else {
-		err := accountmodels.Create(forms)
-		if err != nil {
-			c.JSON(406, gin.H{"error": err.Error})
-		} else {
-			c.JSON(200, gin.H{"message": "Registed", "status": "ok"})
-		}
+		c.JSON(200, gin.H{"message": "Registed", "status": "ok"})
 	}
+
 }
 
 func (A *AccountControll) CheckAccount(c *gin.Context) {

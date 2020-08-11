@@ -4,7 +4,7 @@
 2. [Check Account](#markdown-header-check-account)
 
 ## Register
-*POST JSON*
+*POST FORM*
 
 ```json
 {
@@ -12,7 +12,8 @@
     "email":"nama_saya@gmail.com",
     "phonenumber":"0812312",
     "address":"kediri",
-    "membership":"657d0c2e-625f-4121-a341-a023d8941568"
+    "membership":"657d0c2e-625f-4121-a341-a023d8941568",
+    "image":"file"
 }
 ```
 

@@ -1,15 +1,15 @@
 package addon
 
 import (
-	"errors"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 )
 
 var (
-	Path = "/vendor/assets/picture/"
+	Path = GetDir() + "/vendor/assets/picture/"
 )
 
 func GetDir() string {
@@ -18,18 +18,17 @@ func GetDir() string {
 }
 
 func Upload(collection, name string, file multipart.File) (path string, err error) {
-	path = path + collection + "/" + name + ".png"
-	out, err := os.Create(path)
-	if err != nil {
-		err = errors.New("error creating file")
-		return
+	path = Path + collection
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.MkdirAll(path, 0755)
 	}
+	out, err := os.Create(path + "/" + name + ".png")
+	if err != nil {
+		log.Println(err)
+	} // Err Handling
 	defer out.Close()
 
 	_, err = io.Copy(out, file)
-	if err != nil {
-		err = errors.New("error while copying file")
-		return
-	}
+	path = "/picture/" + collection + "/" + name + ".png"
 	return
 }

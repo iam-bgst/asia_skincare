@@ -120,16 +120,69 @@ ip:port/product?membership=285340a2-431e-4444-8653-9775311d0f2c
 ```
 
 *URL*
-```bash
+
+``` bash
 method:PUT
 ip:port/product/update/id_product
 ```
 
 *JSON RESPONSE*
 
-```json
+``` json
 {
     "message": "success update product",
+    "status": "ok"
+}
+```
+
+## Get Product
+
+*URL*
+
+``` bash
+method:GET
+ip:port/product/get/id
+```
+*JSON RESPONSE*
+```json
+{
+    "data": {
+        "_id": "fb38c192-cc95-466a-ac4e-0f56ab055eeb",
+        "name": "Serum Malam",
+        "pricing": [
+            {
+                "membership": {
+                    "_id": "60f0454a-fba2-4ebc-95cf-43e1a846e150",
+                    "name": "Admin"
+                },
+                "price": 10000
+            },
+            {
+                "membership": {
+                    "_id": "f375391d-c27f-467e-9554-0521a467eb21",
+                    "name": "Reseller"
+                },
+                "price": 1000
+            },
+            {
+                "membership": {
+                    "_id": "f2bf3813-00ee-4c83-9d12-72c4bbf4dd6f",
+                    "name": "Reseller Agen"
+                },
+                "price": 100
+            },
+            {
+                "membership": {
+                    "_id": "9db486f8-5753-4376-b8d4-d013a7df4779",
+                    "name": "Staf"
+                },
+                "price": 10
+            }
+        ],
+        "strock": 100000,
+        "point": 1000,
+        "image": ""
+    },
     "status": "ok"
 }
 ```

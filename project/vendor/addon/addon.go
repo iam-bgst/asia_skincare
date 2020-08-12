@@ -1,6 +1,7 @@
 package addon
 
 import (
+	"fmt"
 	"log"
 	"mime/multipart"
 	"os"
@@ -19,6 +20,7 @@ func GetDir() string {
 }
 
 func Upload(collection, name string, file *multipart.FileHeader, c *gin.Context) (path string, err error) {
+	fmt.Println(c.Request)
 	path = Path + collection
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.MkdirAll(path, 0755)

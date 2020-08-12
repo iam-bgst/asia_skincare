@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"forms"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +11,8 @@ import (
 type AccountControll struct{}
 
 func (A *AccountControll) Register(c *gin.Context) {
+	log.Println("post from ip", c.ClientIP())
+
 	var data forms.Account
 	file, _, _ := c.Request.FormFile("image")
 	data.Address = c.PostForm("address")

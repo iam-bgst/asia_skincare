@@ -1,11 +1,12 @@
 package addon
 
 import (
-	"io"
 	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
+
+	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -17,7 +18,7 @@ func GetDir() string {
 	return dir
 }
 
-func Upload(collection, name string, file multipart.File) (path string, err error) {
+func Upload(collection, name string, file *multipart.FileHeader, c *gin.Context) (path string, err error) {
 	path = Path + collection
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.MkdirAll(path, 0755)
@@ -27,8 +28,7 @@ func Upload(collection, name string, file multipart.File) (path string, err erro
 		log.Println(err)
 	} // Err Handling
 	defer out.Close()
-
-	_, err = io.Copy(out, file)
+	err = c.SaveUploadedFile(file, path)
 	path = "/picture/" + collection + "/" + name + ".png"
 	return
 }

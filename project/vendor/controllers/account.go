@@ -21,7 +21,7 @@ func (A *AccountControll) Register(c *gin.Context) {
 	data.Name = c.PostForm("name")
 	data.PhoneNumber = c.PostForm("phonenumber")
 
-	err := accountmodels.Create(data, file)
+	err := accountmodels.Create(data, file, c)
 	if err != nil {
 		c.JSON(406, gin.H{"error": err.Error})
 	} else {

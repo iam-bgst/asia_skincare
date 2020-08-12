@@ -3,6 +3,7 @@ package models
 import (
 	"addon"
 	"db"
+	"fmt"
 	"forms"
 	"mime/multipart"
 	"strconv"
@@ -30,6 +31,8 @@ func (A *AccountModel) Create(data forms.Account, file multipart.File) (err erro
 	id := uuid.New()
 	data_membership := membership_model.GetOneMembership(data.Membership)
 	phone, _ := strconv.Atoi(data.PhoneNumber)
+	fmt.Println(data)
+	fmt.Println(file)
 
 	path, _ := addon.Upload("account", id, file)
 	err = db.Collection["account"].Insert(bson.M{

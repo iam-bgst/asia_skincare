@@ -14,7 +14,7 @@ func (A *AccountControll) Register(c *gin.Context) {
 	log.Println("post from ip", c.ClientIP())
 
 	var data forms.Account
-	file, _, _ := c.Request.FormFile("image")
+	file, _ := c.FormFile("image")
 	data.Address = c.PostForm("address")
 	data.Email = c.PostForm("email")
 	data.Membership = c.PostForm("membership")

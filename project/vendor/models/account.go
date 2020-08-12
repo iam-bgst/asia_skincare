@@ -4,7 +4,6 @@ import (
 	"addon"
 	"db"
 	"forms"
-	"mime/multipart"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -27,12 +26,12 @@ type Account struct {
 
 type AccountModel struct{}
 
-func (A *AccountModel) Create(data forms.Account, file *multipart.FileHeader, c *gin.Context) (err error) {
+func (A *AccountModel) Create(data forms.Account, c *gin.Context) (err error) {
 	id := uuid.New()
 	data_membership := membership_model.GetOneMembership(data.Membership)
 	phone, _ := strconv.Atoi(data.PhoneNumber)
 
-	path, _ := addon.Upload("account", id, file, c)
+	path, _ := addon.Upload("account", id, data.Image, c)
 	err = db.Collection["account"].Insert(bson.M{
 		"_id":         id,
 		"name":        data.Name,

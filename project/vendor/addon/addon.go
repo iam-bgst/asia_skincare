@@ -1,11 +1,13 @@
 package addon
 
 import (
-	"fmt"
-	"log"
-	"mime/multipart"
+	"bytes"
+	"encoding/base64"
+	"errors"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,18 +21,30 @@ func GetDir() string {
 	return dir
 }
 
-func Upload(collection, name string, file *multipart.FileHeader, c *gin.Context) (path string, err error) {
-	fmt.Println(c.Request)
+func Upload(collection, name string, img string, c *gin.Context) (path string, err error) {
+
 	path = Path + collection
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.MkdirAll(path, 0755)
 	}
-	out, err := os.Create(path + "/" + name + ".png")
+	// out, err := os.Create(path + "/" + name + ".png")
+	idx := strings.Index(img, ";base64,")
+	if idx < 0 {
+		err = errors.New("error indexing image")
+		return
+	}
+	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(img[idx+8:]))
+	buff := bytes.Buffer{}
+	_, err = buff.ReadFrom(reader)
 	if err != nil {
-		log.Println(err)
-	} // Err Handling
-	defer out.Close()
-	err = c.SaveUploadedFile(file, path)
+		return
+	}
+
+	err = ioutil.WriteFile(path+"/"+name+".png", buff.Bytes(), 0644)
+	if err != nil {
+		return
+	}
 	path = "/picture/" + collection + "/" + name + ".png"
+
 	return
 }

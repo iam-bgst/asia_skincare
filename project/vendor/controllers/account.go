@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"forms"
 	"log"
 	"strconv"
@@ -12,22 +13,20 @@ type AccountControll struct{}
 
 func (A *AccountControll) Register(c *gin.Context) {
 	log.Println("post from ip", c.ClientIP())
-
 	var data forms.Account
-	file, _ := c.FormFile("image")
-	data.Address = c.PostForm("address")
-	data.Email = c.PostForm("email")
-	data.Membership = c.PostForm("membership")
-	data.Name = c.PostForm("name")
-	data.PhoneNumber = c.PostForm("phonenumber")
-
-	err := accountmodels.Create(data, file, c)
-	if err != nil {
-		c.JSON(406, gin.H{"error": err.Error})
+	if c.BindJSON(&data) != nil {
+		c.JSON(406, gin.H{
+			"error": "error binding json",
+		})
 	} else {
-		c.JSON(200, gin.H{"message": "Registed", "status": "ok"})
+		fmt.Println(data)
+		err := accountmodels.Create(data, c)
+		if err != nil {
+			c.JSON(406, gin.H{"error": err.Error})
+		} else {
+			c.JSON(200, gin.H{"message": "Registed", "status": "ok"})
+		}
 	}
-
 }
 
 func (A *AccountControll) CheckAccount(c *gin.Context) {

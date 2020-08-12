@@ -6,4 +6,5 @@ type Account struct {
 	PhoneNumber string `json:"phonenumber" bson:"phonenumber"`
 	Address     string `json:"address" bson:"address"`
 	Membership  string `json:"membership" bson:"membership"`
+	Image       string `json:"image"`
 }

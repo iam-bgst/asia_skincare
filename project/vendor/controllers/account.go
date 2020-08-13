@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"forms"
 	"log"
 	"strconv"
@@ -19,10 +18,9 @@ func (A *AccountControll) Register(c *gin.Context) {
 			"error": "error binding json",
 		})
 	} else {
-		fmt.Println(data)
 		err := accountmodels.Create(data, c)
 		if err != nil {
-			c.JSON(406, gin.H{"error": err.Error})
+			c.JSON(406, gin.H{"error": err.Error()})
 		} else {
 			c.JSON(200, gin.H{"message": "Registed", "status": "ok"})
 		}

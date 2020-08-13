@@ -31,7 +31,10 @@ func (A *AccountModel) Create(data forms.Account, c *gin.Context) (err error) {
 	data_membership := membership_model.GetOneMembership(data.Membership)
 	phone, _ := strconv.Atoi(data.PhoneNumber)
 
-	path, _ := addon.Upload("account", id, data.Image, c)
+	path, err := addon.Upload("account", id, data.Image, c)
+	if err != nil {
+		return
+	}
 	err = db.Collection["account"].Insert(bson.M{
 		"_id":         id,
 		"name":        data.Name,

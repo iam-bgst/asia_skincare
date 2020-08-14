@@ -56,7 +56,7 @@ ip:port/product/add
 
 ``` bash
 method:GET
-ip:port/product?membership=285340a2-431e-4444-8653-9775311d0f2c
+ip:port/product/list?membership=285340a2-431e-4444-8653-9775311d0f2c
 ```
 
 *NB : Query Membership is required*

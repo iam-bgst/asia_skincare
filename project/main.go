@@ -12,6 +12,8 @@ func init() {
 	db.SetCollection("membership")
 	db.SetCollection("product")
 	db.SetCollection("account")
+	db.SetCollection("paket")
+	db.SetCollection("discount")
 }
 
 func main() {

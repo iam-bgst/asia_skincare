@@ -3,8 +3,9 @@ package forms
 import "time"
 
 type Transaction struct {
-	Product  []Product `json:"product" bson:"product"`
-	Paket    []Paket   `json:"paket" bson:"paket"`
+	Product  []string  `json:"product" bson:"product"`
+	Paket    []string  `json:"paket" bson:"paket"`
+	Discount []string  `json:"discount" bson:"discount"`
 	Date     time.Time `json:"date" bson:"date"`
 	Delivery Delivery  `json:"delivery" bson:"delivery"`
 	Subtotal int       `json:"subtotal" bson:"subtotal"`

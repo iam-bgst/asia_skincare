@@ -18,7 +18,7 @@ func (A *AccountControll) Register(c *gin.Context) {
 			"error": "error binding json",
 		})
 	} else {
-		err := accountmodels.Create(data, c)
+		err := accountmodels.Create(data)
 		if err != nil {
 			c.JSON(406, gin.H{"error": err.Error()})
 		} else {

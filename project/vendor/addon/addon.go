@@ -5,11 +5,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -21,8 +20,7 @@ func GetDir() string {
 	return dir
 }
 
-func Upload(collection, name string, img string, c *gin.Context) (path string, err error) {
-
+func Upload(collection, name string, img string) (path string, err error) {
 	path = Path + collection
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.MkdirAll(path, 0755)
@@ -47,4 +45,14 @@ func Upload(collection, name string, img string, c *gin.Context) (path string, e
 	path = "/picture/" + collection + "/" + name + ".png"
 
 	return
+}
+
+var letterRune = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandomCode() string {
+	b := make([]rune, 9)
+	for i := range b {
+		b[i] = letterRune[rand.Intn(len(letterRune))]
+	}
+	return string(b)
 }

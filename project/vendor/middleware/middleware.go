@@ -16,6 +16,8 @@ var (
 	productcontroll    = new(controllers.ProductControll)
 	accountcontroll    = new(controllers.AccountControll)
 	membershipcontroll = new(controllers.MembershipControll)
+	paketcontroll      = new(controllers.PaketControll)
+	discountcontroll   = new(controllers.DiscountControll)
 )
 
 func Middleware() {
@@ -53,6 +55,7 @@ func Middleware() {
 		account.PUT("/nonactive/:id", accountcontroll.NonActiveAccount)
 		account.PUT("/active/:id", accountcontroll.ActiveAccount)
 	}
+
 	// Product
 	product := router.Group("/product")
 	{
@@ -62,6 +65,27 @@ func Middleware() {
 		product.GET("/get/:id", productcontroll.Get)
 		product.PUT("/update_price/:product/:membership", productcontroll.UpdatePrice)
 		product.DELETE("/delete/:product", productcontroll.Delete)
+	}
+
+	// Paket
+	paket := router.Group("/paket")
+	{
+		paket.POST("/add", paketcontroll.Create)
+		paket.GET("/list", paketcontroll.ListByMembership)
+		paket.PUT("/update/:id", paketcontroll.Update)
+		paket.GET("/get/:id", paketcontroll.Get)
+		paket.PUT("/update_product/:id", paketcontroll.Updateproduct)
+		paket.DELETE("/delete/:id", paketcontroll.Delete)
+	}
+
+	// Discount
+	discount := router.Group("/discount")
+	{
+		discount.POST("/add", discountcontroll.Create)
+		discount.GET("/list", discountcontroll.List)
+		discount.PUT("/update/:id", discountcontroll.Update)
+		discount.GET("/get/:id", discountcontroll.Get)
+		discount.DELETE("/delete/:id", discountcontroll.Delete)
 	}
 
 	// Membership

@@ -6,7 +6,6 @@ import (
 	"forms"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"github.com/pborman/uuid"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -26,12 +25,12 @@ type Account struct {
 
 type AccountModel struct{}
 
-func (A *AccountModel) Create(data forms.Account, c *gin.Context) (err error) {
+func (A *AccountModel) Create(data forms.Account) (err error) {
 	id := uuid.New()
 	data_membership := membership_model.GetOneMembership(data.Membership)
 	phone, _ := strconv.Atoi(data.PhoneNumber)
 
-	path, err := addon.Upload("account", id, data.Image, c)
+	path, err := addon.Upload("account", id, data.Image)
 	if err != nil {
 		return
 	}

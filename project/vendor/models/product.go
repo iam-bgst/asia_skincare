@@ -101,7 +101,7 @@ func (R *ProductModel) Delete(id string) (err error) {
 	return
 }
 
-func (R *ProductModel) ListByMembership(membership, sort, pageNo, perPage string) (data []Product, err error) {
+func (R *ProductModel) ListByMembership(membership, filter, sort, pageNo, perPage string) (data []Product, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -117,7 +117,13 @@ func (R *ProductModel) ListByMembership(membership, sort, pageNo, perPage string
 	}
 	pn, _ := strconv.Atoi(pageNo)
 	pp, _ := strconv.Atoi(perPage)
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	pipeline := []bson.M{
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"name": regex},
+			},
+		}},
 		{"$unwind": "$pricing"},
 		{"$match": bson.M{"pricing.membership._id": membership}},
 		{"$sort": bson.M{sorting: order}},

@@ -120,7 +120,7 @@ func (P *PaketModel) Delete(id string) (err error) {
 	return
 }
 
-func (P *PaketModel) ListByMembership(membership, sort, pageNo, perPage string) (data []Paket, err error) {
+func (P *PaketModel) ListByMembership(membership, filter, sort, pageNo, perPage string) (data []Paket, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -136,7 +136,17 @@ func (P *PaketModel) ListByMembership(membership, sort, pageNo, perPage string) 
 	}
 	pn, _ := strconv.Atoi(pageNo)
 	pp, _ := strconv.Atoi(perPage)
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+
 	pipeline := []bson.M{
+		// {"$or": []interface{}{
+		// 	bson.M{"name": regex},
+		// }},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"name": regex},
+			},
+		}},
 		{"$unwind": "$pricing"},
 		{"$match": bson.M{"pricing.membership._id": membership}},
 		{"$sort": bson.M{sorting: order}},

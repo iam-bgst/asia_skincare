@@ -28,6 +28,7 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	sort := c.Query("sort")
 	pageNo := c.Query("page")
 	perPage := c.Query("per_page")
+	filter := c.Query("filter")
 	if sort == "" {
 		sort = "id"
 	}
@@ -40,7 +41,7 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	pp, _ := strconv.Atoi(perPage)
 	pn, _ := strconv.Atoi(pageNo)
 
-	data, err := productmodels.ListByMembership(membership, sort, pageNo, perPage)
+	data, err := productmodels.ListByMembership(membership, filter, sort, pageNo, perPage)
 	lastPage := float64(len(data)) / float64(pp)
 	if pp != 0 {
 		if len(data)%pp == 0 {

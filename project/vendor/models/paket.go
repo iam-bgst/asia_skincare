@@ -43,8 +43,9 @@ func (P *PaketModel) Create(data forms.Paket) (err error) {
 		}, bson.M{
 			"$addToSet": bson.M{
 				"product": bson.M{
-					"_id":  data_product.Id,
-					"name": data_product.Name,
+					"_id":   data_product.Id,
+					"name":  data_product.Name,
+					"image": data_product.Image,
 				},
 			},
 		})

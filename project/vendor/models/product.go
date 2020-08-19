@@ -14,7 +14,7 @@ type Product struct {
 	Id      string  `json:"_id" bson:"_id,omitempty"`
 	Name    string  `json:"name" bson:"name"`
 	Pricing Pricing `json:"pricing" bson:"pricing"`
-	Stoct   int     `json:"strock" bson:"stock"`
+	Stoct   int     `json:"stoct" bson:"stock"`
 	Point   int     `json:"point" bson:"point"`
 	Image   string  `json:"image" bson:"image"`
 }
@@ -22,7 +22,7 @@ type Product1 struct {
 	Id      string    `json:"_id" bson:"_id,omitempty"`
 	Name    string    `json:"name" bson:"name"`
 	Pricing []Pricing `json:"pricing" bson:"pricing"`
-	Stoct   int       `json:"strock" bson:"stock"`
+	Stoct   int       `json:"stoct" bson:"stock"`
 	Point   int       `json:"point" bson:"point"`
 	Image   string    `json:"image" bson:"image"`
 }
@@ -30,6 +30,20 @@ type Product2 struct {
 	Id    string `json:"_id" bson:"_id,omitempty"`
 	Name  string `json:"name" bson:"name"`
 	Image string `json:"image" bson:"image"`
+}
+
+type ProductMembership struct {
+	Id      string  `json:"_id" bson:"_id,omitempty"`
+	Name    string  `json:"name" bson:"name"`
+	Image   string  `json:"image" bson:"image"`
+	Pricing Pricing `json:"pricing" bson:"pricing"`
+}
+type ProductTransaction struct {
+	Id       string   `json:"_id" bson:"_id,omitempty"`
+	Name     string   `json:"name" bson:"name"`
+	Image    string   `json:"image" bson:"image"`
+	Pricing  int      `json:"pricing" bson:"pricing"`
+	Discount Discount `json:"discount" bson:"discount"`
 }
 type Pricing struct {
 	Membership Membership `json:"membership" bson:"membership"`
@@ -59,6 +73,18 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 			},
 		})
 	}
+	return
+}
+
+func (P *ProductModel) GetByMembership(id, idm string) (data ProductMembership, err error) {
+	pipeline := []bson.M{
+		{"$unwind": "$pricing"},
+		{"$match": bson.M{
+			"_id":                    id,
+			"pricing.membership._id": idm,
+		}},
+	}
+	err = db.Collection["product"].Pipe(pipeline).One(&data)
 	return
 }
 

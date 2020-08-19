@@ -13,11 +13,12 @@ var (
 	version = "0.0.1"
 	port    = ":1998"
 
-	productcontroll    = new(controllers.ProductControll)
-	accountcontroll    = new(controllers.AccountControll)
-	membershipcontroll = new(controllers.MembershipControll)
-	paketcontroll      = new(controllers.PaketControll)
-	discountcontroll   = new(controllers.DiscountControll)
+	productcontroll     = new(controllers.ProductControll)
+	accountcontroll     = new(controllers.AccountControll)
+	membershipcontroll  = new(controllers.MembershipControll)
+	paketcontroll       = new(controllers.PaketControll)
+	discountcontroll    = new(controllers.DiscountControll)
+	transactioncontroll = new(controllers.TransactionControll)
 )
 
 func Middleware() {
@@ -86,6 +87,12 @@ func Middleware() {
 		discount.PUT("/update/:id", discountcontroll.Update)
 		discount.GET("/get/:id", discountcontroll.Get)
 		discount.DELETE("/delete/:id", discountcontroll.Delete)
+	}
+
+	// Transaction
+	transaction := router.Group("/transaction")
+	{
+		transaction.POST("/add", transactioncontroll.Add)
 	}
 
 	// Membership

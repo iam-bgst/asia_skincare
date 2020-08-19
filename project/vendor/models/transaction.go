@@ -1,25 +1,25 @@
 package models
 
 import (
-	"db"
+	"errors"
+	"fmt"
 	"forms"
 	"time"
 
 	"github.com/pborman/uuid"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type Transaction struct {
-	Id       string     `json:"_id" bson:"_id,omitempty"`
-	Product  []Product  `json:"product" bson:"product"`
-	Paket    []Paket    `json:"paket" bson:"paket"`
-	Discount []Discount `json:"discount" bson:"discount"`
-	Date     time.Time  `json:"date" bson:"date"`
-	Delivery Delivery   `json:"delivery" bson:"delivery"`
-	Subtotal int        `json:"subtotal" bson:"subtotal"`
-	Status   string     `json:"status" bson:"status"`
-	To       To         `json:"to" bson:"to"`
-	From     From       `json:"from" bson:"from"`
+	Id       string               `json:"_id" bson:"_id,omitempty"`
+	Product  []ProductTransaction `json:"product" bson:"product"`
+	Paket    []Paket              `json:"paket" bson:"paket"`
+	Discount []Discount           `json:"discount" bson:"discount"`
+	Date     time.Time            `json:"date" bson:"date"`
+	Delivery Delivery             `json:"delivery" bson:"delivery"`
+	Subtotal int                  `json:"subtotal" bson:"subtotal"`
+	Status   string               `json:"status" bson:"status"`
+	To       To                   `json:"to" bson:"to"`
+	From     From                 `json:"from" bson:"from"`
 }
 type To struct {
 	Name    string `json:"name" bson:"name"`
@@ -41,45 +41,109 @@ type Delivery struct {
 
 type TransactionModel struct{}
 
-func (T *Transaction) Create(data forms.Transaction) (err error) {
+func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err error) {
 	id := uuid.New()
 
 	// Getting the Product
-	var product []Product1
-	for _, p := range data.Product {
-		data_p, err := product_model.Get(p)
-		if err != nil {
-			break
+	var prod []ProductTransaction
+	discount_i := data.Product[0].Discount
+	for i, p := range data.Product {
+		if len(data.Product) == 0 {
+			prod = nil
+			fmt.Println("product kosong")
+		} else {
+			data_p, err1 := product_model.GetByMembership(p.Product, data.Membership)
+			// fmt.Println(err1.Error())
+			if err1 != nil {
+				err = errors.New("Product id " + p.Product + " " + err1.Error())
+				return
+			}
+			// fmt.Println(discount_i)
+			if i > 0 {
+				if p.Discount == discount_i {
+					err = errors.New("discount used on product " + data.Product[i-1].Product)
+					return
+				}
+			}
+			data_d, err1 := discount_model.Get(p.Discount)
+			if err1 != nil {
+				err = errors.New("Discount Product id " + p.Discount + " " + err1.Error())
+				return
+			}
+			prod = append(prod, ProductTransaction{
+				Id:       data_p.Id,
+				Name:     data_p.Name,
+				Pricing:  data_p.Pricing.Price,
+				Image:    data_p.Image,
+				Discount: data_d,
+			})
 		}
-		product = append(product, data_p)
 	}
 
 	// Getting the Paket
 	var paket []Paket
 	for _, p := range data.Paket {
-		data_p, err := paket_model.Get(p)
-		if err != nil {
-			break
-
+		if len(data.Paket) == 0 {
+			paket = nil
+		} else {
+			data_p, err1 := paket_model.Get(p)
+			if err != nil {
+				err = errors.New("Paket id " + p + " " + err1.Error())
+				return
+			}
+			paket = append(paket, data_p)
 		}
-		paket = append(paket, data_p)
+
 	}
 
 	// Getting the Discount
-	var discount []Discount
+	var dis []Discount
 	for _, d := range data.Discount {
-		data_discount, err := discount_model.Get(d)
-		if err != nil {
-			break
+		if len(data.Discount) == 0 {
+			dis = nil
+		} else {
+			data_discount, err1 := discount_model.Get(d)
+			if err1 != nil {
+				err = errors.New("Discount id " + d + " " + err1.Error())
+				return
+			}
+			dis = append(dis, Discount{
+				Id:           data_discount.Id,
+				Discount:     data_discount.Discount,
+				DiscountCode: data_discount.DiscountCode,
+				Expired:      data_discount.Expired,
+				Image:        data_discount.Image,
+				Name:         data_discount.Name,
+			})
 		}
-		discount = append(discount, data_discount)
 	}
-	err = db.Collection["transaction"].Insert(bson.M{
-		"_id":      id,
-		"product":  product,
-		"paket":    paket,
-		"discount": discount,
-		"date":     time.Now(),
-	})
+	ret = Transaction{
+		Id:       id,
+		Date:     time.Now(),
+		Discount: dis,
+		Paket:    paket,
+		Product:  prod,
+	}
+
+	// From
+	ret.From.Address = data.From.Address
+	ret.From.Name = data.From.Name
+	ret.From.Number = data.From.Number
+
+	// To
+	ret.To.Address = data.To.Address
+	ret.To.Name = data.To.Name
+	ret.To.Number = data.To.Number
+
+	// fmt.Println(ret)
+	// err = db.Collection["transaction"].Insert(bson.M{
+	// 	"_id":      id,
+	// 	"product":  prod,
+	// 	"paket":    paket,
+	// 	"discount": dis,
+	// 	"date":     time.Now(),
+	// 	"from":     data.From,
+	// 	"to":       data.To,
+	// })
 	return
 }

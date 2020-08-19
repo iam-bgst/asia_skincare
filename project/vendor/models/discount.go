@@ -32,10 +32,10 @@ func (D *DiscountModel) Create(data forms.Discount) (err error) {
 		code = data.DiscountCode
 	}
 	err = db.Collection["discount"].Insert(bson.M{
-		"_id":         id,
-		"name":        data.Name,
-		"discount":    data.Discount,
-		"dicountcode": code,
+		"_id":          id,
+		"name":         data.Name,
+		"discount":     data.Discount,
+		"discountcode": code,
 	})
 	if err != nil {
 		return

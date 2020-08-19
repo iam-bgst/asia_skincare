@@ -1,17 +1,21 @@
 package forms
 
-import "time"
-
 type Transaction struct {
-	Product  []string  `json:"product" bson:"product"`
-	Paket    []string  `json:"paket" bson:"paket"`
-	Discount []string  `json:"discount" bson:"discount"`
-	Date     time.Time `json:"date" bson:"date"`
-	Delivery Delivery  `json:"delivery" bson:"delivery"`
-	Subtotal int       `json:"subtotal" bson:"subtotal"`
-	To       To        `json:"to" bson:"to"`
-	From     From      `json:"from" bson:"from"`
+	Product    []ProductTransaction `json:"product" bson:"product"`
+	Paket      []string             `json:"paket" bson:"paket"`
+	Discount   []string             `json:"discount" bson:"discount"`
+	Membership string               `json:"membership" bson:"membership"`
+	Delivery   Delivery             `json:"delivery" bson:"delivery"`
+	Subtotal   int                  `json:"subtotal" bson:"subtotal"`
+	To         To                   `json:"to" bson:"to"`
+	From       From                 `json:"from" bson:"from"`
 }
+
+type ProductTransaction struct {
+	Product  string `json:"product"`
+	Discount string `json:"discount"`
+}
+
 type To struct {
 	Name    string `json:"name" bson:"name"`
 	Number  string `json:"number" bson:"number"`

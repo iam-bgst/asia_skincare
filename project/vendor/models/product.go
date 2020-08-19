@@ -17,6 +17,7 @@ type Product struct {
 	Stoct   int     `json:"stoct" bson:"stock"`
 	Point   int     `json:"point" bson:"point"`
 	Image   string  `json:"image" bson:"image"`
+	Desc    string  `json:"desc" bson:"desc"`
 }
 type Product1 struct {
 	Id      string    `json:"_id" bson:"_id,omitempty"`
@@ -59,6 +60,7 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 		"name":  data.Name,
 		"stock": data.Stoct,
 		"point": data.Point,
+		"desc":  data.Desc,
 	})
 	for _, pricing := range data.Pricing {
 		data_membership := membership_model.GetOneMembership(pricing.Membership)

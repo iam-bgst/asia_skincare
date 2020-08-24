@@ -9,4 +9,5 @@ var (
 	paketmodels       = new(models.PaketModel)
 	discountmodels    = new(models.DiscountModel)
 	transactionmodels = new(models.TransactionModel)
+	deliverymodels    = new(models.DeliveryModels)
 )

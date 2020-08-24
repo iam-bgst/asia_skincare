@@ -19,6 +19,7 @@ var (
 	paketcontroll       = new(controllers.PaketControll)
 	discountcontroll    = new(controllers.DiscountControll)
 	transactioncontroll = new(controllers.TransactionControll)
+	deliverycontroll    = new(controllers.DeliveryControll)
 )
 
 func Middleware() {
@@ -74,7 +75,7 @@ func Middleware() {
 		paket.POST("/add", paketcontroll.Create)
 		paket.GET("/list", paketcontroll.ListByMembership)
 		paket.PUT("/update/:id", paketcontroll.Update)
-		paket.GET("/get/:id", paketcontroll.Get)
+		paket.GET("/get/:id/:idm", paketcontroll.Get)
 		paket.PUT("/update_product/:id", paketcontroll.Updateproduct)
 		paket.DELETE("/delete/:id", paketcontroll.Delete)
 	}
@@ -93,6 +94,13 @@ func Middleware() {
 	transaction := router.Group("/transaction")
 	{
 		transaction.POST("/add", transactioncontroll.Add)
+	}
+
+	// // Delivery
+	delivery := router.Group("/delivery")
+	{
+		delivery.GET("/list", deliverycontroll.List)
+		delivery.GET("/checkongkir", deliverycontroll.CheckOngkir)
 	}
 
 	// Membership

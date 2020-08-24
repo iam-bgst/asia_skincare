@@ -36,6 +36,7 @@ func (D *DiscountModel) Create(data forms.Discount) (err error) {
 		"name":         data.Name,
 		"discount":     data.Discount,
 		"discountcode": code,
+		"expired":      data.Expired,
 	})
 	if err != nil {
 		return

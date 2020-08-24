@@ -3,6 +3,7 @@ package models
 import (
 	"addon"
 	"db"
+	"fmt"
 	"forms"
 	"strconv"
 
@@ -11,16 +12,24 @@ import (
 )
 
 type Account struct {
-	Id          string     `json:"_id" bson:"_id,omitempty"`
-	Name        string     `json:"name" bson:"name"`
-	Email       string     `json:"email" bson:"email"`
-	PhoneNumber int        `json:"phonenumber" bson:"phonenumber"`
-	Point       int        `json:"point" bson:"point"`
-	Address     string     `json:"address" bson:"address"`
-	ConfirmCode int        `json:"confirmcode" bson:"confirmcode"`
-	Membership  Membership `json:"membership" bson:"membership"`
-	Image       string     `json:"image" bson:"image"`
-	Status      string     `json:"status" bson:"status"`
+	Id            string     `json:"_id" bson:"_id,omitempty"`
+	Name          string     `json:"name" bson:"name"`
+	Email         string     `json:"email" bson:"email"`
+	PhoneNumber   int        `json:"phonenumber" bson:"phonenumber"`
+	Point         int        `json:"point" bson:"point"`
+	Address       string     `json:"address" bson:"address"`
+	Membership    Membership `json:"membership" bson:"membership"`
+	Image         string     `json:"image" bson:"image"`
+	Status        string     `json:"status" bson:"status"`
+	Discount_used []Discount `json:"discount_used" bson:"discount_used"`
+}
+type AccountTransaction struct {
+	Id          string `json:"_id" bson:"_id,omitempty"`
+	Name        string `json:"name" bson:"name"`
+	Email       string `json:"email" bson:"email"`
+	PhoneNumber int    `json:"phonenumber" bson:"phonenumber"`
+	Address     string `json:"address" bson:"address"`
+	Image       string `json:"image" bson:"image"`
 }
 
 type AccountModel struct{}
@@ -56,7 +65,7 @@ func (A *AccountModel) CheckAccount(phonenumber int) (data Account, err error) {
 	return
 }
 
-func (A *AccountModel) Get(id string) (data Account, err error) {
+func (A *AccountModel) Get(id string) (data AccountTransaction, err error) {
 	err = db.Collection["account"].Find(bson.M{
 		"_id": id,
 	}).One(&data)
@@ -103,6 +112,48 @@ func (A *AccountModel) ActiveAccount(id string) (err error) {
 func (A *AccountModel) Delete(id string) (err error) {
 	err = db.Collection["account"].Remove(bson.M{
 		"_id": id,
+	})
+	return
+}
+
+func (A *AccountModel) GetDiscountUsed(id, idd string) (data Discount, err error) {
+	pipeline := []bson.M{
+		{"$unwind": "$discount_used"},
+		{"$match": bson.M{
+			"_id":               id,
+			"discount_used._id": idd,
+		}},
+		{"$project": bson.M{
+			"_id":          "$discount_used._id",
+			"name":         "$discount_used.name",
+			"discount":     "$discount_used.discount",
+			"discountcode": "$discount_used.discountcode",
+			"image":        "$discount_used.image",
+		}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).One(&data)
+	return
+}
+func (A *AccountModel) AddDiscounUsed(id, idd string) (err error) {
+	data_discount, err1 := discount_model.Get(idd)
+	if err1 != nil {
+		fmt.Println("log on account model line 140")
+		err = err1
+		return
+	}
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$addToSet": bson.M{
+			"discount_used": bson.M{
+				"_id":          data_discount.Id,
+				"name":         data_discount.Name,
+				"discount":     data_discount.Discount,
+				"discountcode": data_discount.DiscountCode,
+				"image":        data_discount.Image,
+				"expired":      data_discount.Expired,
+			},
+		},
 	})
 	return
 }

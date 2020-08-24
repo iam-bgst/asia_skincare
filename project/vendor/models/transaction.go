@@ -1,18 +1,22 @@
 package models
 
 import (
+	"db"
 	"errors"
 	"fmt"
 	"forms"
+	"log"
 	"time"
 
 	"github.com/pborman/uuid"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Transaction struct {
 	Id       string               `json:"_id" bson:"_id,omitempty"`
+	Account  AccountTransaction   `json:"account" bson:"account"`
 	Product  []ProductTransaction `json:"product" bson:"product"`
-	Paket    []Paket              `json:"paket" bson:"paket"`
+	Paket    []PaketTransaction   `json:"paket" bson:"paket"`
 	Discount []Discount           `json:"discount" bson:"discount"`
 	Date     time.Time            `json:"date" bson:"date"`
 	Delivery Delivery             `json:"delivery" bson:"delivery"`
@@ -33,16 +37,17 @@ type From struct {
 	Address string `json:"address" bson:"address"`
 }
 
-type Delivery struct {
-	Courier string `json:"courier" bson:"courier"`
-	Resi    string `json:"resi" bson:"resi"`
-	Price   string `json:"price" bson:"price"`
-}
-
 type TransactionModel struct{}
 
 func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err error) {
 	id := uuid.New()
+
+	// Get Account
+	data_account, err1 := account_model.Get(data.Account)
+	if err1 != nil {
+		err = err1
+		return
+	}
 
 	// Getting the Product
 	var prod []ProductTransaction
@@ -50,8 +55,12 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	for i, p := range data.Product {
 		if len(data.Product) == 0 {
 			prod = nil
-			fmt.Println("product kosong")
 		} else {
+			_, err1 := account_model.GetDiscountUsed(data.Account, p.Discount)
+			if err1 == nil {
+				err = errors.New("discount is used")
+				return
+			}
 			data_p, err1 := product_model.GetByMembership(p.Product, data.Membership)
 			// fmt.Println(err1.Error())
 			if err1 != nil {
@@ -73,32 +82,52 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 			prod = append(prod, ProductTransaction{
 				Id:       data_p.Id,
 				Name:     data_p.Name,
-				Pricing:  data_p.Pricing.Price,
+				Qty:      p.Qty,
+				Pricing:  data_p.Pricing.Price * p.Qty,
 				Image:    data_p.Image,
 				Discount: data_d,
 			})
+			err2 := account_model.AddDiscounUsed(data_account.Id, p.Discount)
+			if err2 != nil {
+				fmt.Println("log on line 96")
+				err = err2
+				return
+			}
 		}
 	}
 
 	// Getting the Paket
-	var paket []Paket
+	var paket []PaketTransaction
 	for _, p := range data.Paket {
 		if len(data.Paket) == 0 {
 			paket = nil
 		} else {
-			data_p, err1 := paket_model.Get(p)
+			data_p, err1 := paket_model.GetByMembership(p.Paket, data.Membership)
 			if err != nil {
-				err = errors.New("Paket id " + p + " " + err1.Error())
+				err = errors.New("Paket id " + p.Paket + " " + err1.Error())
 				return
 			}
-			paket = append(paket, data_p)
+			paket = append(paket, PaketTransaction{
+				Id:      data_p.Id,
+				Image:   data_p.Image,
+				Qty:     p.Qty,
+				Name:    data_p.Name,
+				Point:   data_p.Point,
+				Pricing: data_p.Pricing.Price * p.Qty,
+				Product: data_p.Product,
+				Stock:   data_p.Stock,
+			})
 		}
-
 	}
 
 	// Getting the Discount
 	var dis []Discount
 	for _, d := range data.Discount {
+		_, err1 := account_model.GetDiscountUsed(data.Account, d)
+		if err1 == nil {
+			err = errors.New("discount is used")
+			return
+		}
 		if len(data.Discount) == 0 {
 			dis = nil
 		} else {
@@ -115,6 +144,12 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 				Image:        data_discount.Image,
 				Name:         data_discount.Name,
 			})
+			err2 := account_model.AddDiscounUsed(data.Account, d)
+			if err2 != nil {
+				fmt.Println("log on line 145")
+				err = err2
+				return
+			}
 		}
 	}
 	ret = Transaction{
@@ -123,6 +158,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		Discount: dis,
 		Paket:    paket,
 		Product:  prod,
+		Account:  data_account,
 	}
 
 	// From
@@ -135,9 +171,31 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	ret.To.Name = data.To.Name
 	ret.To.Number = data.To.Number
 
+	// Proses Subtotal
+	subtotal := 0
+	total_discount := 0
+	total := 0
+	for _, dis := range prod {
+		total_discount += dis.Discount.Discount
+		subtotal += dis.Pricing
+	}
+	for _, pak := range paket {
+		subtotal += pak.Pricing
+	}
+	for _, dis := range dis {
+		total_discount += dis.Discount
+	}
+
+	log.Println(subtotal)
+	discount := (subtotal * total_discount) / 100
+	log.Println(discount)
+	total = subtotal - discount
+	log.Println(total)
+	ret.Subtotal = total
 	// fmt.Println(ret)
 	// err = db.Collection["transaction"].Insert(bson.M{
 	// 	"_id":      id,
+	// 	"account":  data_account,
 	// 	"product":  prod,
 	// 	"paket":    paket,
 	// 	"discount": dis,
@@ -145,5 +203,18 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	// 	"from":     data.From,
 	// 	"to":       data.To,
 	// })
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (T *TransactionModel) UpdateStatus(id, status string) (err error) {
+	err = db.Collection["transaction"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"status": status,
+	})
 	return
 }

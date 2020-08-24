@@ -14,6 +14,11 @@ func init() {
 	db.SetCollection("account")
 	db.SetCollection("paket")
 	db.SetCollection("discount")
+	db.SetCollection("transaction")
+
+	var delivery = new(models.DeliveryModels)
+	delivery.GetListCity()
+
 }
 
 func main() {

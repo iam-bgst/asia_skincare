@@ -1,8 +1,9 @@
 package forms
 
 type Transaction struct {
+	Account    string               `json:"account"`
 	Product    []ProductTransaction `json:"product" bson:"product"`
-	Paket      []string             `json:"paket" bson:"paket"`
+	Paket      []PaketTransaction   `json:"paket" bson:"paket"`
 	Discount   []string             `json:"discount" bson:"discount"`
 	Membership string               `json:"membership" bson:"membership"`
 	Delivery   Delivery             `json:"delivery" bson:"delivery"`
@@ -11,8 +12,14 @@ type Transaction struct {
 	From       From                 `json:"from" bson:"from"`
 }
 
+type PaketTransaction struct {
+	Paket string `json:"paket"`
+	Qty   int    `json:"qty"`
+}
+
 type ProductTransaction struct {
 	Product  string `json:"product"`
+	Qty      int    `json:"qty"`
 	Discount string `json:"discount"`
 }
 

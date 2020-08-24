@@ -31,7 +31,8 @@ func (P *PaketControll) Create(c *gin.Context) {
 
 func (P *PaketControll) Get(c *gin.Context) {
 	id := c.Param("id")
-	data, err := paketmodels.Get(id)
+	idm := c.Param("idm")
+	data, err := paketmodels.GetByMembership(id, idm)
 	if err != nil {
 		c.JSON(406, gin.H{
 			"error": err.Error(),

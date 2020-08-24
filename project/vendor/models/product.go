@@ -42,6 +42,7 @@ type ProductMembership struct {
 type ProductTransaction struct {
 	Id       string   `json:"_id" bson:"_id,omitempty"`
 	Name     string   `json:"name" bson:"name"`
+	Qty      int      `json:"qty" bson:"qty"`
 	Image    string   `json:"image" bson:"image"`
 	Pricing  int      `json:"pricing" bson:"pricing"`
 	Discount Discount `json:"discount" bson:"discount"`

@@ -20,6 +20,16 @@ type Paket struct {
 	Point   int        `json:"point" bson:"point"`
 	Image   string     `json:"image" bson:"image"`
 }
+type PaketTransaction struct {
+	Id      string     `json:"_id" bson:"_id,omitempty"`
+	Name    string     `json:"name" bson:"name"`
+	Product []Product2 `json:"product" bson:"product"`
+	Pricing int        `json:"pricing" bson:"pricing"`
+	Qty     int        `json:"qty" bson:"qty"`
+	Stock   int        `json:"stock" bson:"stock"`
+	Point   int        `json:"point" bson:"point"`
+	Image   string     `json:"image" bson:"image"`
+}
 
 type PaketModel struct{}
 
@@ -74,6 +84,10 @@ func (P *PaketModel) Get(id string) (data Paket, err error) {
 }
 
 func (P *PaketModel) Update(id string, data forms.Paket) (err error) {
+	path, err := addon.Upload("paket", id, data.Image)
+	if err != nil {
+		return
+	}
 	err = db.Collection["paket"].Update(bson.M{
 		"_id": id,
 	}, bson.M{
@@ -81,6 +95,7 @@ func (P *PaketModel) Update(id string, data forms.Paket) (err error) {
 			"name":  data.Name,
 			"stock": data.Stock,
 			"point": data.Point,
+			"image": path,
 		},
 	})
 	return
@@ -118,6 +133,18 @@ func (P *PaketModel) Delete(id string) (err error) {
 	err = db.Collection["paket"].Remove(bson.M{
 		"_id": id,
 	})
+	return
+}
+
+func (P *PaketModel) GetByMembership(id, idm string) (data Paket, err error) {
+	pipeline := []bson.M{
+		{"$unwind": "$pricing"},
+		{"$match": bson.M{
+			"_id":                    id,
+			"pricing.membership._id": idm,
+		}},
+	}
+	err = db.Collection["paket"].Pipe(pipeline).One(&data)
 	return
 }
 

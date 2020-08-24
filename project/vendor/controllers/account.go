@@ -88,3 +88,20 @@ func (A *AccountControll) ActiveAccount(c *gin.Context) {
 		})
 	}
 }
+
+func (A *AccountControll) CheckDiscount(c *gin.Context) {
+	id := c.Param("id")
+	id_discount := c.Param("idd")
+
+	data, err := accountmodels.GetDiscountUsed(id, id_discount)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"data":   data,
+			"status": "ok",
+		})
+	}
+}

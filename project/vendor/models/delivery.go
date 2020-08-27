@@ -102,7 +102,7 @@ func (D *DeliveryModels) GetListCity() {
 	json.Unmarshal([]byte(value), &city)
 }
 
-func (D *DeliveryModels) List(sorting, pageNo, perPage int) []City {
+func (D *DeliveryModels) List(sorting, pageNo, perPage int) (data []City, count int) {
 	start := 0
 	end := 0
 	if pageNo == 1 {
@@ -112,5 +112,5 @@ func (D *DeliveryModels) List(sorting, pageNo, perPage int) []City {
 		start = ((perPage * pageNo) - 5)
 		end = (perPage * pageNo)
 	}
-	return city[start:end]
+	return city[start:end], len(city)
 }

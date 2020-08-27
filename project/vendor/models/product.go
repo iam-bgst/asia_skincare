@@ -16,6 +16,7 @@ type Product struct {
 	Pricing Pricing `json:"pricing" bson:"pricing"`
 	Stoct   int     `json:"stoct" bson:"stock"`
 	Point   int     `json:"point" bson:"point"`
+	Weight  int     `json:"weight" bson:"weight"`
 	Image   string  `json:"image" bson:"image"`
 	Desc    string  `json:"desc" bson:"desc"`
 }
@@ -57,11 +58,12 @@ type ProductModel struct{}
 func (P *ProductModel) Create(data forms.Product) (err error) {
 	id := uuid.New()
 	err = db.Collection["product"].Insert(bson.M{
-		"_id":   id,
-		"name":  data.Name,
-		"stock": data.Stoct,
-		"point": data.Point,
-		"desc":  data.Desc,
+		"_id":    id,
+		"name":   data.Name,
+		"stock":  data.Stoct,
+		"point":  data.Point,
+		"desc":   data.Desc,
+		"weight": data.Weight,
 	})
 	for _, pricing := range data.Pricing {
 		data_membership := membership_model.GetOneMembership(pricing.Membership)
@@ -103,9 +105,10 @@ func (P *ProductModel) Update(id string, data forms.Product) (err error) {
 		"_id": id,
 	}, bson.M{
 		"$set": bson.M{
-			"name":  data.Name,
-			"stock": data.Stoct,
-			"point": data.Point,
+			"name":   data.Name,
+			"stock":  data.Stoct,
+			"point":  data.Point,
+			"weight": data.Weight,
 		},
 	})
 	return
@@ -130,7 +133,7 @@ func (R *ProductModel) Delete(id string) (err error) {
 	return
 }
 
-func (R *ProductModel) ListByMembership(membership, filter, sort, pageNo, perPage string) (data []Product, err error) {
+func (R *ProductModel) ListByMembership(membership, filter, sort, pageNo, perPage string) (data []Product, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -160,5 +163,6 @@ func (R *ProductModel) ListByMembership(membership, filter, sort, pageNo, perPag
 		{"$limit": pp},
 	}
 	err = db.Collection["product"].Pipe(pipeline).All(&data)
+	count, _ = db.Collection["product"].Find(bson.M{}).Count()
 	return
 }

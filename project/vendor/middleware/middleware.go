@@ -96,7 +96,7 @@ func Middleware() {
 		transaction.POST("/add", transactioncontroll.Add)
 	}
 
-	// // Delivery
+	// Delivery
 	delivery := router.Group("/delivery")
 	{
 		delivery.GET("/list", deliverycontroll.List)

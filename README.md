@@ -13,3 +13,4 @@
 1. [Account](readme/account.md)
 2. [Product](readme/product.md)
 3. [Paket](readme/paket.md)
+4. [Delivary](readme/delivary.md)

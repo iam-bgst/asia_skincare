@@ -41,8 +41,8 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	pp, _ := strconv.Atoi(perPage)
 	pn, _ := strconv.Atoi(pageNo)
 
-	data, err := productmodels.ListByMembership(membership, filter, sort, pageNo, perPage)
-	lastPage := float64(len(data)) / float64(pp)
+	data, count, err := productmodels.ListByMembership(membership, filter, sort, pageNo, perPage)
+	lastPage := float64(count) / float64(pp)
 	if pp != 0 {
 		if len(data)%pp == 0 {
 			lastPage = lastPage
@@ -50,7 +50,13 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 			lastPage = lastPage + 1
 		}
 	} else {
-		lastPage = float64(len(data)) / float64(5)
+		lastPage = float64(count) / float64(5)
+	}
+	if membership == "" {
+		c.JSON(400, gin.H{
+			"error": "membership not set",
+		})
+		c.Abort()
 	}
 	if err != nil {
 		c.JSON(404, gin.H{
@@ -60,7 +66,7 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 		c.Abort()
 	} else {
 		c.JSON(200, gin.H{
-			"total":        len(data),
+			"total":        count,
 			"per_page":     pp,
 			"current_page": pn,
 			"last_page":    int(lastPage),

@@ -18,9 +18,28 @@ func (D *DeliveryControll) List(c *gin.Context) {
 	if perPage == 0 {
 		perPage = 5
 	}
-	data := deliverymodels.List(sort, pageNo, perPage)
+	data, count := deliverymodels.List(sort, pageNo, perPage)
+	lastPage := float64(len(data)) / float64(perPage)
+	if perPage != 0 {
+		if len(data)%perPage == 0 {
+			lastPage = lastPage
+		} else {
+			lastPage = lastPage + 1
+		}
+	} else {
+		lastPage = float64(len(data)) / float64(5)
+	}
 	c.JSON(200, gin.H{
-		"data": data,
+		"total":        count,
+		"per_page":     perPage,
+		"current_page": pageNo,
+		"last_page":    int(lastPage),
+		"next_page":    "",
+		"prev_page":    "",
+		"from":         ((pageNo * perPage) - perPage) + 1,
+		"to":           pageNo * perPage,
+		"data":         data,
+		"status":       "Ok",
 	})
 }
 

@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"forms"
-	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pborman/uuid"
@@ -58,16 +59,14 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		} else {
 			_, err1 := account_model.GetDiscountUsed(data.Account, p.Discount)
 			if err1 == nil {
-				err = errors.New("discount is used")
+				err = errors.New("discount is used on previous product")
 				return
 			}
 			data_p, err1 := product_model.GetByMembership(p.Product, data.Membership)
-			// fmt.Println(err1.Error())
 			if err1 != nil {
 				err = errors.New("Product id " + p.Product + " " + err1.Error())
 				return
 			}
-			// fmt.Println(discount_i)
 			if i > 0 {
 				if p.Discount == discount_i {
 					err = errors.New("discount used on product " + data.Product[i-1].Product)
@@ -125,7 +124,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	for _, d := range data.Discount {
 		_, err1 := account_model.GetDiscountUsed(data.Account, d)
 		if err1 == nil {
-			err = errors.New("discount is used")
+			err = errors.New("discount is used on your account")
 			return
 		}
 		if len(data.Discount) == 0 {
@@ -186,23 +185,31 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		total_discount += dis.Discount
 	}
 
-	log.Println(subtotal)
+	// log.Println(subtotal)
 	discount := (subtotal * total_discount) / 100
-	log.Println(discount)
+	// log.Println(discount)
 	total = subtotal - discount
-	log.Println(total)
+	// log.Println(total)
 	ret.Subtotal = total
-	// fmt.Println(ret)
-	// err = db.Collection["transaction"].Insert(bson.M{
-	// 	"_id":      id,
-	// 	"account":  data_account,
-	// 	"product":  prod,
-	// 	"paket":    paket,
-	// 	"discount": dis,
-	// 	"date":     time.Now(),
-	// 	"from":     data.From,
-	// 	"to":       data.To,
-	// })
+
+	// Insert into mongo
+	err = db.Collection["transaction"].Insert(bson.M{
+		"_id":      id,
+		"date":     time.Now(),
+		"account":  data_account,
+		"product":  prod,
+		"paket":    paket,
+		"discount": dis,
+		"from":     data.From,
+		"to":       data.To,
+		"delivery": bson.M{
+			"courier": data.Delivery.Courier,
+			"service": data.Delivery.Service,
+			"resi":    "",
+			"price":   data.Delivery.Price,
+			"code":    data.Delivery.Code,
+		},
+	})
 	if err != nil {
 		return
 	}
@@ -216,5 +223,43 @@ func (T *TransactionModel) UpdateStatus(id, status string) (err error) {
 	}, bson.M{
 		"status": status,
 	})
+	return
+}
+
+func (T *TransactionModel) UpdateResi(id, resi string) (err error) {
+	err = db.Collection["transaction"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
+			"delivery.resi": resi,
+		},
+	})
+	return
+}
+
+func (T *TransactionModel) HistoyTransaction(id_account, filter, sort, pageNo, perPage string) (data []Transaction, count int, err error) {
+	sorting := sort
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = "-" + sorting
+	}
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	pn, _ := strconv.Atoi(pageNo)
+	pp, _ := strconv.Atoi(perPage)
+	err = db.Collection["transaction"].Find(bson.M{
+		"account._id": id_account,
+		"$or": []interface{}{
+			bson.M{"name": regex},
+		},
+	}).Sort(sorting).Skip((pn - 1) * pp).Limit(pp).All(&data)
+	if err != nil {
+		return
+	}
+	count, err = db.Collection["transaction"].Find(bson.M{"account._id": id_account}).Count()
+	if err != nil {
+		return
+	}
 	return
 }

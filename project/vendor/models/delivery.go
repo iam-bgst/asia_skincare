@@ -15,6 +15,12 @@ import (
 var city []City
 
 type Delivery struct {
+	Courier string `json:"courier" bson:"courier"`
+	Service string `json:"service" bson:"service"`
+	Resi    string `json:"resi" bson:"resi"`
+	Price   string `json:"price" bson:"price"`
+}
+type Result struct {
 	Name string  `json:"name"`
 	Code string  `json:"code"`
 	Cost []Costs `json:"cost"`
@@ -45,7 +51,7 @@ type CheckCost struct {
 	Courier     string
 }
 
-func (D *DeliveryModels) CheckOngkir(origin, destination, weight string) (data_result []Delivery) {
+func (D *DeliveryModels) CheckOngkir(origin, destination, weight string) (data_result []Result) {
 	// var data_result []Delivery
 	var data_cost []Costs
 	apiUrl := "https://api.rajaongkir.com/starter/cost?key=8c24e11e7261144361a9a5a86d30314f"
@@ -84,7 +90,7 @@ func (D *DeliveryModels) CheckOngkir(origin, destination, weight string) (data_r
 				Estimate: etd,
 			})
 		}
-		data_result = append(data_result, Delivery{
+		data_result = append(data_result, Result{
 			Code: s,
 			Name: name,
 			Cost: data_cost,

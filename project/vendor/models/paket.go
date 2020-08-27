@@ -61,7 +61,7 @@ func (P *PaketModel) Create(data forms.Paket) (err error) {
 		})
 	}
 	for _, pricing := range data.Pricing {
-		data_membership := membership_model.GetOneMembership(pricing.Membership)
+		data_membership, _ := membership_model.GetOneMembership(pricing.Membership)
 		err = db.Collection["paket"].Update(bson.M{
 			"_id": id,
 		}, bson.M{

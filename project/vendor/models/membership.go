@@ -16,8 +16,8 @@ type MembershipModel struct{}
 
 var Memship []string
 
-func (MS *MembershipModel) GetOneMembership(id string) (data Membership) {
-	db.Collection["membership"].Find(bson.M{
+func (MS *MembershipModel) GetOneMembership(id string) (data Membership, err error) {
+	err = db.Collection["membership"].Find(bson.M{
 		"_id": id,
 	}).One(&data)
 	return

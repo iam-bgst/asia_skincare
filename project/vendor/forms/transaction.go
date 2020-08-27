@@ -36,7 +36,9 @@ type From struct {
 }
 
 type Delivery struct {
-	Courier string `json:"courier" bson:"courier"`
-	Resi    string `json:"resi" bson:"resi"`
-	Price   string `json:"price" bson:"price"`
+	Courier string `json:"courier"`
+	Service string `json:"service"`
+	Resi    string `json:"resi"`
+	Price   string `json:"price"`
+	Code    string `json:"code"`
 }

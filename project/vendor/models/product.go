@@ -2,6 +2,7 @@ package models
 
 import (
 	"db"
+	"errors"
 	"forms"
 	"strconv"
 	"strings"
@@ -66,7 +67,7 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 		"weight": data.Weight,
 	})
 	for _, pricing := range data.Pricing {
-		data_membership := membership_model.GetOneMembership(pricing.Membership)
+		data_membership, _ := membership_model.GetOneMembership(pricing.Membership)
 		err = db.Collection["product"].Update(bson.M{
 			"_id": id,
 		}, bson.M{
@@ -134,6 +135,11 @@ func (R *ProductModel) Delete(id string) (err error) {
 }
 
 func (R *ProductModel) ListByMembership(membership, filter, sort, pageNo, perPage string) (data []Product, count int, err error) {
+	_, err = membership_model.GetOneMembership(membership)
+	if err != nil {
+		err = errors.New("membership not found")
+		return
+	}
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {

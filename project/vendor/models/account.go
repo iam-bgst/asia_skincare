@@ -36,7 +36,7 @@ type AccountModel struct{}
 
 func (A *AccountModel) Create(data forms.Account) (err error) {
 	id := uuid.New()
-	data_membership := membership_model.GetOneMembership(data.Membership)
+	data_membership, _ := membership_model.GetOneMembership(data.Membership)
 	phone, _ := strconv.Atoi(data.PhoneNumber)
 
 	path, err := addon.Upload("account", id, data.Image)

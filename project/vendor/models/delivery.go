@@ -18,7 +18,7 @@ type Delivery struct {
 	Courier string `json:"courier" bson:"courier"`
 	Service string `json:"service" bson:"service"`
 	Resi    string `json:"resi" bson:"resi"`
-	Price   string `json:"price" bson:"price"`
+	Price   int    `json:"price" bson:"price"`
 }
 type Result struct {
 	Name string  `json:"name"`

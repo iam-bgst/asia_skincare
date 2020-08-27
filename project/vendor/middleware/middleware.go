@@ -94,6 +94,9 @@ func Middleware() {
 	transaction := router.Group("/transaction")
 	{
 		transaction.POST("/add", transactioncontroll.Add)
+		transaction.GET("/history/:account", transactioncontroll.ListHistory)
+		transaction.PUT("/update_status/:id", transactioncontroll.UpdateStatus)
+		transaction.PUT("/add_resi/:id", transactioncontroll.AddResiToTransaction)
 	}
 
 	// Delivery

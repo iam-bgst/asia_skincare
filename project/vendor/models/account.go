@@ -64,7 +64,16 @@ func (A *AccountModel) CheckAccount(phonenumber int) (data Account, err error) {
 	}).One(&data)
 	return
 }
-
+func (A *AccountModel) UpdatePoint(id string, point int) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$inc": bson.M{
+			"point": point,
+		},
+	})
+	return
+}
 func (A *AccountModel) Get(id string) (data AccountTransaction, err error) {
 	err = db.Collection["account"].Find(bson.M{
 		"_id": id,

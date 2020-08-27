@@ -13,18 +13,34 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+const (
+	NOTPAYED = iota
+	PACKED
+	SENT
+	DONE
+	CENCELED
+)
+
 type Transaction struct {
-	Id       string               `json:"_id" bson:"_id,omitempty"`
-	Account  AccountTransaction   `json:"account" bson:"account"`
-	Product  []ProductTransaction `json:"product" bson:"product"`
-	Paket    []PaketTransaction   `json:"paket" bson:"paket"`
-	Discount []Discount           `json:"discount" bson:"discount"`
-	Date     time.Time            `json:"date" bson:"date"`
-	Delivery Delivery             `json:"delivery" bson:"delivery"`
-	Subtotal int                  `json:"subtotal" bson:"subtotal"`
-	Status   string               `json:"status" bson:"status"`
-	To       To                   `json:"to" bson:"to"`
-	From     From                 `json:"from" bson:"from"`
+	Id          string               `json:"_id" bson:"_id,omitempty"`
+	Account     AccountTransaction   `json:"account" bson:"account"`
+	Product     []ProductTransaction `json:"product" bson:"product"`
+	Paket       []PaketTransaction   `json:"paket" bson:"paket"`
+	Discount    []Discount           `json:"discount" bson:"discount"`
+	Date        time.Time            `json:"date" bson:"date"`
+	Delivery    Delivery             `json:"delivery" bson:"delivery"`
+	Subtotal    int                  `json:"subtotal" bson:"subtotal"`
+	Status      string               `json:"status" bson:"status"`
+	Status_code int                  `json:"status_code" bson:"status_code"`
+	/* Status
+	0. NotPayed
+	1. Packed
+	2. Send
+	3. Done
+	4. Cenceled
+	*/
+	To   To   `json:"to" bson:"to"`
+	From From `json:"from" bson:"from"`
 }
 type To struct {
 	Name    string `json:"name" bson:"name"`
@@ -39,6 +55,22 @@ type From struct {
 }
 
 type TransactionModel struct{}
+
+func (T *TransactionModel) GetStatus(status_code int) (status string) {
+	switch status_code {
+	case NOTPAYED:
+		status = "NotPayed"
+	case PACKED:
+		status = "Packed"
+	case SENT:
+		status = "Sent"
+	case DONE:
+		status = "Done"
+	case CENCELED:
+		status = "Cenceled"
+	}
+	return
+}
 
 func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err error) {
 	id := uuid.New()
@@ -193,6 +225,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	ret.Subtotal = total
 
 	// Insert into mongo
+	price, _ := strconv.Atoi(data.Delivery.Price)
 	err = db.Collection["transaction"].Insert(bson.M{
 		"_id":      id,
 		"date":     time.Now(),
@@ -206,9 +239,11 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 			"courier": data.Delivery.Courier,
 			"service": data.Delivery.Service,
 			"resi":    "",
-			"price":   data.Delivery.Price,
+			"price":   price,
 			"code":    data.Delivery.Code,
 		},
+		"status":      T.GetStatus(0),
+		"status_code": 0,
 	})
 	if err != nil {
 		return
@@ -217,11 +252,37 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	return
 }
 
-func (T *TransactionModel) UpdateStatus(id, status string) (err error) {
+func (T *TransactionModel) Get(id string) (data Transaction, err error) {
+	err = db.Collection["transaction"].Find(bson.M{
+		"_id": id,
+	}).One(&data)
+	return
+}
+
+func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) {
+	if status_code == DONE {
+		transaction_data, err1 := T.Get(id)
+		for _, t := range transaction_data.Product {
+			produck_data, _ := product_model.Get(t.Id)
+			account_model.UpdatePoint(transaction_data.Account.Id, produck_data.Point)
+		}
+
+		for _, p := range transaction_data.Paket {
+			paket_data, _ := paket_model.Get(p.Id)
+			account_model.UpdatePoint(transaction_data.Account.Id, paket_data.Point)
+		}
+		if err1 != nil {
+			err = errors.New("error whee getting transaction")
+			return
+		}
+	}
 	err = db.Collection["transaction"].Update(bson.M{
 		"_id": id,
 	}, bson.M{
-		"status": status,
+		"$set": bson.M{
+			"status":      T.GetStatus(status_code),
+			"status_code": status_code,
+		},
 	})
 	return
 }
@@ -237,7 +298,12 @@ func (T *TransactionModel) UpdateResi(id, resi string) (err error) {
 	return
 }
 
-func (T *TransactionModel) HistoyTransaction(id_account, filter, sort, pageNo, perPage string) (data []Transaction, count int, err error) {
+func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pageNo, perPage int) (data []Transaction, count int, err error) {
+	_, err = account_model.Get(id_account)
+	if err != nil {
+		err = errors.New("account not found")
+		return
+	}
 	sorting := sort
 	if strings.Contains(sort, "asc") {
 		sorting = strings.Replace(sort, "|asc", "", -1)
@@ -246,18 +312,22 @@ func (T *TransactionModel) HistoyTransaction(id_account, filter, sort, pageNo, p
 		sorting = "-" + sorting
 	}
 	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
-	pn, _ := strconv.Atoi(pageNo)
-	pp, _ := strconv.Atoi(perPage)
+	// pn, _ := strconv.Atoi(pageNo)
+	// pp, _ := strconv.Atoi(perPage)
 	err = db.Collection["transaction"].Find(bson.M{
 		"account._id": id_account,
 		"$or": []interface{}{
-			bson.M{"name": regex},
+			bson.M{"product.name": regex},
 		},
-	}).Sort(sorting).Skip((pn - 1) * pp).Limit(pp).All(&data)
+	}).Sort(sorting).Skip((pageNo - 1) * perPage).Limit(perPage).All(&data)
 	if err != nil {
 		return
 	}
-	count, err = db.Collection["transaction"].Find(bson.M{"account._id": id_account}).Count()
+	count, err = db.Collection["transaction"].Find(bson.M{
+		"account._id": id_account,
+		"$or": []interface{}{
+			bson.M{"product.name": regex},
+		}}).Count()
 	if err != nil {
 		return
 	}

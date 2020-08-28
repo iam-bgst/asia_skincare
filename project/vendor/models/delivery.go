@@ -113,9 +113,9 @@ func (D *DeliveryModels) List(sorting, pageNo, perPage int) (data []City, count 
 	end := 0
 	if pageNo == 1 {
 		start = 0
-		end = 5
+		end = perPage
 	} else if pageNo > 1 {
-		start = ((perPage * pageNo) - 5)
+		start = ((perPage * pageNo) - perPage)
 		end = (perPage * pageNo)
 	}
 	return city[start:end], len(city)

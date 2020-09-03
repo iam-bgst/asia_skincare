@@ -17,6 +17,8 @@ type Account struct {
 	Email         string     `json:"email" bson:"email"`
 	PhoneNumber   int        `json:"phonenumber" bson:"phonenumber"`
 	Point         int        `json:"point" bson:"point"`
+	Province      int        `json:"province" bson:"province"`
+	City          int        `json:"city" bson:"city"`
 	Address       string     `json:"address" bson:"address"`
 	Membership    Membership `json:"membership" bson:"membership"`
 	Image         string     `json:"image" bson:"image"`
@@ -43,12 +45,26 @@ func (A *AccountModel) Create(data forms.Account) (err error) {
 	if err != nil {
 		return
 	}
+
+	prov, err1 := delivery_model.GetProvince(data.Province)
+	if err1 != nil {
+		err = err1
+		return
+	}
+	city, err2 := delivery_model.GetCity(data.Province)
+	if err2 != nil {
+		err = err2
+		return
+	}
+
 	err = db.Collection["account"].Insert(bson.M{
 		"_id":         id,
 		"name":        data.Name,
 		"email":       data.Email,
 		"phonenumber": phone,
 		"membership":  data_membership,
+		"province":    prov,
+		"city":        city,
 		"point":       0,
 		"address":     data.Address,
 		"comfirmcode": 0,
@@ -81,6 +97,21 @@ func (A *AccountModel) Get(id string) (data AccountTransaction, err error) {
 	return
 }
 
+func (A *AccountModel) GetByMembership(membership string, prov, city int) (available bool) {
+	err := db.Collection["account"].Find(bson.M{
+		"membership._id": membership,
+		"$or": []interface{}{
+			bson.M{"province": prov},
+			bson.M{"city": city},
+		},
+	})
+	if err == nil {
+		available = true
+	} else {
+		available = false
+	}
+	return
+}
 func (A *AccountModel) Update(id string, data forms.Account) (err error) {
 	phone, _ := strconv.Atoi(data.PhoneNumber)
 	err = db.Collection["account"].Update(bson.M{

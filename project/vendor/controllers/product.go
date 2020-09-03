@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"forms"
+	"models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -29,6 +30,10 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	pageNo := c.Query("page")
 	perPage := c.Query("per_page")
 	filter := c.Query("filter")
+
+	prov, _ := strconv.Atoi(c.Query("prov"))
+	city, _ := strconv.Atoi(c.Query("city"))
+
 	if sort == "" {
 		sort = "id"
 	}
@@ -40,8 +45,15 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	}
 	pp, _ := strconv.Atoi(perPage)
 	pn, _ := strconv.Atoi(pageNo)
+	var data []models.Product
+	var count int
+	var err error
 
-	data, count, err := productmodels.ListByMembership(membership, filter, sort, pageNo, perPage)
+	if prov == 0 || city == 0 {
+		data, count, err = productmodels.ListByMembership(membership, filter, sort, pageNo, perPage)
+	} else {
+		data, count, err = productmodels.GetByMembershipAndProvCity(membership, filter, sort, pageNo, perPage, prov, city)
+	}
 	lastPage := float64(count) / float64(pp)
 	if pp != 0 {
 		if len(data)%pp == 0 {

@@ -15,17 +15,14 @@ func init() {
 	db.SetCollection("paket")
 	db.SetCollection("discount")
 	db.SetCollection("transaction")
+	db.SetCollection("delivery")
 
-	var delivery = new(models.DeliveryModels)
-	delivery.GetListCity()
+	// initial assets
+	models.InitialAssets()
 
 }
 
 func main() {
-	// Initial Membership
-	var membership = new(models.MembershipModel)
-	membership.InitMembership()
-
 	// Open Port Gin
 	middleware.Middleware()
 

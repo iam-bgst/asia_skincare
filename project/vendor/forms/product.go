@@ -7,6 +7,7 @@ type Product struct {
 	Stoct   int       `json:"stock" bson:"stock"`
 	Point   int       `json:"point" bson:"point"`
 	Desc    string    `json:"desc"`
+	Image   string    `json:"image"`
 }
 
 type Pricing struct {

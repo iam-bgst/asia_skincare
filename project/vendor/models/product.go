@@ -1,6 +1,7 @@
 package models
 
 import (
+	"addon"
 	"db"
 	"errors"
 	"forms"
@@ -58,6 +59,10 @@ type ProductModel struct{}
 
 func (P *ProductModel) Create(data forms.Product) (err error) {
 	id := uuid.New()
+	path, err := addon.Upload("product", id, data.Image)
+	if err != nil {
+		return
+	}
 	err = db.Collection["product"].Insert(bson.M{
 		"_id":    id,
 		"name":   data.Name,
@@ -65,6 +70,7 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 		"point":  data.Point,
 		"desc":   data.Desc,
 		"weight": data.Weight,
+		"image":  path,
 	})
 	for _, pricing := range data.Pricing {
 		data_membership, _ := membership_model.GetOneMembership(pricing.Membership)
@@ -135,6 +141,50 @@ func (R *ProductModel) Delete(id string) (err error) {
 }
 
 func (R *ProductModel) ListByMembership(membership, filter, sort, pageNo, perPage string) (data []Product, count int, err error) {
+	_, err = membership_model.GetOneMembership(membership)
+	if err != nil {
+		err = errors.New("membership not found")
+		return
+	}
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "date"
+		order = -1
+	}
+	pn, _ := strconv.Atoi(pageNo)
+	pp, _ := strconv.Atoi(perPage)
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"name": regex},
+			},
+		}},
+		{"$unwind": "$pricing"},
+		{"$match": bson.M{"pricing.membership._id": membership}},
+		{"$sort": bson.M{sorting: order}},
+		{"$skip": (pn - 1) * pp},
+		{"$limit": pp},
+	}
+	err = db.Collection["product"].Pipe(pipeline).All(&data)
+	count, _ = db.Collection["product"].Find(bson.M{}).Count()
+	return
+}
+
+func (R *ProductModel) GetByMembershipAndProvCity(membership, filter, sort, pageNo, perPage string, prov, city int) (data []Product, count int, err error) {
+	ok := account_model.GetByMembership(membership, prov, city)
+	if !ok {
+		err = errors.New("not available agent")
+		return
+	}
 	_, err = membership_model.GetOneMembership(membership)
 	if err != nil {
 		err = errors.New("membership not found")

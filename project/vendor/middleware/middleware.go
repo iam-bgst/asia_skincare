@@ -102,7 +102,8 @@ func Middleware() {
 	// Delivery
 	delivery := router.Group("/delivery")
 	{
-		delivery.GET("/list", deliverycontroll.List)
+		delivery.GET("/listcity", deliverycontroll.ListCity)
+		delivery.GET("/listprovince", deliverycontroll.ListProvince)
 		delivery.GET("/checkongkir", deliverycontroll.CheckOngkir)
 	}
 

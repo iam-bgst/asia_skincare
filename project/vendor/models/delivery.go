@@ -1,6 +1,8 @@
 package models
 
 import (
+	"addon"
+	"db"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -8,8 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/parnurzeal/gorequest"
+	"github.com/pborman/uuid"
 	"github.com/tidwall/gjson"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var city []City
@@ -31,13 +34,18 @@ type Costs struct {
 	Estimate string `json:"estimate"`
 }
 
+type Province struct {
+	Id          string `json:"_id" bson:"_id,omitempty"`
+	Province_id int    `json:"province_id"`
+	Province    string `json:"province" bson:"province"`
+	City        []City `json:"city" bson:"city"`
+}
 type City struct {
-	City_id     string `json:"city_id"`
-	Province_id string `json:"province_id"`
-	Province    string `json:"province"`
+	Id          string `json:"_id" bson:"_id,omitempty"`
+	City_id     int    `json:"city_id"`
 	Type        string `json:"type"`
 	City_name   string `json:"city_name"`
-	Posta_code  string `json:"postal_code"`
+	Postal_code int    `json:"postal_code"`
 }
 
 type DeliveryModels struct{}
@@ -70,14 +78,8 @@ func (D *DeliveryModels) CheckOngkir(origin, destination, weight string) (data_r
 
 		resp, _ := client.Do(r)
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		// fmt.Println(resp.Status)
 		name := gjson.Get(string(bodyBytes), "rajaongkir.results.0.name").String()
 
-		// data_result = append(data_result, Delivery{
-		// 	Code: s,
-		// 	Name: name,
-		// })
-		// fmt.Println(string(bodyBytes))
 		value := gjson.Get(string(bodyBytes), "rajaongkir.results.0.costs.#.service").Array()
 		for i, s := range value {
 			ii := strconv.Itoa(i)
@@ -96,16 +98,187 @@ func (D *DeliveryModels) CheckOngkir(origin, destination, weight string) (data_r
 			Cost: data_cost,
 		})
 	}
-	// fmt.Println(data_result)
 	return
 }
 
-func (D *DeliveryModels) GetListCity() {
-	req := gorequest.New()
-	_, body, _ := req.Get("https://api.rajaongkir.com/starter/city?key=8c24e11e7261144361a9a5a86d30314f").End()
-	value := gjson.Get(body, "rajaongkir.results").String()
-	// fmt.Println(value)
-	json.Unmarshal([]byte(value), &city)
+func (D *DeliveryModels) GetListCity(filter, sort string, pageNo, perPage int) (data []City, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "city_id"
+		order = 1
+	}
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	err = db.Collection["delivery"].Pipe([]bson.M{
+		{"$project": bson.M{
+			"city": "$city",
+		}},
+		{"$unwind": "$city"},
+		{"$project": bson.M{
+			"_id":         "$city._id",
+			"city_id":     "$city.city_id",
+			"city_name":   "$city.city_name",
+			"type":        "$city.type",
+			"postal_code": "$city.postal_code",
+		}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"city_name": regex},
+			},
+		}},
+	}).All(&data)
+	count = len(data)
+
+	pipeline := []bson.M{
+		{"$project": bson.M{
+			"city": "$city",
+		}},
+		{"$unwind": "$city"},
+		{"$project": bson.M{
+			"_id":         "$city._id",
+			"city_id":     "$city.city_id",
+			"city_name":   "$city.city_name",
+			"type":        "$city.type",
+			"postal_code": "$city.postal_code",
+		}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"city_name": regex},
+			},
+		}},
+		{"$sort": bson.M{sorting: order}},
+		{"$skip": (pageNo - 1) * perPage},
+		{"$limit": perPage},
+	}
+
+	err = db.Collection["delivery"].Pipe(pipeline).All(&data)
+
+	return
+}
+
+func (D *DeliveryModels) GetProvince(id_province int) (data Province, err error) {
+	err = db.Collection["delivery"].Pipe([]bson.M{
+		{"$project": bson.M{
+			"_id":         "$_id",
+			"province_id": "$province_id",
+			"province":    "$province",
+		}},
+		{"$match": bson.M{
+			"province_id": id_province,
+		}},
+	}).One(&data)
+	return
+}
+
+func (D *DeliveryModels) GetCity(id_city int) (data City, err error) {
+	err = db.Collection["delivery"].Pipe([]bson.M{
+		{"$project": bson.M{
+			"city": "$city",
+		}},
+		{"$unwind": "$city"},
+		{"$project": bson.M{
+			"_id":         "$city._id",
+			"city_id":     "$city.city_id",
+			"city_name":   "$city.city_name",
+			"type":        "$city.type",
+			"postal_code": "$city.postal_code",
+		}},
+		{"$match": bson.M{
+			"city_id": id_city,
+		}},
+	}).One(&data)
+	return
+}
+
+func (D *DeliveryModels) GetListProvince(filter, sort string, pageNo, perPage int) (data []Province, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "province_id"
+		order = 1
+	}
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	err = db.Collection["delivery"].Pipe([]bson.M{
+		{"$project": bson.M{
+			"_id":         "$_id",
+			"province_id": "$province_id",
+			"province":    "$province",
+		}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"province": regex},
+			},
+		}},
+	}).All(&data)
+	count = len(data)
+
+	pipeline := []bson.M{
+		{"$project": bson.M{
+			"_id":         "$_id",
+			"province_id": "$province_id",
+			"province":    "$province",
+		}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"province": regex},
+			},
+		}},
+		{"$sort": bson.M{sorting: order}},
+		{"$skip": (pageNo - 1) * perPage},
+		{"$limit": perPage},
+	}
+
+	err = db.Collection["delivery"].Pipe(pipeline).All(&data)
+
+	return
+}
+
+func (D *DeliveryModels) InitialDelivery() {
+	var data []Province
+	db.Collection["delivery"].Find(bson.M{}).All(&data)
+	if len(data) == 0 {
+		dir := addon.GetDir()
+		byt, _ := ioutil.ReadFile(dir + "/vendor/config/assets.json")
+		json.Unmarshal(byt, &data)
+		for _, s := range data {
+			id := uuid.New()
+			db.Collection["delivery"].Insert(bson.M{
+				"_id":         id,
+				"province_id": s.Province_id,
+				"province":    s.Province,
+			})
+			for _, c := range s.City {
+				idc := uuid.New()
+				db.Collection["delivery"].Update(bson.M{
+					"_id": id,
+				}, bson.M{
+					"$addToSet": bson.M{
+						"city": bson.M{
+							"_id":         idc,
+							"city_id":     c.City_id,
+							"city_name":   c.City_name,
+							"type":        c.Type,
+							"postal_code": c.Postal_code,
+						},
+					},
+				})
+			}
+		}
+	}
 }
 
 func (D *DeliveryModels) List(sorting, pageNo, perPage int) (data []City, count int) {

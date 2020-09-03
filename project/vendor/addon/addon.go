@@ -21,6 +21,10 @@ func GetDir() string {
 }
 
 func Upload(collection, name string, img string) (path string, err error) {
+	if img == "" {
+		path = "/picture/" + collection + "/" + name + ".png"
+		return
+	}
 	path = Path + collection
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.MkdirAll(path, 0755)

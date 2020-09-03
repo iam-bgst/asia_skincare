@@ -108,6 +108,10 @@ func (P *ProductModel) Get(id string) (data Product1, err error) {
 }
 
 func (P *ProductModel) Update(id string, data forms.Product) (err error) {
+	path, err := addon.Upload("product", id, data.Image)
+	if err != nil {
+		return
+	}
 	err = db.Collection["product"].Update(bson.M{
 		"_id": id,
 	}, bson.M{
@@ -116,6 +120,7 @@ func (P *ProductModel) Update(id string, data forms.Product) (err error) {
 			"stock":  data.Stoct,
 			"point":  data.Point,
 			"weight": data.Weight,
+			"image":  path,
 		},
 	})
 	return

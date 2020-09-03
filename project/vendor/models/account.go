@@ -113,6 +113,10 @@ func (A *AccountModel) GetByMembership(membership string, prov, city int) (avail
 	return
 }
 func (A *AccountModel) Update(id string, data forms.Account) (err error) {
+	path, err := addon.Upload("account", id, data.Image)
+	if err != nil {
+		return
+	}
 	phone, _ := strconv.Atoi(data.PhoneNumber)
 	err = db.Collection["account"].Update(bson.M{
 		"_id": id,
@@ -122,6 +126,7 @@ func (A *AccountModel) Update(id string, data forms.Account) (err error) {
 			"email":       data.Email,
 			"phonenumber": phone,
 			"address":     data.Address,
+			"image":       path,
 		},
 	})
 	return

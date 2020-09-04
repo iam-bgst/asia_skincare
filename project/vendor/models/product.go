@@ -254,7 +254,7 @@ func (P *ProductModel) ListProductOnAgent(id_account_agent, filter, sort string,
 	}
 
 	regex := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
-	regex_next := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
+	regex_next := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	pipeline := []bson.M{
 		{"$match": bson.M{"_id": id_account_agent}},
 		{"$unwind": "$product"},

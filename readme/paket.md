@@ -117,6 +117,29 @@ ip:port/paket/update/:id_paket
 }
 ```
 
+## List
+*URL*
+
+``` bash
+method:POST
+ip:port/paket/list?membership=id_membership
+```
+*JSON RESPONSE*
+```json
+{
+    "current_page": 1,
+    "data": null,
+    "from": 1,
+    "last_page": 0,
+    "next_page": "",
+    "per_page": 5,
+    "prev_page": "",
+    "status": "Ok",
+    "to": 5,
+    "total": 0
+}
+```
+
 ## Delete
 *URL*
 

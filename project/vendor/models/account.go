@@ -17,13 +17,24 @@ type Account struct {
 	Email         string     `json:"email" bson:"email"`
 	PhoneNumber   int        `json:"phonenumber" bson:"phonenumber"`
 	Point         int        `json:"point" bson:"point"`
-	Province      int        `json:"province" bson:"province"`
-	City          int        `json:"city" bson:"city"`
-	Address       string     `json:"address" bson:"address"`
+	Address       []Address  `json:"address" bson:"address"`
 	Membership    Membership `json:"membership" bson:"membership"`
 	Image         string     `json:"image" bson:"image"`
 	Status        string     `json:"status" bson:"status"`
 	Discount_used []Discount `json:"discount_used" bson:"discount_used"`
+}
+type AccountList struct {
+	Id       string `json:"_id" bson:"_id,omitempty"`
+	Name     string `json:"name" bson:"name"`
+	Province string `json:"province" bson:"province"`
+	City     string `json:"city" bson:"city"`
+}
+
+type Address struct {
+	Province Province `json:"province" bson:"province"`
+	City     City     `json:"city" bson:"city"`
+	Detail   string   `json:"detail" bson:"detail"`
+	Default  bool     `json:"default" bson:"default"`
 }
 type AccountTransaction struct {
 	Id          string `json:"_id" bson:"_id,omitempty"`
@@ -46,12 +57,12 @@ func (A *AccountModel) Create(data forms.Account) (err error) {
 		return
 	}
 
-	prov, err1 := delivery_model.GetProvince(data.Province)
+	prov, err1 := delivery_model.GetProvince(data.Address.Province)
 	if err1 != nil {
 		err = err1
 		return
 	}
-	city, err2 := delivery_model.GetCity(data.Province)
+	city, err2 := delivery_model.GetCityByProv(data.Address.Province, data.Address.City)
 	if err2 != nil {
 		err = err2
 		return
@@ -63,17 +74,38 @@ func (A *AccountModel) Create(data forms.Account) (err error) {
 		"email":       data.Email,
 		"phonenumber": phone,
 		"membership":  data_membership,
-		"province":    prov,
-		"city":        city,
 		"point":       0,
-		"address":     data.Address,
 		"comfirmcode": 0,
 		"image":       path,
 		"status":      "active",
 	})
+	err = db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
+		"$addToSet": bson.M{
+			"address": bson.M{
+				"province": prov,
+				"city":     city,
+				"detail":   data.Address.Detail,
+				"default":  true,
+			},
+		},
+	})
 	return
 }
-
+func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$addToSet": bson.M{
+			"address": bson.M{
+				"province": data.Province,
+				"city":     data.City,
+				"detail":   data.Detail,
+				"default":  false,
+			},
+		},
+	})
+	return
+}
 func (A *AccountModel) CheckAccount(phonenumber int) (data Account, err error) {
 	err = db.Collection["account"].Find(bson.M{
 		"phonenumber": phonenumber,
@@ -125,7 +157,6 @@ func (A *AccountModel) Update(id string, data forms.Account) (err error) {
 			"name":        data.Name,
 			"email":       data.Email,
 			"phonenumber": phone,
-			"address":     data.Address,
 			"image":       path,
 		},
 	})
@@ -200,5 +231,20 @@ func (A *AccountModel) AddDiscounUsed(id, idd string) (err error) {
 			},
 		},
 	})
+	return
+}
+
+func (A *AccountModel) ListAccount() (data AccountList, err error) {
+	regex := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
+	pipeline := []bson.M{
+		{"$match": bson.M{"membership.name": regex}},
+		{"$unwind": "$address"},
+		{"$project": bson.M{
+			"name":     "$name",
+			"province": "$address.province.province",
+			"city":     bson.M{"$concat": []string{"$address.city.city_name", " - ", "$address.city.type"}},
+		}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
 	return
 }

@@ -120,6 +120,7 @@ func (P *ProductModel) Update(id string, data forms.Product) (err error) {
 			"stock":  data.Stoct,
 			"point":  data.Point,
 			"weight": data.Weight,
+			"desc":   data.Desc,
 			"image":  path,
 		},
 	})

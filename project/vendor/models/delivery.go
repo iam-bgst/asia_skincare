@@ -177,6 +177,28 @@ func (D *DeliveryModels) GetProvince(id_province int) (data Province, err error)
 	return
 }
 
+func (D *DeliveryModels) GetCityByProv(idprov, id_city int) (data City, err error) {
+	err = db.Collection["delivery"].Pipe([]bson.M{
+		{"$match": bson.M{
+			"province_id": idprov,
+		}},
+		{"$project": bson.M{
+			"city": "$city",
+		}},
+		{"$unwind": "$city"},
+		{"$project": bson.M{
+			"_id":         "$city._id",
+			"city_id":     "$city.city_id",
+			"city_name":   "$city.city_name",
+			"type":        "$city.type",
+			"postal_code": "$city.postal_code",
+		}},
+		{"$match": bson.M{
+			"city_id": id_city,
+		}},
+	}).One(&data)
+	return
+}
 func (D *DeliveryModels) GetCity(id_city int) (data City, err error) {
 	err = db.Collection["delivery"].Pipe([]bson.M{
 		{"$project": bson.M{

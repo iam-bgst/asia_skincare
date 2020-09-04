@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"forms"
 	"strconv"
+	"strings"
 
 	"github.com/pborman/uuid"
 	"gopkg.in/mgo.v2/bson"
@@ -22,6 +23,10 @@ type Account struct {
 	Image         string     `json:"image" bson:"image"`
 	Status        string     `json:"status" bson:"status"`
 	Discount_used []Discount `json:"discount_used" bson:"discount_used"`
+	Product       []struct {
+		Id    string `json:"_id"`
+		Stock int    `json:"stock"`
+	} `json:"product"`
 }
 type AccountList struct {
 	Id       string `json:"_id" bson:"_id,omitempty"`
@@ -89,8 +94,44 @@ func (A *AccountModel) Create(data forms.Account) (err error) {
 			},
 		},
 	})
+	product := product_model.All()
+	for _, p := range product {
+		db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
+			"$addToSet": bson.M{
+				"product": bson.M{
+					"_id":   p.Id,
+					"stock": 0,
+				},
+			},
+		})
+	}
 	return
 }
+
+func (A *AccountModel) AddProduct(id_product string) (err error) {
+	_, err = db.Collection["account"].UpdateAll(bson.M{}, bson.M{
+		"$addToSet": bson.M{
+			"product": bson.M{
+				"_id":   id_product,
+				"stock": 0,
+			},
+		},
+	})
+	return
+}
+
+func (A *AccountModel) UpdateStockOnAccount(account, product string, stock int) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         account,
+		"product._id": product,
+	}, bson.M{
+		"$set": bson.M{
+			"product.$.stock": stock,
+		},
+	})
+	return
+}
+
 func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
 	err = db.Collection["account"].Update(bson.M{
 		"_id": id,
@@ -234,7 +275,22 @@ func (A *AccountModel) AddDiscounUsed(id, idd string) (err error) {
 	return
 }
 
-func (A *AccountModel) ListAccount() (data AccountList, err error) {
+func (A *AccountModel) ListAccount(filter, sort string, pageNo, perPage int) (data []AccountList, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "date"
+		order = -1
+	}
+	// pn, _ := strconv.Atoi(pageNo)
+	// pp, _ := strconv.Atoi(perPage)
 	regex := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
 	pipeline := []bson.M{
 		{"$match": bson.M{"membership.name": regex}},
@@ -244,7 +300,11 @@ func (A *AccountModel) ListAccount() (data AccountList, err error) {
 			"province": "$address.province.province",
 			"city":     bson.M{"$concat": []string{"$address.city.city_name", " - ", "$address.city.type"}},
 		}},
+		{"$sort": bson.M{sorting: order}},
+		{"$skip": (pageNo - 1) * perPage},
+		{"$limit": perPage},
 	}
 	err = db.Collection["account"].Pipe(pipeline).All(&data)
+	count, _ = db.Collection["account"].Find(bson.M{}).Count()
 	return
 }

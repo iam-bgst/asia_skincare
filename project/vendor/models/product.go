@@ -85,6 +85,10 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 			},
 		})
 	}
+	err = account_model.AddProduct(id)
+	if err != nil {
+		return
+	}
 	return
 }
 
@@ -143,6 +147,11 @@ func (R *ProductModel) Delete(id string) (err error) {
 	err = db.Collection["product"].Remove(bson.M{
 		"_id": id,
 	})
+	return
+}
+
+func (P *ProductModel) All() (data []Product) {
+	db.Collection["product"].Find(bson.M{}).All(&data)
 	return
 }
 
@@ -225,6 +234,59 @@ func (R *ProductModel) GetByMembershipAndProvCity(membership, filter, sort, page
 		{"$limit": pp},
 	}
 	err = db.Collection["product"].Pipe(pipeline).All(&data)
+	count, _ = db.Collection["product"].Find(bson.M{}).Count()
+	return
+}
+
+func (P *ProductModel) ListProductOnAgent(id_account_agent, filter, sort string, pageNo, perPage int) (data []Product, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "date"
+		order = -1
+	}
+
+	regex := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
+	regex_next := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
+	pipeline := []bson.M{
+		{"$match": bson.M{"_id": id_account_agent}},
+		{"$unwind": "$product"},
+		{"$lookup": bson.M{
+			"from":         "product",
+			"localField":   "product._id",
+			"foreignField": "_id",
+			"as":           "product_docs",
+		}},
+		{"$unwind": "$product_docs"},
+		{"$project": bson.M{
+			"_id":     "$product._id",
+			"stock":   "$product.stock",
+			"desc":    "$product.desc",
+			"name":    "$product_docs.name",
+			"image":   "$product_docs.image",
+			"weight":  "$product_docs.weight",
+			"point":   "$product_docs.point",
+			"pricing": "$product_docs.pricing",
+		}},
+		{"$unwind": "$pricing"},
+		{"$match": bson.M{"pricing.membership.name": regex}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"name": regex_next},
+			},
+		}},
+		{"$sort": bson.M{sorting: order}},
+		{"$skip": (pageNo - 1) * perPage},
+		{"$limit": perPage},
+	}
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
 	count, _ = db.Collection["product"].Find(bson.M{}).Count()
 	return
 }

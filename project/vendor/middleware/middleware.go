@@ -3,6 +3,7 @@ package middleware
 import (
 	"addon"
 	"controllers"
+	"expvar"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,9 @@ var (
 	discountcontroll    = new(controllers.DiscountControll)
 	transactioncontroll = new(controllers.TransactionControll)
 	deliverycontroll    = new(controllers.DeliveryControll)
+
+	// ExpVar
+	count_point = expvar.NewInt("")
 )
 
 func Middleware() {
@@ -56,6 +60,8 @@ func Middleware() {
 		account.PUT("/update/:id", accountcontroll.Update)
 		account.PUT("/nonactive/:id", accountcontroll.NonActiveAccount)
 		account.PUT("/active/:id", accountcontroll.ActiveAccount)
+		account.GET("/list", accountcontroll.ListAccount)
+		account.POST("/adaddress/:id", accountcontroll.AddAddress)
 	}
 
 	// Product
@@ -67,6 +73,7 @@ func Middleware() {
 		product.GET("/get/:id", productcontroll.Get)
 		product.PUT("/update_price/:product/:membership", productcontroll.UpdatePrice)
 		product.DELETE("/delete/:product", productcontroll.Delete)
+		product.GET("/listonagent/:id_account_agent", productcontroll.ListProductOnAgent)
 	}
 
 	// Paket

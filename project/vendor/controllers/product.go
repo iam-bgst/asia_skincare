@@ -161,3 +161,53 @@ func (P *ProductControll) Delete(c *gin.Context) {
 		})
 	}
 }
+
+func (P *ProductControll) ListProductOnAgent(c *gin.Context) {
+	id_account_agent := c.Param("id_account_agent")
+	sort := c.Query("sort")
+	pageNo, _ := strconv.Atoi(c.Query("page"))
+	perPage, _ := strconv.Atoi(c.Query("per_page"))
+	filter := c.Query("filter")
+	if sort == "" {
+		sort = "_id"
+	}
+	if pageNo == 0 {
+		pageNo = 1
+	}
+	if perPage == 0 {
+		perPage = 5
+	}
+
+	data, count, err := productmodels.ListProductOnAgent(id_account_agent, filter, sort, pageNo, perPage)
+	lastPage := float64(count) / float64(perPage)
+	if perPage != 0 {
+		if count%perPage == 0 {
+			lastPage = lastPage
+		} else {
+			lastPage = lastPage + 1
+		}
+	} else {
+		lastPage = float64(count) / float64(5)
+	}
+	if err != nil {
+		c.JSON(404, gin.H{
+			"message": "terjadi kesalahan",
+			"error":   err.Error(),
+		})
+		c.Abort()
+	} else {
+		c.JSON(200, gin.H{
+			"total":        count,
+			"per_page":     perPage,
+			"current_page": pageNo,
+			"last_page":    int(lastPage),
+			"next_page":    "",
+			"prev_page":    "",
+			"from":         ((pageNo * perPage) - perPage) + 1,
+			"to":           pageNo * perPage,
+			"data":         data,
+			"status":       "Ok",
+		})
+		c.Abort()
+	}
+}

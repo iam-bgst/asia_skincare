@@ -5,7 +5,9 @@ import (
 	"controllers"
 	"expvar"
 	"log"
+	"time"
 
+	exp_gin "github.com/gin-contrib/expvar"
 	"github.com/gin-gonic/gin"
 	cors "github.com/itsjamie/gin-cors"
 )
@@ -23,11 +25,19 @@ var (
 	deliverycontroll    = new(controllers.DeliveryControll)
 
 	// ExpVar
-	count_point = expvar.NewInt("")
+	counter = expvar.NewMap("counter").Init()
+	last    = expvar.NewString("las_update")
 )
 
 func Middleware() {
 	log.Println("Api Asia SkinCare Ready on port", port)
+
+	var last_update struct {
+		T time.Time
+	}
+	last_update.T = time.Now()
+	last.Set(last_update.T.String())
+
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
@@ -45,7 +55,7 @@ func Middleware() {
 	router.Static("/public", directory+"/vendor/assets/")
 
 	// Index
-	router.GET("/", func(c *gin.Context) {
+	router.GET("/", HandleCounter, func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "Server Asia SkinCare",
 			"version": version,
@@ -55,70 +65,82 @@ func Middleware() {
 	// Account
 	account := router.Group("/account")
 	{
-		account.POST("/register", accountcontroll.Register)
-		account.GET("/checkaccount", accountcontroll.CheckAccount)
-		account.PUT("/update/:id", accountcontroll.Update)
-		account.PUT("/nonactive/:id", accountcontroll.NonActiveAccount)
-		account.PUT("/active/:id", accountcontroll.ActiveAccount)
-		account.GET("/list", accountcontroll.ListAccount)
-		account.POST("/adaddress/:id", accountcontroll.AddAddress)
+		account.POST("/register", HandleCounter, accountcontroll.Register)
+		account.GET("/checkaccount", HandleCounter, accountcontroll.CheckAccount)
+		account.PUT("/update/:id", HandleCounter, accountcontroll.Update)
+		account.PUT("/nonactive/:id", HandleCounter, accountcontroll.NonActiveAccount)
+		account.PUT("/active/:id", HandleCounter, accountcontroll.ActiveAccount)
+		account.GET("/list", HandleCounter, accountcontroll.ListAccount)
+		account.POST("/adaddress/:id", HandleCounter, accountcontroll.AddAddress)
 	}
 
 	// Product
 	product := router.Group("/product")
 	{
-		product.POST("/add", productcontroll.Create)
-		product.GET("/list", productcontroll.ListByMembership)
-		product.PUT("/update/:id", productcontroll.Update)
-		product.GET("/get/:id", productcontroll.Get)
-		product.PUT("/update_price/:product/:membership", productcontroll.UpdatePrice)
-		product.DELETE("/delete/:product", productcontroll.Delete)
-		product.GET("/listonagent/:id_account_agent", productcontroll.ListProductOnAgent)
+		product.POST("/add", HandleCounter, productcontroll.Create)
+		product.GET("/list", HandleCounter, productcontroll.ListByMembership)
+		product.PUT("/update/:id", HandleCounter, productcontroll.Update)
+		product.GET("/get/:id", HandleCounter, productcontroll.Get)
+		product.PUT("/update_price/:product/:membership", HandleCounter, productcontroll.UpdatePrice)
+		product.DELETE("/delete/:product", HandleCounter, productcontroll.Delete)
+		product.GET("/listonagent/:id_account_agent", HandleCounter, productcontroll.ListProductOnAgent)
 	}
 
 	// Paket
 	paket := router.Group("/paket")
 	{
-		paket.POST("/add", paketcontroll.Create)
+		paket.POST("/add", HandleCounter, paketcontroll.Create)
 		paket.GET("/list", paketcontroll.ListByMembership)
-		paket.PUT("/update/:id", paketcontroll.Update)
-		paket.GET("/get/:id/:idm", paketcontroll.Get)
-		paket.PUT("/update_product/:id", paketcontroll.Updateproduct)
-		paket.DELETE("/delete/:id", paketcontroll.Delete)
+		paket.PUT("/update/:id", HandleCounter, paketcontroll.Update)
+		paket.GET("/get/:id/:idm", HandleCounter, paketcontroll.Get)
+		paket.PUT("/update_product/:id", HandleCounter, paketcontroll.Updateproduct)
+		paket.DELETE("/delete/:id", HandleCounter, paketcontroll.Delete)
 	}
 
 	// Discount
 	discount := router.Group("/discount")
 	{
-		discount.POST("/add", discountcontroll.Create)
-		discount.GET("/list", discountcontroll.List)
-		discount.PUT("/update/:id", discountcontroll.Update)
-		discount.GET("/get/:id", discountcontroll.Get)
-		discount.DELETE("/delete/:id", discountcontroll.Delete)
+		discount.POST("/add", HandleCounter, discountcontroll.Create)
+		discount.GET("/list", HandleCounter, discountcontroll.List)
+		discount.PUT("/update/:id", HandleCounter, discountcontroll.Update)
+		discount.GET("/get/:id", HandleCounter, discountcontroll.Get)
+		discount.DELETE("/delete/:id", HandleCounter, discountcontroll.Delete)
 	}
 
 	// Transaction
 	transaction := router.Group("/transaction")
 	{
-		transaction.POST("/add", transactioncontroll.Add)
-		transaction.GET("/history/:account", transactioncontroll.ListHistory)
-		transaction.PUT("/update_status/:id", transactioncontroll.UpdateStatus)
-		transaction.PUT("/add_resi/:id", transactioncontroll.AddResiToTransaction)
+		transaction.POST("/add", HandleCounter, transactioncontroll.Add)
+		transaction.GET("/history/:account", HandleCounter, transactioncontroll.ListHistory)
+		transaction.PUT("/update_status/:id", HandleCounter, transactioncontroll.UpdateStatus)
+		transaction.PUT("/add_resi/:id", HandleCounter, transactioncontroll.AddResiToTransaction)
 	}
 
 	// Delivery
 	delivery := router.Group("/delivery")
 	{
-		delivery.GET("/listcity", deliverycontroll.ListCity)
-		delivery.GET("/listprovince", deliverycontroll.ListProvince)
-		delivery.GET("/checkongkir", deliverycontroll.CheckOngkir)
+		delivery.GET("/listcity", HandleCounter, deliverycontroll.ListCity)
+		delivery.GET("/listprovince", HandleCounter, deliverycontroll.ListProvince)
+		delivery.GET("/checkongkir", HandleCounter, deliverycontroll.CheckOngkir)
 	}
 
 	// Membership
 	membership := router.Group("/membership")
 	{
-		membership.POST("/add", membershipcontroll.Create)
-		membership.GET("/listall", membershipcontroll.ListAll)
+		membership.POST("/add", HandleCounter, membershipcontroll.Create)
+		membership.GET("/listall", HandleCounter, membershipcontroll.ListAll)
 	}
+
+	// ExpVar
+	router.GET("/debug/vars", exp_gin.Handler())
 	router.Run(port)
+}
+
+func HandleCounter(c *gin.Context) {
+	if c.Request.URL.Path[1:] == "" {
+		counter.Add("root", 1)
+	} else {
+		counter.Add(c.Request.URL.Path[1:], 1)
+	}
+
 }

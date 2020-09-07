@@ -269,6 +269,71 @@ func (D *DeliveryModels) GetListProvince(filter, sort string, pageNo, perPage in
 	return
 }
 
+func (D *DeliveryModels) GetListCityByPorvince(id_province int, filter, sort string, pageNo, perPage int) (data []City, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "city_id"
+		order = 1
+	}
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	err = db.Collection["delivery"].Pipe([]bson.M{
+		{"$match": bson.M{
+			"province_id": id_province,
+		}},
+		{"$project": bson.M{
+			"city": "$city",
+		}},
+		{"$unwind": "$city"},
+		{"$project": bson.M{
+			"_id":         "$city._id",
+			"city_id":     "$city.city_id",
+			"city_name":   "$city.city_name",
+			"type":        "$city.type",
+			"postal_code": "$city.postal_code",
+		}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"city_name": regex},
+			},
+		}},
+	}).All(&data)
+	count = len(data)
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"province_id": id_province,
+		}},
+		{"$project": bson.M{
+			"city": "$city",
+		}},
+		{"$unwind": "$city"},
+		{"$project": bson.M{
+			"_id":         "$city._id",
+			"city_id":     "$city.city_id",
+			"city_name":   "$city.city_name",
+			"type":        "$city.type",
+			"postal_code": "$city.postal_code",
+		}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"city_name": regex},
+			},
+		}},
+		{"$sort": bson.M{sorting: order}},
+		{"$skip": (pageNo - 1) * perPage},
+		{"$limit": perPage},
+	}
+	err = db.Collection["delivery"].Pipe(pipeline).All(&data)
+	return
+}
+
 func (D *DeliveryModels) InitialDelivery() {
 	var data []Province
 	db.Collection["delivery"].Find(bson.M{}).All(&data)

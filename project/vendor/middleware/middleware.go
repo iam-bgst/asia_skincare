@@ -121,6 +121,7 @@ func Middleware() {
 	{
 		delivery.GET("/listcity", HandleCounter, deliverycontroll.ListCity)
 		delivery.GET("/listprovince", HandleCounter, deliverycontroll.ListProvince)
+		delivery.GET("/listcity_prov/:id", HandleCounter, deliverycontroll.ListCityByProvince)
 		delivery.GET("/checkongkir", HandleCounter, deliverycontroll.CheckOngkir)
 	}
 

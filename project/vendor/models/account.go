@@ -29,10 +29,12 @@ type Account struct {
 	} `json:"product"`
 }
 type AccountList struct {
-	Id       string `json:"_id" bson:"_id,omitempty"`
-	Name     string `json:"name" bson:"name"`
-	Province string `json:"province" bson:"province"`
-	City     string `json:"city" bson:"city"`
+	Id            string `json:"_id" bson:"_id,omitempty"`
+	Name          string `json:"name" bson:"name"`
+	Province      string `json:"province" bson:"province"`
+	Province_code int    `json:"province_id" bson:"province_code"`
+	City          string `json:"city" bson:"city"`
+	City_code     int    `json:"city_code" bson:"city_code"`
 }
 
 type Address struct {
@@ -300,10 +302,13 @@ func (A *AccountModel) ListAccount(filter, sort string, pageNo, perPage int) (da
 	pipeline := []bson.M{
 		{"$match": bson.M{"membership.name": regex}},
 		{"$unwind": "$address"},
+		{"$match": bson.M{"address.default": true}},
 		{"$project": bson.M{
-			"name":     "$name",
-			"province": "$address.province.province",
-			"city":     bson.M{"$concat": []string{"$address.city.city_name", " - ", "$address.city.type"}},
+			"name":          "$name",
+			"province":      "$address.province.province",
+			"city":          bson.M{"$concat": []string{"$address.city.city_name", " - ", "$address.city.type"}},
+			"province_code": "$address.province.province_id",
+			"city_code":     "$address.city.city_id",
 		}},
 		{"$sort": bson.M{sorting: order}},
 		{"$skip": (pageNo - 1) * perPage},

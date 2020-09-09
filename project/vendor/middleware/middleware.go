@@ -68,6 +68,7 @@ func Middleware() {
 		account.POST("/register", HandleCounter, accountcontroll.Register)
 		account.GET("/checkaccount", HandleCounter, accountcontroll.CheckAccount)
 		account.PUT("/update/:id", HandleCounter, accountcontroll.Update)
+		account.GET("/get/:id", HandleCounter, accountcontroll.Get)
 		account.PUT("/nonactive/:id", HandleCounter, accountcontroll.NonActiveAccount)
 		account.PUT("/active/:id", HandleCounter, accountcontroll.ActiveAccount)
 		account.GET("/list", HandleCounter, accountcontroll.ListAccount)

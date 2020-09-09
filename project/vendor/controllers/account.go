@@ -178,3 +178,18 @@ func (A *AccountControll) ListAccount(c *gin.Context) {
 		c.Abort()
 	}
 }
+
+func (A *AccountControll) Get(c *gin.Context) {
+	id := c.Param("id")
+	data, err := accountmodels.GetId(id)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"data":   data,
+			"status": "ok",
+		})
+	}
+}

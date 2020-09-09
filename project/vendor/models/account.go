@@ -169,7 +169,12 @@ func (A *AccountModel) Get(id string) (data AccountTransaction, err error) {
 	}).One(&data)
 	return
 }
-
+func (A *AccountModel) GetId(id string) (data Account, err error) {
+	err = db.Collection["account"].Find(bson.M{
+		"_id": id,
+	}).One(&data)
+	return
+}
 func (A *AccountModel) GetByMembership(membership string, prov, city int) (available bool) {
 	err := db.Collection["account"].Find(bson.M{
 		"membership._id": membership,

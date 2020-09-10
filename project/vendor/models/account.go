@@ -135,13 +135,24 @@ func (A *AccountModel) UpdateStockOnAccount(account, product string, stock int) 
 }
 
 func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
+	prov, err1 := delivery_model.GetProvince(data.Province)
+	if err1 != nil {
+		err = err1
+		return
+	}
+	city, err2 := delivery_model.GetCityByProv(data.Province, data.City)
+	if err2 != nil {
+		err = err2
+		return
+	}
+
 	err = db.Collection["account"].Update(bson.M{
 		"_id": id,
 	}, bson.M{
 		"$addToSet": bson.M{
 			"address": bson.M{
-				"province": data.Province,
-				"city":     data.City,
+				"province": prov,
+				"city":     city,
 				"detail":   data.Detail,
 				"default":  false,
 			},

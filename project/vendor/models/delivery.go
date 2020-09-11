@@ -29,6 +29,7 @@ type Result struct {
 	Cost []Costs `json:"cost"`
 }
 type Costs struct {
+	Id       string `json:"id"`
 	Name     string `json:"name"`
 	Cost     int    `json:"cost"`
 	Estimate string `json:"estimate"`
@@ -87,6 +88,7 @@ func (D *DeliveryModels) CheckOngkir(origin, destination, weight string) (data_r
 			etd := gjson.Get(string(bodyBytes), "rajaongkir.results.0.costs."+ii+".cost.0.etd").String()
 
 			data_cost = append(data_cost, Costs{
+				Id:       uuid.New(),
 				Name:     s.String(),
 				Cost:     int(cost),
 				Estimate: etd,

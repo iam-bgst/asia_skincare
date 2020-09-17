@@ -50,6 +50,20 @@ type ProductTransaction struct {
 	Pricing  int      `json:"pricing" bson:"pricing"`
 	Discount Discount `json:"discount" bson:"discount"`
 }
+
+type ListProducFix struct {
+	Id         string     `json:"_id" bson:"_id,omitempty"`
+	Name       string     `json:"name" bson:"name"`
+	Pricing    Pricing    `json:"pricing" bson:"pricing"`
+	Membership Membership `json:"membership" bson:"membership"`
+	Stoct      int        `json:"stoct" bson:"stock"`
+	Point      int        `json:"point" bson:"point"`
+	Weight     int        `json:"weight" bson:"weight"`
+	Image      string     `json:"image" bson:"image"`
+	Desc       string     `json:"desc" bson:"desc"`
+	From       Address    `json:"from" bson:"from"`
+}
+
 type Pricing struct {
 	Membership Membership `json:"membership" bson:"membership"`
 	Price      int        `json:"price" bson:"price"`
@@ -58,6 +72,9 @@ type Pricing struct {
 type ProductModel struct{}
 
 func (P *ProductModel) Create(data forms.Product) (err error) {
+	if account_model.CheckAdmin() == false {
+		return errors.New("Could not found Account Admin, admin not created")
+	}
 	id := uuid.New()
 	path, err := addon.Upload("product", id, data.Image)
 	if err != nil {
@@ -238,7 +255,7 @@ func (R *ProductModel) GetByMembershipAndProvCity(membership, filter, sort, page
 	return
 }
 
-func (P *ProductModel) ListProductOnAgent(id_account_agent, filter, sort string, pageNo, perPage int) (data []Product, count int, err error) {
+func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage int) (data []ListProducFix, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -253,11 +270,12 @@ func (P *ProductModel) ListProductOnAgent(id_account_agent, filter, sort string,
 		order = -1
 	}
 
-	regex := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
 	regex_next := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	pipeline := []bson.M{
-		{"$match": bson.M{"_id": id_account_agent}},
+		{"$match": bson.M{"membership.code": bson.M{"$nin": []int{1, 3}}}},
 		{"$unwind": "$product"},
+		{"$unwind": "$address"},
+		{"$match": bson.M{"address.default": true}},
 		{"$lookup": bson.M{
 			"from":         "product",
 			"localField":   "product._id",
@@ -266,27 +284,51 @@ func (P *ProductModel) ListProductOnAgent(id_account_agent, filter, sort string,
 		}},
 		{"$unwind": "$product_docs"},
 		{"$project": bson.M{
-			"_id":     "$product._id",
-			"stock":   "$product.stock",
-			"desc":    "$product.desc",
-			"name":    "$product_docs.name",
-			"image":   "$product_docs.image",
-			"weight":  "$product_docs.weight",
-			"point":   "$product_docs.point",
-			"pricing": "$product_docs.pricing",
+			"_id":        "$product._id",
+			"stock":      "$product.stock",
+			"desc":       "$product_docs.desc",
+			"from":       "$address",
+			"membership": "$membership",
+			"name":       "$product_docs.name",
+			"image":      "$product_docs.image",
+			"weight":     "$product_docs.weight",
+			"point":      "$product_docs.point",
+			"prices":     "$product_docs.pricing",
 		}},
-		{"$unwind": "$pricing"},
-		{"$match": bson.M{"pricing.membership.name": regex}},
+		{"$addFields": bson.M{
+			"pricing": bson.M{
+				"$arrayElemAt": []interface{}{
+					bson.M{"$filter": bson.M{
+						"input": "$prices",
+						"as":    "pri",
+						"cond": bson.M{
+							"$eq": []string{"$$pri.membership._id", "$membership._id"},
+						},
+					},
+					}, 0,
+				},
+			},
+		}},
 		{"$match": bson.M{
 			"$or": []interface{}{
 				bson.M{"name": regex_next},
 			},
 		}},
-		{"$sort": bson.M{sorting: order}},
-		{"$skip": (pageNo - 1) * perPage},
-		{"$limit": perPage},
 	}
+
+	data_non_fix := []bson.M{}
+	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)
+	count = len(data_non_fix)
+
+	pipeline = append(pipeline,
+		bson.M{"$sort": bson.M{sorting: order}},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$skip": (pageNo - 1) * perPage},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$limit": perPage},
+	)
 	err = db.Collection["account"].Pipe(pipeline).All(&data)
-	count, _ = db.Collection["product"].Find(bson.M{}).Count()
 	return
 }

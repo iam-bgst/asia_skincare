@@ -84,7 +84,7 @@ func Middleware() {
 		product.GET("/get/:id", HandleCounter, productcontroll.Get)
 		product.PUT("/update_price/:product/:membership", HandleCounter, productcontroll.UpdatePrice)
 		product.DELETE("/delete/:product", HandleCounter, productcontroll.Delete)
-		product.GET("/listonagent/:id_account_agent", HandleCounter, productcontroll.ListProductOnAgent)
+		product.GET("/listonagent", HandleCounter, productcontroll.ListProductOnAgent)
 	}
 
 	// Paket

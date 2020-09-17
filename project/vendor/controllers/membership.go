@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"forms"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +27,8 @@ func (MS *MembershipControll) Create(c *gin.Context) {
 }
 
 func (MS *MembershipControll) ListAll(c *gin.Context) {
-	data, err := membershipmodels.ListAll()
+	ne, _ := strconv.Atoi(c.Query("ne"))
+	data, err := membershipmodels.ListAll(ne)
 	if err != nil {
 		c.JSON(405, gin.H{
 			"error": "error while get list membership",

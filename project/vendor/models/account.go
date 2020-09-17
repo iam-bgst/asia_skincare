@@ -3,6 +3,7 @@ package models
 import (
 	"addon"
 	"db"
+	"errors"
 	"fmt"
 	"forms"
 	"strconv"
@@ -27,6 +28,15 @@ type Account struct {
 		Id    string `json:"_id"`
 		Stock int    `json:"stock"`
 	} `json:"product"`
+}
+type Account2 struct {
+	Id          string     `json:"_id" bson:"_id,omitempty"`
+	Name        string     `json:"name" bson:"name"`
+	Email       string     `json:"email" bson:"email"`
+	PhoneNumber int        `json:"phonenumber" bson:"phonenumber"`
+	Membership  Membership `json:"membership" bson:"membership"`
+	Image       string     `json:"image" bson:"image"`
+	Status      string     `json:"status" bson:"status"`
 }
 type AccountList struct {
 	Id            string `json:"_id" bson:"_id,omitempty"`
@@ -54,9 +64,24 @@ type AccountTransaction struct {
 
 type AccountModel struct{}
 
+func (A *AccountModel) CheckAdmin() (found bool) {
+	err := db.Collection["account"].Find(bson.M{
+		"membership.code": 0,
+	}).One(&bson.M{})
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
 func (A *AccountModel) Create(data forms.Account) (err error) {
+
 	id := uuid.New()
 	data_membership, _ := membership_model.GetOneMembership(data.Membership)
+	if data_membership.Code == STAFF && A.CheckAdmin() == false {
+		return errors.New("Could not found Account Admin, you cannot create account staff while admin is nothing")
+	}
 	phone, _ := strconv.Atoi(data.PhoneNumber)
 
 	path, err := addon.Upload("account", id, data.Image)
@@ -82,7 +107,6 @@ func (A *AccountModel) Create(data forms.Account) (err error) {
 		"phonenumber": phone,
 		"membership":  data_membership,
 		"point":       0,
-		"comfirmcode": 0,
 		"image":       path,
 		"status":      "active",
 	})
@@ -269,6 +293,12 @@ func (A *AccountModel) GetDiscountUsed(id, idd string) (data Discount, err error
 	err = db.Collection["account"].Pipe(pipeline).One(&data)
 	return
 }
+
+func (A *AccountModel) All() (data []Account) {
+	db.Collection["account"].Find(bson.M{}).All(&data)
+	return
+}
+
 func (A *AccountModel) AddDiscounUsed(id, idd string) (err error) {
 	data_discount, err1 := discount_model.Get(idd)
 	if err1 != nil {

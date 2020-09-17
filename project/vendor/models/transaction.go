@@ -35,7 +35,7 @@ type Transaction struct {
 	/* Status
 	0. NotPayed
 	1. Packed
-	2. Send
+	2. Sent
 	3. Done
 	4. Cenceled
 	*/
@@ -49,9 +49,10 @@ type To struct {
 }
 
 type From struct {
-	Name    string `json:"name" bson:"name"`
-	Number  string `json:"number" bson:"number"`
-	Address string `json:"address" bson:"address"`
+	Name    string   `json:"name" bson:"name"`
+	Number  string   `json:"number" bson:"number"`
+	Address string   `json:"address" bson:"address"`
+	Account Account2 `json:"account" bson:"account"`
 }
 
 type TransactionModel struct{}
@@ -79,6 +80,11 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	data_account, err1 := account_model.Get(data.Account)
 	if err1 != nil {
 		err = err1
+		return
+	}
+	data_account_from, err2 := account_model.GetId(data.From.Account)
+	if err2 != nil {
+		err = err2
 		return
 	}
 
@@ -233,8 +239,21 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		"product":  prod,
 		"paket":    paket,
 		"discount": dis,
-		"from":     data.From,
-		"to":       data.To,
+		"from": bson.M{
+			"account": bson.M{
+				"_id":         data_account_from.Id,
+				"name":        data_account_from.Name,
+				"email":       data_account_from.Email,
+				"phonenumber": data_account_from.PhoneNumber,
+				"membership":  data_account_from.Membership,
+				"image":       data_account_from.Image,
+				"status":      data_account_from.Status,
+			},
+			"name":    data.From.Name,
+			"number":  data.From.Number,
+			"address": data.From.Address,
+		},
+		"to": data.To,
 		"delivery": bson.M{
 			"courier": data.Delivery.Courier,
 			"service": data.Delivery.Service,
@@ -271,6 +290,24 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 			paket_data, _ := paket_model.Get(p.Id)
 			account_model.UpdatePoint(transaction_data.Account.Id, paket_data.Point)
 		}
+
+		if err1 != nil {
+			err = errors.New("error whee getting transaction")
+			return
+		}
+	}
+	if status_code == SENT {
+		transaction_data, err1 := T.Get(id)
+		for _, t := range transaction_data.Product {
+			produck_data, _ := product_model.Get(t.Id)
+			account_model.UpdatePoint(transaction_data.Account.Id, produck_data.Point)
+		}
+
+		for _, p := range transaction_data.Paket {
+			paket_data, _ := paket_model.Get(p.Id)
+			account_model.UpdatePoint(transaction_data.Account.Id, paket_data.Point)
+		}
+
 		if err1 != nil {
 			err = errors.New("error whee getting transaction")
 			return

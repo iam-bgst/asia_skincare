@@ -33,6 +33,8 @@ type From struct {
 	Name    string `json:"name" bson:"name"`
 	Number  string `json:"number" bson:"number"`
 	Address string `json:"address" bson:"address"`
+
+	Account string `json:"account"`
 }
 
 type Delivery struct {

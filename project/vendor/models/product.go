@@ -21,6 +21,7 @@ type Product struct {
 	Weight  int     `json:"weight" bson:"weight"`
 	Image   string  `json:"image" bson:"image"`
 	Desc    string  `json:"desc" bson:"desc"`
+	Type    int     `json:"type" bson:"type"`
 }
 type Product1 struct {
 	Id      string    `json:"_id" bson:"_id,omitempty"`
@@ -62,6 +63,7 @@ type ListProducFix struct {
 	Image      string     `json:"image" bson:"image"`
 	Desc       string     `json:"desc" bson:"desc"`
 	From       Address    `json:"from" bson:"from"`
+	Type       int        `json:"type" bson:"type"`
 }
 
 type Pricing struct {
@@ -330,5 +332,52 @@ func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage i
 		bson.M{"$limit": perPage},
 	)
 	err = db.Collection["account"].Pipe(pipeline).All(&data)
+	return
+}
+
+func (P *ProductModel) Detail(id_product, id_account string) (data ListProducFix, err error) {
+	pipeline := []bson.M{
+		{"$match": bson.M{"_id": id_account}},
+		{"$unwind": "$product"},
+		{"$unwind": "$address"},
+		{"$match": bson.M{"address.default": true}},
+		{"$lookup": bson.M{
+			"from":         "product",
+			"localField":   "product._id",
+			"foreignField": "_id",
+			"as":           "product_docs",
+		}},
+		{"$unwind": "$product_docs"},
+		{"$project": bson.M{
+			"_id":        "$product._id",
+			"stock":      "$product.stock",
+			"desc":       "$product_docs.desc",
+			"from":       "$address",
+			"membership": "$membership",
+			"name":       "$product_docs.name",
+			"image":      "$product_docs.image",
+			"weight":     "$product_docs.weight",
+			"point":      "$product_docs.point",
+			"prices":     "$product_docs.pricing",
+		}},
+		{"$addFields": bson.M{
+			"pricing": bson.M{
+				"$arrayElemAt": []interface{}{
+					bson.M{"$filter": bson.M{
+						"input": "$prices",
+						"as":    "pri",
+						"cond": bson.M{
+							"$eq": []string{"$$pri.membership._id", "$membership._id"},
+						},
+					},
+					}, 0,
+				},
+			},
+		}},
+		{"$match": bson.M{
+			"_id": id_product,
+		}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).One(&data)
 	return
 }

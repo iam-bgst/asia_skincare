@@ -1,15 +1,12 @@
 package forms
 
 type Transaction struct {
-	Account    string               `json:"account"`
-	Product    []ProductTransaction `json:"product" bson:"product"`
-	Paket      []PaketTransaction   `json:"paket" bson:"paket"`
-	Discount   []string             `json:"discount" bson:"discount"`
-	Membership string               `json:"membership" bson:"membership"`
-	Delivery   Delivery             `json:"delivery" bson:"delivery"`
-	Subtotal   int                  `json:"subtotal" bson:"subtotal"`
-	To         To                   `json:"to" bson:"to"`
-	From       From                 `json:"from" bson:"from"`
+	Product  []ProductTransaction `json:"product" bson:"product"`
+	Discount []string             `json:"discount" bson:"discount"`
+	Delivery Delivery             `json:"delivery" bson:"delivery"`
+	Subtotal int                  `json:"subtotal" bson:"subtotal"`
+	To       To                   `json:"to" bson:"to"`
+	From     From                 `json:"from" bson:"from"`
 }
 
 type PaketTransaction struct {
@@ -24,17 +21,17 @@ type ProductTransaction struct {
 }
 
 type To struct {
+	Account string `json:"account"`
 	Name    string `json:"name" bson:"name"`
 	Number  string `json:"number" bson:"number"`
 	Address string `json:"address" bson:"address"`
 }
 
 type From struct {
+	Account string `json:"account"`
 	Name    string `json:"name" bson:"name"`
 	Number  string `json:"number" bson:"number"`
 	Address string `json:"address" bson:"address"`
-
-	Account string `json:"account"`
 }
 
 type Delivery struct {

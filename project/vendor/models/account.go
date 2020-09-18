@@ -54,12 +54,14 @@ type Address struct {
 	Default  bool     `json:"default" bson:"default"`
 }
 type AccountTransaction struct {
-	Id          string `json:"_id" bson:"_id,omitempty"`
-	Name        string `json:"name" bson:"name"`
-	Email       string `json:"email" bson:"email"`
-	PhoneNumber int    `json:"phonenumber" bson:"phonenumber"`
-	Address     string `json:"address" bson:"address"`
-	Image       string `json:"image" bson:"image"`
+	Id          string     `json:"_id" bson:"_id,omitempty"`
+	Name        string     `json:"name" bson:"name"`
+	Email       string     `json:"email" bson:"email"`
+	PhoneNumber int        `json:"phonenumber" bson:"phonenumber"`
+	Address     string     `json:"address" bson:"address"`
+	Image       string     `json:"image" bson:"image"`
+	Membership  Membership `json:"membership" bson:"membership"`
+	Status      string     `json:"statut" bson:"status"`
 }
 
 type AccountModel struct{}

@@ -23,9 +23,7 @@ const (
 
 type Transaction struct {
 	Id          string               `json:"_id" bson:"_id,omitempty"`
-	Account     AccountTransaction   `json:"account" bson:"account"`
 	Product     []ProductTransaction `json:"product" bson:"product"`
-	Paket       []PaketTransaction   `json:"paket" bson:"paket"`
 	Discount    []Discount           `json:"discount" bson:"discount"`
 	Date        time.Time            `json:"date" bson:"date"`
 	Delivery    Delivery             `json:"delivery" bson:"delivery"`
@@ -43,16 +41,17 @@ type Transaction struct {
 	From From `json:"from" bson:"from"`
 }
 type To struct {
-	Name    string `json:"name" bson:"name"`
-	Number  string `json:"number" bson:"number"`
-	Address string `json:"address" bson:"address"`
-}
-
-type From struct {
+	Account Account2 `json:"account" bson:"account"`
 	Name    string   `json:"name" bson:"name"`
 	Number  string   `json:"number" bson:"number"`
 	Address string   `json:"address" bson:"address"`
+}
+
+type From struct {
 	Account Account2 `json:"account" bson:"account"`
+	Name    string   `json:"name" bson:"name"`
+	Number  string   `json:"number" bson:"number"`
+	Address string   `json:"address" bson:"address"`
 }
 
 type TransactionModel struct{}
@@ -76,13 +75,14 @@ func (T *TransactionModel) GetStatus(status_code int) (status string) {
 func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err error) {
 	id := uuid.New()
 
-	// Get Account
-	data_account, err1 := account_model.Get(data.Account)
+	// Get Account From
+	data_account_from, err1 := account_model.Get(data.From.Account)
 	if err1 != nil {
 		err = err1
 		return
 	}
-	data_account_from, err2 := account_model.GetId(data.From.Account)
+	// Get Account To
+	data_account_to, err2 := account_model.Get(data.To.Account)
 	if err2 != nil {
 		err = err2
 		return
@@ -92,79 +92,74 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	var prod []ProductTransaction
 	discount_i := data.Product[0].Discount
 	for i, p := range data.Product {
+		var data_d Discount
 		if len(data.Product) == 0 {
 			prod = nil
 		} else {
-			_, err1 := account_model.GetDiscountUsed(data.Account, p.Discount)
+
+			_, err1 := account_model.GetDiscountUsed(data.To.Account, p.Discount)
 			if err1 == nil {
 				err = errors.New("discount is used on previous product")
 				return
 			}
-			data_p, err1 := product_model.GetByMembership(p.Product, data.Membership)
+			data_p, err1 := product_model.Detail(p.Product, data.From.Account)
 			if err1 != nil {
 				err = errors.New("Product id " + p.Product + " " + err1.Error())
 				return
 			}
 			if i > 0 {
-				if p.Discount == discount_i {
+				if p.Discount == "" {
+					data_d = Discount{}
+				} else if p.Discount == discount_i {
 					err = errors.New("discount used on product " + data.Product[i-1].Product)
 					return
 				}
 			}
-			data_d, err1 := discount_model.Get(p.Discount)
-			if err1 != nil {
-				err = errors.New("Discount Product id " + p.Discount + " " + err1.Error())
-				return
-			}
-			prod = append(prod, ProductTransaction{
-				Id:       data_p.Id,
-				Name:     data_p.Name,
-				Qty:      p.Qty,
-				Pricing:  data_p.Pricing.Price * p.Qty,
-				Image:    data_p.Image,
-				Discount: data_d,
-			})
-			err2 := account_model.AddDiscounUsed(data_account.Id, p.Discount)
-			if err2 != nil {
-				fmt.Println("log on line 96")
-				err = err2
-				return
-			}
-		}
-	}
 
-	// Getting the Paket
-	var paket []PaketTransaction
-	for _, p := range data.Paket {
-		if len(data.Paket) == 0 {
-			paket = nil
-		} else {
-			data_p, err1 := paket_model.GetByMembership(p.Paket, data.Membership)
-			if err != nil {
-				err = errors.New("Paket id " + p.Paket + " " + err1.Error())
-				return
+			if p.Discount == "" {
+				data_d = Discount{}
+			} else {
+				data_d, err1 = discount_model.Get(p.Discount)
+				if err1 != nil {
+					err = errors.New("Discount Product id " + p.Discount + " " + err1.Error())
+					return
+				}
+				err2 := account_model.AddDiscounUsed(data_account_to.Id, p.Discount)
+				if err2 != nil {
+					fmt.Println("log on line 96")
+					err = err2
+					return
+				}
 			}
-			paket = append(paket, PaketTransaction{
+
+			prod = append(prod, ProductTransaction{
 				Id:      data_p.Id,
-				Image:   data_p.Image,
-				Qty:     p.Qty,
 				Name:    data_p.Name,
-				Point:   data_p.Point,
+				Qty:     p.Qty,
 				Pricing: data_p.Pricing.Price * p.Qty,
-				Product: data_p.Product,
-				Stock:   data_p.Stock,
+				Image:   data_p.Image,
+				Discount: Discount{
+					Id:           data_d.Id,
+					Discount:     data_d.Discount,
+					DiscountCode: data_d.DiscountCode,
+					Expired:      data_d.Expired,
+					Image:        data_d.Image,
+					Name:         data_d.Name,
+				},
 			})
+
 		}
 	}
 
 	// Getting the Discount
 	var dis []Discount
 	for _, d := range data.Discount {
-		_, err1 := account_model.GetDiscountUsed(data.Account, d)
+		_, err1 := account_model.GetDiscountUsed(data.To.Account, d)
 		if err1 == nil {
 			err = errors.New("discount is used on your account")
 			return
 		}
+
 		if len(data.Discount) == 0 {
 			dis = nil
 		} else {
@@ -181,7 +176,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 				Image:        data_discount.Image,
 				Name:         data_discount.Name,
 			})
-			err2 := account_model.AddDiscounUsed(data.Account, d)
+			err2 := account_model.AddDiscounUsed(data.To.Account, d)
 			if err2 != nil {
 				fmt.Println("log on line 145")
 				err = err2
@@ -193,20 +188,40 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		Id:       id,
 		Date:     time.Now(),
 		Discount: dis,
-		Paket:    paket,
 		Product:  prod,
-		Account:  data_account,
 	}
 
 	// From
-	ret.From.Address = data.From.Address
-	ret.From.Name = data.From.Name
-	ret.From.Number = data.From.Number
+	ret.From = From{
+		Account: Account2{
+			Id:          data_account_from.Id,
+			Name:        data_account_from.Name,
+			Email:       data_account_from.Email,
+			Image:       data_account_from.Image,
+			Membership:  data_account_from.Membership,
+			PhoneNumber: data_account_from.PhoneNumber,
+			Status:      data_account_from.Status,
+		},
+		Address: data.From.Address,
+		Name:    data.From.Name,
+		Number:  data.From.Number,
+	}
 
 	// To
-	ret.To.Address = data.To.Address
-	ret.To.Name = data.To.Name
-	ret.To.Number = data.To.Number
+	ret.To = To{
+		Account: Account2{
+			Id:          data_account_to.Id,
+			Name:        data_account_to.Name,
+			Email:       data_account_to.Email,
+			Image:       data_account_to.Image,
+			Membership:  data_account_to.Membership,
+			PhoneNumber: data_account_to.PhoneNumber,
+			Status:      data_account_to.Status,
+		},
+		Address: data.To.Address,
+		Name:    data.To.Name,
+		Number:  data.To.Number,
+	}
 
 	// Proses Subtotal
 	subtotal := 0
@@ -215,9 +230,6 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	for _, dis := range prod {
 		total_discount += dis.Discount.Discount
 		subtotal += dis.Pricing
-	}
-	for _, pak := range paket {
-		subtotal += pak.Pricing
 	}
 	for _, dis := range dis {
 		total_discount += dis.Discount
@@ -230,40 +242,49 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	// log.Println(total)
 	ret.Subtotal = total
 
-	// Insert into mongo
 	price, _ := strconv.Atoi(data.Delivery.Price)
-	err = db.Collection["transaction"].Insert(bson.M{
-		"_id":      id,
-		"date":     time.Now(),
-		"account":  data_account,
-		"product":  prod,
-		"paket":    paket,
-		"discount": dis,
-		"from": bson.M{
-			"account": bson.M{
-				"_id":         data_account_from.Id,
-				"name":        data_account_from.Name,
-				"email":       data_account_from.Email,
-				"phonenumber": data_account_from.PhoneNumber,
-				"membership":  data_account_from.Membership,
-				"image":       data_account_from.Image,
-				"status":      data_account_from.Status,
-			},
-			"name":    data.From.Name,
-			"number":  data.From.Number,
-			"address": data.From.Address,
-		},
-		"to": data.To,
-		"delivery": bson.M{
-			"courier": data.Delivery.Courier,
-			"service": data.Delivery.Service,
-			"resi":    "",
-			"price":   price,
-			"code":    data.Delivery.Code,
-		},
-		"status":      T.GetStatus(0),
-		"status_code": 0,
-	})
+	ret.Delivery = Delivery{
+		Courier: data.Delivery.Courier,
+		Price:   price,
+		Resi:    "",
+		Service: data.Delivery.Service,
+	}
+	ret.Status = T.GetStatus(0)
+	ret.Status_code = 0
+	// Insert into mongo
+	err = db.Collection["transaction"].Insert(ret)
+	// err = db.Collection["transaction"].Insert(bson.M{
+	// 	"_id":      id,
+	// 	"date":     time.Now(),
+	// 	"account":  data_account,
+	// 	"product":  prod,
+	// 	"paket":    paket,
+	// 	"discount": dis,
+	// 	"from": bson.M{
+	// 		"account": bson.M{
+	// 			"_id":         data_account_from.Id,
+	// 			"name":        data_account_from.Name,
+	// 			"email":       data_account_from.Email,
+	// 			"phonenumber": data_account_from.PhoneNumber,
+	// 			"membership":  data_account_from.Membership,
+	// 			"image":       data_account_from.Image,
+	// 			"status":      data_account_from.Status,
+	// 		},
+	// 		"name":    data.From.Name,
+	// 		"number":  data.From.Number,
+	// 		"address": data.From.Address,
+	// 	},
+	// 	"to": data.To,
+	// 	"delivery": bson.M{
+	// 		"courier": data.Delivery.Courier,
+	// 		"service": data.Delivery.Service,
+	// 		"resi":    "",
+	// 		"price":   price,
+	// 		"code":    data.Delivery.Code,
+	// 	},
+	// 	"status":      T.GetStatus(0),
+	// 	"status_code": 0,
+	// })
 	if err != nil {
 		return
 	}
@@ -283,12 +304,7 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 		transaction_data, err1 := T.Get(id)
 		for _, t := range transaction_data.Product {
 			produck_data, _ := product_model.Get(t.Id)
-			account_model.UpdatePoint(transaction_data.Account.Id, produck_data.Point)
-		}
-
-		for _, p := range transaction_data.Paket {
-			paket_data, _ := paket_model.Get(p.Id)
-			account_model.UpdatePoint(transaction_data.Account.Id, paket_data.Point)
+			account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
 		}
 
 		if err1 != nil {
@@ -300,12 +316,7 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 		transaction_data, err1 := T.Get(id)
 		for _, t := range transaction_data.Product {
 			produck_data, _ := product_model.Get(t.Id)
-			account_model.UpdatePoint(transaction_data.Account.Id, produck_data.Point)
-		}
-
-		for _, p := range transaction_data.Paket {
-			paket_data, _ := paket_model.Get(p.Id)
-			account_model.UpdatePoint(transaction_data.Account.Id, paket_data.Point)
+			account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
 		}
 
 		if err1 != nil {

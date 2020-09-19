@@ -364,7 +364,7 @@ func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pa
 	// pn, _ := strconv.Atoi(pageNo)
 	// pp, _ := strconv.Atoi(perPage)
 	err = db.Collection["transaction"].Find(bson.M{
-		"account._id": id_account,
+		"from.account._id": id_account,
 		"$or": []interface{}{
 			bson.M{"product.name": regex},
 		},
@@ -373,7 +373,7 @@ func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pa
 		return
 	}
 	count, err = db.Collection["transaction"].Find(bson.M{
-		"account._id": id_account,
+		"from.account._id": id_account,
 		"$or": []interface{}{
 			bson.M{"product.name": regex},
 		}}).Count()

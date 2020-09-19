@@ -38,6 +38,9 @@ func (T *TransactionControll) ListHistory(c *gin.Context) {
 	pageNo, _ := strconv.Atoi(c.Query("page"))
 	perPage, _ := strconv.Atoi(c.Query("per_page"))
 	filter := c.Query("filter")
+
+	status, _ := strconv.Atoi(c.Query("status"))
+
 	if sort == "" {
 		sort = "id"
 	}
@@ -47,7 +50,7 @@ func (T *TransactionControll) ListHistory(c *gin.Context) {
 	if perPage == 0 {
 		perPage = 5
 	}
-	data, count, err := transactionmodels.HistoyTransaction(id_account, filter, sort, pageNo, perPage)
+	data, count, err := transactionmodels.HistoyTransaction(id_account, filter, sort, pageNo, perPage, status)
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {
 		if len(data)%perPage == 0 {

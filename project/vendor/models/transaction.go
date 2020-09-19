@@ -347,7 +347,7 @@ func (T *TransactionModel) UpdateResi(id, resi string) (err error) {
 	return
 }
 
-func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pageNo, perPage int) (data []Transaction, count int, err error) {
+func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pageNo, perPage, status int) (data []Transaction, count int, err error) {
 	_, err = account_model.Get(id_account)
 	if err != nil {
 		err = errors.New("account not found")
@@ -364,6 +364,7 @@ func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pa
 	// pn, _ := strconv.Atoi(pageNo)
 	// pp, _ := strconv.Atoi(perPage)
 	err = db.Collection["transaction"].Find(bson.M{
+		"status_code":      status,
 		"from.account._id": id_account,
 		"$or": []interface{}{
 			bson.M{"product.name": regex},
@@ -373,6 +374,7 @@ func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pa
 		return
 	}
 	count, err = db.Collection["transaction"].Find(bson.M{
+		"status_code":      status,
 		"from.account._id": id_account,
 		"$or": []interface{}{
 			bson.M{"product.name": regex},

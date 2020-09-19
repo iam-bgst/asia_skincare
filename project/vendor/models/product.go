@@ -63,6 +63,7 @@ type ListProducFix struct {
 	Image      string     `json:"image" bson:"image"`
 	Desc       string     `json:"desc" bson:"desc"`
 	From       Address    `json:"from" bson:"from"`
+	Account    string     `json:"account" bson:"account"`
 	Type       int        `json:"type" bson:"type"`
 }
 
@@ -290,6 +291,7 @@ func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage i
 			"stock":      "$product.stock",
 			"desc":       "$product_docs.desc",
 			"from":       "$address",
+			"account":    "$_id",
 			"membership": "$membership",
 			"name":       "$product_docs.name",
 			"image":      "$product_docs.image",

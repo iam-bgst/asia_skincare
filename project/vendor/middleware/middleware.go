@@ -115,6 +115,7 @@ func Middleware() {
 		transaction.GET("/history/:account", HandleCounter, transactioncontroll.ListHistory)
 		transaction.PUT("/update_status/:id", HandleCounter, transactioncontroll.UpdateStatus)
 		transaction.PUT("/add_resi/:id", HandleCounter, transactioncontroll.AddResiToTransaction)
+		transaction.PUT("/add_picture/:id", HandleCounter, transactioncontroll.AddPicturePay)
 	}
 
 	// Delivery

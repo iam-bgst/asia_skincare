@@ -32,6 +32,29 @@ func (T *TransactionControll) Add(c *gin.Context) {
 	}
 }
 
+func (T *TransactionControll) AddPicturePay(c *gin.Context) {
+	var data struct {
+		Image string `json:"image"`
+	}
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{
+			"error": "error binding json",
+		})
+	}
+	id := c.Param("id")
+	err := transactionmodels.AddPicturePay(id, data.Image)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"status":  "ok",
+			"message": "add picture success",
+		})
+	}
+}
+
 func (T *TransactionControll) ListHistory(c *gin.Context) {
 	id_account := c.Param("account")
 	sort := c.Query("sort")

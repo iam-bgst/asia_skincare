@@ -1,6 +1,7 @@
 package models
 
 import (
+	"addon"
 	"db"
 	"errors"
 	"fmt"
@@ -37,8 +38,9 @@ type Transaction struct {
 	3. Done
 	4. Cenceled
 	*/
-	To   To   `json:"to" bson:"to"`
-	From From `json:"from" bson:"from"`
+	Pic_Pay string `json:"pic_pay" bson:"pic_pay"`
+	To      To     `json:"to" bson:"to"`
+	From    From   `json:"from" bson:"from"`
 }
 type To struct {
 	Account Account2 `json:"account" bson:"account"`
@@ -289,6 +291,21 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		return
 	}
 
+	return
+}
+
+func (T *TransactionModel) AddPicturePay(id_trans string, picture string) (err error) {
+	path, err1 := addon.Upload("transaction", id_trans, picture)
+	if err1 != nil {
+		return err1
+	}
+	err = db.Collection["transaction"].Update(bson.M{
+		"_id": id_trans,
+	}, bson.M{
+		"$set": bson.M{
+			"pic_pay": path,
+		},
+	})
 	return
 }
 

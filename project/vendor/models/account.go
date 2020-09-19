@@ -202,6 +202,18 @@ func (A *AccountModel) UpdatePoint(id string, point int) (err error) {
 	})
 	return
 }
+
+func (A *AccountModel) UpdateStockProduct(id_account, id_product string, stock int) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         id_account,
+		"product._id": id_product,
+	}, bson.M{
+		"$inc": bson.M{
+			"product.$.stock": stock - (stock * 2),
+		},
+	})
+	return
+}
 func (A *AccountModel) Get(id string) (data AccountTransaction, err error) {
 	err = db.Collection["account"].Find(bson.M{
 		"_id": id,

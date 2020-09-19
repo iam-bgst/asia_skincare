@@ -316,7 +316,8 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 		transaction_data, err1 := T.Get(id)
 		for _, t := range transaction_data.Product {
 			produck_data, _ := product_model.Get(t.Id)
-			account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
+
+			account_model.UpdateStockProduct(transaction_data.From.Account.Id, produck_data.Id)
 		}
 
 		if err1 != nil {

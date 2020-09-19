@@ -24,6 +24,7 @@ type Delivery struct {
 	Price   int    `json:"price" bson:"price"`
 }
 type Result struct {
+	Id   string  `json:"_id"`
 	Name string  `json:"name"`
 	Code string  `json:"code"`
 	Cost []Costs `json:"cost"`
@@ -95,6 +96,7 @@ func (D *DeliveryModels) CheckOngkir(origin, destination, weight string) (data_r
 			})
 		}
 		data_result = append(data_result, Result{
+			Id:   uuid.New(),
 			Code: s,
 			Name: name,
 			Cost: data_cost,

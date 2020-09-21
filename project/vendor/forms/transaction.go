@@ -1,5 +1,7 @@
 package forms
 
+import "time"
+
 type Transaction struct {
 	Product  []ProductTransaction `json:"product" bson:"product"`
 	Discount []string             `json:"discount" bson:"discount"`
@@ -7,6 +9,13 @@ type Transaction struct {
 	Subtotal int                  `json:"subtotal" bson:"subtotal"`
 	To       To                   `json:"to" bson:"to"`
 	From     From                 `json:"from" bson:"from"`
+}
+type Evidence struct {
+	Total   string    `json:"total"`
+	Name    string    `json:"name"`
+	Send_by string    `json:"send_by"`
+	Time    time.Time `json:"time"`
+	Image   string    `json:"image"`
 }
 
 type PaketTransaction struct {

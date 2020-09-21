@@ -38,9 +38,17 @@ type Transaction struct {
 	3. Done
 	4. Cenceled
 	*/
+	Evidence
 	Pic_Pay string `json:"pic_pay" bson:"pic_pay"`
 	To      To     `json:"to" bson:"to"`
 	From    From   `json:"from" bson:"from"`
+}
+type Evidence struct {
+	Total   string    `json:"total" bson:"total"`
+	Name    string    `json:"name" bson:"name"`
+	Send_by string    `json:"send" bson:"send"`
+	Time    time.Time `json:"time" bson:"time"`
+	Image   string    `json:"image" bson:"image"`
 }
 type To struct {
 	Account Account2 `json:"account" bson:"account"`
@@ -294,8 +302,8 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	return
 }
 
-func (T *TransactionModel) AddPicturePay(id_trans string, picture string) (err error) {
-	path, err1 := addon.Upload("transaction", id_trans, picture)
+func (T *TransactionModel) AddPicturePay(id_trans string, data forms.Evidence) (err error) {
+	path, err1 := addon.Upload("transaction", id_trans, data.Image)
 	if err1 != nil {
 		return err1
 	}
@@ -303,7 +311,13 @@ func (T *TransactionModel) AddPicturePay(id_trans string, picture string) (err e
 		"_id": id_trans,
 	}, bson.M{
 		"$set": bson.M{
-			"pic_pay": path,
+			"evidence": bson.M{
+				"image":   path,
+				"send_by": data.Send_by,
+				"name":    data.Name,
+				"time":    data.Time,
+				"total":   data.Total,
+			},
 		},
 	})
 	return

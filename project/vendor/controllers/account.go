@@ -179,6 +179,30 @@ func (A *AccountControll) ListAccount(c *gin.Context) {
 	}
 }
 
+func (A *AccountControll) AddQris(c *gin.Context) {
+	id := c.Param("id")
+	var data struct {
+		Image string `json:"image"`
+	}
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{
+			"error": "error bind json",
+		})
+	} else {
+		err := accountmodels.AddQris(id, data.Image)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "added qris",
+				"status":  "ok",
+			})
+		}
+	}
+}
+
 func (A *AccountControll) Get(c *gin.Context) {
 	id := c.Param("id")
 	data, err := accountmodels.GetId(id)

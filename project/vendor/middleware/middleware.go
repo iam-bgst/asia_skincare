@@ -73,6 +73,7 @@ func Middleware() {
 		account.PUT("/active/:id", HandleCounter, accountcontroll.ActiveAccount)
 		account.GET("/list", HandleCounter, accountcontroll.ListAccount)
 		account.POST("/adaddress/:id", HandleCounter, accountcontroll.AddAddress)
+		account.POST("/qris/add/:id", HandleCounter, accountcontroll.AddQris)
 	}
 
 	// Product

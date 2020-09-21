@@ -23,6 +23,7 @@ type Account struct {
 	Membership    Membership `json:"membership" bson:"membership"`
 	Image         string     `json:"image" bson:"image"`
 	Status        string     `json:"status" bson:"status"`
+	Qris          string     `json:"qris" bson:"qris"`
 	Discount_used []Discount `json:"discount_used" bson:"discount_used"`
 	Product       []struct {
 		Id    string `json:"_id"`
@@ -155,6 +156,21 @@ func (A *AccountModel) UpdateStockOnAccount(account, product string, stock int) 
 	}, bson.M{
 		"$set": bson.M{
 			"product.$.stock": stock,
+		},
+	})
+	return
+}
+
+func (A *AccountModel) AddQris(id_account, qris string) (err error) {
+	path, err1 := addon.Upload("account/qris", id_account, qris)
+	if err1 != nil {
+		return err1
+	}
+	err = db.Collection["account"].Update(bson.M{
+		"_id": account,
+	}, bson.M{
+		"$set": bson.M{
+			"qris": path,
 		},
 	})
 	return

@@ -167,7 +167,7 @@ func (A *AccountModel) AddQris(id_account, qris string) (err error) {
 		return err1
 	}
 	err = db.Collection["account"].Update(bson.M{
-		"_id": account,
+		"_id": id_account,
 	}, bson.M{
 		"$set": bson.M{
 			"qris": path,

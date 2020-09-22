@@ -10,4 +10,5 @@ var (
 	discountmodels    = new(models.DiscountModel)
 	transactionmodels = new(models.TransactionModel)
 	deliverymodels    = new(models.DeliveryModels)
+	metodemodels      = new(models.MetodeModels)
 )

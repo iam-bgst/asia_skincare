@@ -16,6 +16,7 @@ func init() {
 	db.SetCollection("discount")
 	db.SetCollection("transaction")
 	db.SetCollection("delivery")
+	db.SetCollection("metode")
 
 	// initial assets
 	models.InitialAssets()

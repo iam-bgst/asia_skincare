@@ -38,6 +38,7 @@ type Account2 struct {
 	Membership  Membership `json:"membership" bson:"membership"`
 	Image       string     `json:"image" bson:"image"`
 	Status      string     `json:"status" bson:"status"`
+	Qris        string     `json:"qris" bson:"qris"`
 }
 type AccountList struct {
 	Id            string `json:"_id" bson:"_id,omitempty"`

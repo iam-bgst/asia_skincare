@@ -23,14 +23,15 @@ const (
 )
 
 type Transaction struct {
-	Id          string               `json:"_id" bson:"_id,omitempty"`
-	Product     []ProductTransaction `json:"product" bson:"product"`
-	Discount    []Discount           `json:"discount" bson:"discount"`
-	Date        time.Time            `json:"date" bson:"date"`
-	Delivery    Delivery             `json:"delivery" bson:"delivery"`
-	Subtotal    int                  `json:"subtotal" bson:"subtotal"`
-	Status      string               `json:"status" bson:"status"`
-	Status_code int                  `json:"status_code" bson:"status_code"`
+	Id               string               `json:"_id" bson:"_id,omitempty"`
+	Transaction_code string               `json:"code" bson:"code"`
+	Product          []ProductTransaction `json:"product" bson:"product"`
+	Discount         []Discount           `json:"discount" bson:"discount"`
+	Date             time.Time            `json:"date" bson:"date"`
+	Delivery         Delivery             `json:"delivery" bson:"delivery"`
+	Subtotal         int                  `json:"subtotal" bson:"subtotal"`
+	Status           string               `json:"status" bson:"status"`
+	Status_code      int                  `json:"status_code" bson:"status_code"`
 	/* Status
 	0. NotPayed
 	1. Packed
@@ -38,11 +39,19 @@ type Transaction struct {
 	3. Done
 	4. Cenceled
 	*/
-	Evidence
-	Pic_Pay string `json:"pic_pay" bson:"pic_pay"`
-	To      To     `json:"to" bson:"to"`
-	From    From   `json:"from" bson:"from"`
+	Metode   Metode   `json:"metode" bson:"metode"`
+	Evidence Evidence `json:"evidance" bson:"evidance"`
+	Pic_Pay  string   `json:"pic_pay" bson:"pic_pay"`
+	To       To       `json:"to" bson:"to"`
+	From     From     `json:"from" bson:"from"`
 }
+
+type Metode struct {
+	Id   string `json:"_id" bson:"_id,omitempty"`
+	Name string `json:"name" bson:"name"`
+	Desc string `json:"desc" bson:"desc"`
+}
+
 type Evidence struct {
 	Total   string    `json:"total" bson:"total"`
 	Name    string    `json:"name" bson:"name"`
@@ -84,6 +93,14 @@ func (T *TransactionModel) GetStatus(status_code int) (status string) {
 
 func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err error) {
 	id := uuid.New()
+
+	// Get Metode
+
+	data_metode, err0 := metode_model.Get(data.Metode)
+	if err0 != nil {
+		err = err0
+		return
+	}
 
 	// Get Account From
 	data_account_from, err1 := account_model.Get(data.From.Account)
@@ -201,6 +218,8 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		Product:  prod,
 	}
 
+	ret.Metode = data_metode
+
 	// From
 	ret.From = From{
 		Account: Account2{
@@ -253,6 +272,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	ret.Subtotal = total
 
 	price, _ := strconv.Atoi(data.Delivery.Price)
+	ret.Transaction_code = addon.RandomCode(10, false)
 	ret.Delivery = Delivery{
 		Courier: data.Delivery.Courier,
 		Price:   price,

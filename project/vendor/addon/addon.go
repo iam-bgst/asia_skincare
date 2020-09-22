@@ -53,10 +53,19 @@ func Upload(collection, name string, img string) (path string, err error) {
 
 var letterRune = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-func RandomCode() string {
-	b := make([]rune, 9)
-	for i := range b {
-		b[i] = letterRune[rand.Intn(len(letterRune))]
+func RandomCode(length int, origin bool) string {
+	if origin {
+		b := make([]rune, length)
+		for i := range b {
+			b[i] = letterRune[rand.Intn(len(letterRune))]
+		}
+		return string(b)
+	} else {
+		letterRune = append(letterRune, []rune("0123456789")...)
+		b := make([]rune, length)
+		for i := range b {
+			b[i] = letterRune[rand.Intn(len(letterRune))]
+		}
+		return string(b)
 	}
-	return string(b)
 }

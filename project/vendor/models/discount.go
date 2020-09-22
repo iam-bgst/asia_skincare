@@ -27,7 +27,7 @@ func (D *DiscountModel) Create(data forms.Discount) (err error) {
 	var code string
 	id := uuid.New()
 	if data.DiscountCode == "" {
-		code = addon.RandomCode()
+		code = addon.RandomCode(8, true)
 	} else {
 		code = data.DiscountCode
 	}

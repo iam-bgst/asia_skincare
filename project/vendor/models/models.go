@@ -7,4 +7,5 @@ var (
 	paket_model      = new(PaketModel)
 	discount_model   = new(DiscountModel)
 	delivery_model   = new(DeliveryModels)
+	metode_model     = new(MetodeModels)
 )

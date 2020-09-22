@@ -23,6 +23,7 @@ var (
 	discountcontroll    = new(controllers.DiscountControll)
 	transactioncontroll = new(controllers.TransactionControll)
 	deliverycontroll    = new(controllers.DeliveryControll)
+	metodecontroll      = new(controllers.MetodeControll)
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -107,6 +108,16 @@ func Middleware() {
 		discount.PUT("/update/:id", HandleCounter, discountcontroll.Update)
 		discount.GET("/get/:id", HandleCounter, discountcontroll.Get)
 		discount.DELETE("/delete/:id", HandleCounter, discountcontroll.Delete)
+	}
+
+	// Metode
+	metode := router.Group("/metode")
+	{
+		metode.POST("/add", HandleCounter, metodecontroll.Create)
+		metode.GET("/list", HandleCounter, metodecontroll.List)
+		metode.PUT("/update/:id", HandleCounter, metodecontroll.Update)
+		metode.GET("/get/:id", HandleCounter, metodecontroll.Get)
+		metode.DELETE("/delete/:id", HandleCounter, metodecontroll.Delete)
 	}
 
 	// Transaction

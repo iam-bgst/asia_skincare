@@ -40,8 +40,7 @@ type Transaction struct {
 	4. Cenceled
 	*/
 	Metode   Metode   `json:"metode" bson:"metode"`
-	Evidence Evidence `json:"evidance" bson:"evidance"`
-	Pic_Pay  string   `json:"pic_pay" bson:"pic_pay"`
+	Evidence Evidence `json:"evidence" bson:"evidence"`
 	To       To       `json:"to" bson:"to"`
 	From     From     `json:"from" bson:"from"`
 }
@@ -55,7 +54,7 @@ type Metode struct {
 type Evidence struct {
 	Total   string    `json:"total" bson:"total"`
 	Name    string    `json:"name" bson:"name"`
-	Send_by string    `json:"send" bson:"send"`
+	Send_by string    `json:"send_by" bson:"send_by"`
 	Time    time.Time `json:"time" bson:"time"`
 	Image   string    `json:"image" bson:"image"`
 }

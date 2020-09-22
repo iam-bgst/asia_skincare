@@ -47,7 +47,7 @@ func (M *MetodeModels) Delete(id string) (err error) {
 	return
 }
 
-func (M *MetodeModels) List(sort, pageNo, perPage string) (data []Discount, err error) {
+func (M *MetodeModels) List(sort, pageNo, perPage string) (data []Metode, err error) {
 	sorting := sort
 	if strings.Contains(sort, "asc") {
 		sorting = strings.Replace(sort, "|asc", "", -1)

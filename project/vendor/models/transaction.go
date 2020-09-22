@@ -229,6 +229,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 			Membership:  data_account_from.Membership,
 			PhoneNumber: data_account_from.PhoneNumber,
 			Status:      data_account_from.Status,
+			Qris:        data_account_from.Qris,
 		},
 		Address: data.From.Address,
 		Name:    data.From.Name,

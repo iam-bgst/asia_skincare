@@ -62,6 +62,7 @@ type AccountTransaction struct {
 	PhoneNumber int        `json:"phonenumber" bson:"phonenumber"`
 	Address     string     `json:"address" bson:"address"`
 	Image       string     `json:"image" bson:"image"`
+	Qris        string     `json:"qris" bson:"qris"`
 	Membership  Membership `json:"membership" bson:"membership"`
 	Status      string     `json:"statut" bson:"status"`
 }

@@ -80,12 +80,12 @@ func (A *AccountModel) CheckAdmin() (found bool) {
 	}
 }
 
-func (A *AccountModel) Create(data forms.Account) (err error) {
+func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) {
 
 	id := uuid.New()
 	data_membership, _ := membership_model.GetOneMembership(data.Membership)
 	if data_membership.Code == STAFF && A.CheckAdmin() == false {
-		return errors.New("Could not found Account Admin, you cannot create account staff while admin is nothing")
+		return data_ret, errors.New("Could not found Account Admin, you cannot create account staff while admin is nothing")
 	}
 	phone, _ := strconv.Atoi(data.PhoneNumber)
 
@@ -136,6 +136,9 @@ func (A *AccountModel) Create(data forms.Account) (err error) {
 			},
 		})
 	}
+	err = db.Collection["account"].Find(bson.M{
+		"_id": id,
+	}).One(&data_ret)
 	return
 }
 

@@ -125,6 +125,7 @@ func Middleware() {
 	{
 		transaction.POST("/add", HandleCounter, transactioncontroll.Add)
 		transaction.GET("/history/:account", HandleCounter, transactioncontroll.ListHistory)
+		transaction.GET("/order/:account", HandleCounter, transactioncontroll.ListTransactionOnagent)
 		transaction.PUT("/update_status/:id", HandleCounter, transactioncontroll.UpdateStatus)
 		transaction.PUT("/add_resi/:id", HandleCounter, transactioncontroll.AddResiToTransaction)
 		transaction.PUT("/add_picture/:id", HandleCounter, transactioncontroll.AddPicturePay)

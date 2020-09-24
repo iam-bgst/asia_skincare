@@ -322,6 +322,44 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	return
 }
 
+func (T *TransactionModel) TransactionOnAgent(id_account, filter, sort string, pageNo, perPage, status int) (data []Transaction, count int, err error) {
+	_, err = account_model.Get(id_account)
+	if err != nil {
+		err = errors.New("account not found")
+		return
+	}
+	sorting := sort
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = "-" + sorting
+	}
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	// pn, _ := strconv.Atoi(pageNo)
+	// pp, _ := strconv.Atoi(perPage)
+	err = db.Collection["transaction"].Find(bson.M{
+		"status_code":      status,
+		"from.account._id": id_account,
+		"$or": []interface{}{
+			bson.M{"product.name": regex},
+		},
+	}).Sort(sorting).Skip((pageNo - 1) * perPage).Limit(perPage).All(&data)
+	if err != nil {
+		return
+	}
+	count, err = db.Collection["transaction"].Find(bson.M{
+		"status_code":      status,
+		"from.account._id": id_account,
+		"$or": []interface{}{
+			bson.M{"product.name": regex},
+		}}).Count()
+	if err != nil {
+		return
+	}
+	return
+}
+
 func (T *TransactionModel) AddPicturePay(id_trans string, data forms.Evidence) (err error) {
 	path, err1 := addon.Upload("transaction", id_trans, data.Image)
 	if err1 != nil {

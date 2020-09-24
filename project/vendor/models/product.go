@@ -91,6 +91,7 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 		"desc":   data.Desc,
 		"weight": data.Weight,
 		"image":  path,
+		"type":   data.Type,
 	})
 	for _, pricing := range data.Pricing {
 		data_membership, _ := membership_model.GetOneMembership(pricing.Membership)

@@ -38,7 +38,12 @@ type Account2 struct {
 	Membership  Membership `json:"membership" bson:"membership"`
 	Image       string     `json:"image" bson:"image"`
 	Status      string     `json:"status" bson:"status"`
-	Qris        string     `json:"qris" bson:"qris"`
+	Qris        Qris       `json:"qris" bson:"qris"`
+}
+type Qris struct {
+	Name  string `json:"name" bson:"name"`
+	NMID  string `json:"nmid" bson:"nmid"`
+	Image string `json:"image" bson:"image"`
 }
 type AccountList struct {
 	Id            string `json:"_id" bson:"_id,omitempty"`
@@ -62,7 +67,7 @@ type AccountTransaction struct {
 	PhoneNumber int        `json:"phonenumber" bson:"phonenumber"`
 	Address     string     `json:"address" bson:"address"`
 	Image       string     `json:"image" bson:"image"`
-	Qris        string     `json:"qris" bson:"qris"`
+	Qris        Qris       `json:"qris" bson:"qris"`
 	Membership  Membership `json:"membership" bson:"membership"`
 	Status      string     `json:"statut" bson:"status"`
 }
@@ -166,7 +171,7 @@ func (A *AccountModel) UpdateStockOnAccount(account, product string, stock int) 
 	return
 }
 
-func (A *AccountModel) AddQris(id_account, qris string) (err error) {
+func (A *AccountModel) AddQris(id_account, qris, name, nmid string) (err error) {
 	path, err1 := addon.Upload("account/qris", id_account, qris)
 	if err1 != nil {
 		return err1
@@ -175,7 +180,11 @@ func (A *AccountModel) AddQris(id_account, qris string) (err error) {
 		"_id": id_account,
 	}, bson.M{
 		"$set": bson.M{
-			"qris": path,
+			"qris": bson.M{
+				"name":  name,
+				"nmid":  strings.ToUpper(nmid),
+				"image": path,
+			},
 		},
 	})
 	return

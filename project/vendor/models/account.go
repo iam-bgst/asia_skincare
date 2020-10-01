@@ -34,7 +34,7 @@ type Account struct {
 }
 
 type Point struct {
-	Value int       `json:"point" bson:"point"`
+	Value int       `json:"value" bson:"value"`
 	Exp   time.Time `json:"exp" bson:"exp"`
 }
 

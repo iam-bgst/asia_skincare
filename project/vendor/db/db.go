@@ -26,10 +26,13 @@ func NewConnection() {
 	Database.Session = session
 }
 
-func SetCollection(name string) {
-	if Collection[name] == nil {
-		Collection[name] = Database.Session.DB("asia_sc").C(name)
+func SetCollection(name []string) {
+	for _, c := range name {
+		if Collection[c] == nil {
+			Collection[c] = Database.Session.DB("asia_sc").C(c)
+		}
 	}
+
 }
 
 func GetCollection(name string) *mgo.Collection {

@@ -8,6 +8,7 @@ import (
 	"forms"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pborman/uuid"
 	"gopkg.in/mgo.v2/bson"
@@ -18,7 +19,8 @@ type Account struct {
 	Name          string     `json:"name" bson:"name"`
 	Email         string     `json:"email" bson:"email"`
 	PhoneNumber   int        `json:"phonenumber" bson:"phonenumber"`
-	Point         int        `json:"point" bson:"point"`
+	Point         Point      `json:"point" bson:"point"`
+	RegiteredAt   time.Time  `json:"registeredAt" bson:"registeredAt"`
 	Address       []Address  `json:"address" bson:"address"`
 	Membership    Membership `json:"membership" bson:"membership"`
 	Image         string     `json:"image" bson:"image"`
@@ -30,6 +32,12 @@ type Account struct {
 		Stock int    `json:"stock"`
 	} `json:"product"`
 }
+
+type Point struct {
+	Value int       `json:"point" bson:"point"`
+	Exp   time.Time `json:"exp" bson:"exp"`
+}
+
 type Account2 struct {
 	Id          string     `json:"_id" bson:"_id,omitempty"`
 	Name        string     `json:"name" bson:"name"`
@@ -109,16 +117,20 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 		err = err2
 		return
 	}
-
+	timeAccount := time.Now()
 	err = db.Collection["account"].Insert(bson.M{
-		"_id":         id,
-		"name":        data.Name,
-		"email":       data.Email,
-		"phonenumber": phone,
-		"membership":  data_membership,
-		"point":       0,
-		"image":       path,
-		"status":      "active",
+		"_id":          id,
+		"name":         data.Name,
+		"email":        data.Email,
+		"registeredAt": timeAccount,
+		"phonenumber":  phone,
+		"membership":   data_membership,
+		"point": bson.M{
+			"value": 0,
+			"exp":   timeAccount.AddDate(2, 0, 0),
+		},
+		"image":  path,
+		"status": "active",
 	})
 	err = db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
 		"$addToSet": bson.M{
@@ -227,7 +239,18 @@ func (A *AccountModel) UpdatePoint(id string, point int) (err error) {
 		"_id": id,
 	}, bson.M{
 		"$inc": bson.M{
-			"point": point,
+			"point.value": point,
+		},
+	})
+	return
+}
+
+func (A *AccountModel) UpdateExpPoint(id string, timeExp time.Time) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
+			"point.exp": timeExp,
 		},
 	})
 	return
@@ -247,6 +270,12 @@ func (A *AccountModel) UpdateStockProduct(id_account, id_product string, stock i
 func (A *AccountModel) Get(id string) (data AccountTransaction, err error) {
 	err = db.Collection["account"].Find(bson.M{
 		"_id": id,
+	}).One(&data)
+	return
+}
+func (A *AccountModel) GetByCode(code int) (data Account, err error) {
+	err = db.Collection["account"].Find(bson.M{
+		"membership.code": code,
 	}).One(&data)
 	return
 }

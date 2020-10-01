@@ -323,10 +323,16 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 }
 
 func (T *TransactionModel) TransactionOnAgent(id_account, filter, sort string, pageNo, perPage, status int) (data []Transaction, count int, err error) {
-	_, err = account_model.Get(id_account)
-	if err != nil {
+	data_account, err1 := account_model.Get(id_account)
+	if err1 != nil {
 		err = errors.New("account not found")
 		return
+	}
+	var account Account
+	if data_account.Membership.Code == 1 {
+		account, _ = account_model.GetByCode(0)
+	} else {
+		account, _ = account_model.GetId(data_account.Id)
 	}
 	sorting := sort
 	if strings.Contains(sort, "asc") {
@@ -338,9 +344,10 @@ func (T *TransactionModel) TransactionOnAgent(id_account, filter, sort string, p
 	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	// pn, _ := strconv.Atoi(pageNo)
 	// pp, _ := strconv.Atoi(perPage)
+	fmt.Println(account.Id)
 	err = db.Collection["transaction"].Find(bson.M{
 		"status_code":      status,
-		"from.account._id": id_account,
+		"from.account._id": account.Id,
 		"$or": []interface{}{
 			bson.M{"product.name": regex},
 		},
@@ -350,7 +357,7 @@ func (T *TransactionModel) TransactionOnAgent(id_account, filter, sort string, p
 	}
 	count, err = db.Collection["transaction"].Find(bson.M{
 		"status_code":      status,
-		"from.account._id": id_account,
+		"from.account._id": account.Id,
 		"$or": []interface{}{
 			bson.M{"product.name": regex},
 		}}).Count()

@@ -7,19 +7,18 @@ import (
 )
 
 func init() {
+	// Collection
+	collection := []string{"reseller", "membership", "product", "delivery", "account", "paket", "discount", "transaction", "metode", "reward"}
+
+	// Mongodb
 	db.NewConnection()
-	db.SetCollection("reseller")
-	db.SetCollection("membership")
-	db.SetCollection("product")
-	db.SetCollection("account")
-	db.SetCollection("paket")
-	db.SetCollection("discount")
-	db.SetCollection("transaction")
-	db.SetCollection("delivery")
-	db.SetCollection("metode")
+	db.SetCollection(collection)
 
 	// initial assets
 	models.InitialAssets()
+
+	// Service Point
+	models.ServicePoint()
 
 }
 

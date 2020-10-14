@@ -82,6 +82,7 @@ func Middleware() {
 	{
 		product.POST("/add", HandleCounter, productcontroll.Create)
 		product.GET("/list", HandleCounter, productcontroll.ListByMembership)
+		product.GET("/list/recomd", HandleCounter, productcontroll.ListRecomend)
 		product.PUT("/update/:id", HandleCounter, productcontroll.Update)
 		product.GET("/get/:id", HandleCounter, productcontroll.Get)
 		product.PUT("/update_price/:product/:membership", HandleCounter, productcontroll.UpdatePrice)

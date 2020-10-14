@@ -17,6 +17,7 @@ type Product struct {
 	Name    string  `json:"name" bson:"name"`
 	Pricing Pricing `json:"pricing" bson:"pricing"`
 	Stoct   int     `json:"stoct" bson:"stock"`
+	Solded  int     `json:"solded" bson:"solded"`
 	Point   int     `json:"point" bson:"point"`
 	Weight  int     `json:"weight" bson:"weight"`
 	Image   string  `json:"image" bson:"image"`
@@ -57,6 +58,7 @@ type ListProducFix struct {
 	Name       string     `json:"name" bson:"name"`
 	Pricing    Pricing    `json:"pricing" bson:"pricing"`
 	Membership Membership `json:"membership" bson:"membership"`
+	Solded     int        `json:"solded" bson:"solded"`
 	Stoct      int        `json:"stoct" bson:"stock"`
 	Point      int        `json:"point" bson:"point"`
 	Weight     int        `json:"weight" bson:"weight"`
@@ -125,6 +127,17 @@ func (P *ProductModel) GetByMembership(id, idm string) (data ProductMembership, 
 	return
 }
 
+func (P *ProductModel) UpdateSolded(id string, solded int) (err error) {
+	err = db.Collection["product"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$inc": bson.M{
+			"solded": solded,
+		},
+	})
+	return
+}
+
 func (P *ProductModel) Get(id string) (data Product1, err error) {
 	err = db.Collection["product"].Find(bson.M{
 		"_id": id,
@@ -173,6 +186,36 @@ func (R *ProductModel) Delete(id string) (err error) {
 
 func (P *ProductModel) All() (data []Product) {
 	db.Collection["product"].Find(bson.M{}).All(&data)
+	return
+}
+
+func (P *ProductModel) List(filter, sort string, pageNo, perPage int) (data []ListProducFix, count int, err error) {
+	sorting := sort
+	// order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		// order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		// order = -1
+	} else {
+		sorting = "date"
+		// order = -1
+	}
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"name": regex},
+			},
+		}},
+		{"$sort": bson.M{"solded": -1}},
+		{"$skip": (pageNo - 1) * perPage},
+		{"$limit": perPage},
+	}
+	err = db.Collection["product"].Pipe(pipeline).All(&data)
+	count, _ = db.Collection["product"].Find(bson.M{}).Count()
 	return
 }
 

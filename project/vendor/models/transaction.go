@@ -412,7 +412,7 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 		transaction_data, err1 := T.Get(id)
 		for _, t := range transaction_data.Product {
 			produck_data, _ := product_model.Get(t.Id)
-
+			product_model.UpdateSolded(t.Id, t.Qty)
 			account_model.UpdateStockProduct(transaction_data.From.Account.Id, produck_data.Id, t.Qty)
 		}
 

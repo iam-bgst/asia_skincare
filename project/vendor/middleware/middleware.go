@@ -57,7 +57,7 @@ func Middleware() {
 		ValidateHeaders: false,
 	}))
 	router.Static("/public", directory+"/vendor/assets/")
-	gin.BasicAuth()
+
 	// Index
 	router.GET("/", HandleCounter, func(c *gin.Context) {
 		c.JSON(200, gin.H{

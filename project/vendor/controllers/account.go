@@ -3,12 +3,63 @@ package controllers
 import (
 	"forms"
 	"log"
+	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AccountControll struct{}
+
+type Payload struct {
+	Id  string `json:"id"`
+	Exp int    `json:"exp"`
+	Jwt jwt.StandardClaims
+}
+
+func (A *AccountControll) Auth(c *gin.Context) {
+	var auth struct {
+		Number int `json:"number"`
+	}
+	if c.BindJSON(&auth) != nil {
+		c.JSON(405, gin.H{
+			"error": "error binding json",
+		})
+	} else {
+		account, err := accountmodels.CheckAccount(auth.Number)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+			c.Abort()
+		} else {
+			payload := Payload{
+				Id:  account.Id,
+				Exp: int(time.Now().Add(time.Hour * 99999).Unix()),
+				Jwt: jwt.StandardClaims{},
+			}
+			convert := jwt.NewWithClaims(jwt.SigningMethodHS256, payload.Jwt)
+			token, err := convert.SignedString([]byte("secret"))
+			if err != nil {
+				c.JSON(406, gin.H{
+					"msg":    err.Error(),
+					"status": "ERROR",
+				})
+				c.Abort()
+			} else {
+				c.JSON(http.StatusOK, gin.H{
+					"status":  "SUCCESS",
+					"expired": time.Now().Add(time.Minute * 99999).Unix(),
+					"msg":     "Sukses berhasil login",
+					"token":   token,
+				})
+			}
+		}
+	}
+}
 
 func (A *AccountControll) Register(c *gin.Context) {
 	log.Println("post from ip", c.ClientIP())

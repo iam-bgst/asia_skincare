@@ -20,6 +20,7 @@ type Product struct {
 	Solded  int     `json:"solded" bson:"solded"`
 	Point   int     `json:"point" bson:"point"`
 	Weight  int     `json:"weight" bson:"weight"`
+	Netto   string  `json:"netto": bson:"netto"`
 	Image   string  `json:"image" bson:"image"`
 	Desc    string  `json:"desc" bson:"desc"`
 	Type    int     `json:"type" bson:"type"`
@@ -62,6 +63,7 @@ type ListProducFix struct {
 	Stoct      int        `json:"stoct" bson:"stock"`
 	Point      int        `json:"point" bson:"point"`
 	Weight     int        `json:"weight" bson:"weight"`
+	Netto      string     `json:"netto" bson:"netto"`
 	Image      string     `json:"image" bson:"image"`
 	Desc       string     `json:"desc" bson:"desc"`
 	From       Address    `json:"from" bson:"from"`
@@ -92,6 +94,7 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 		"point":  data.Point,
 		"desc":   data.Desc,
 		"weight": data.Weight,
+		"netto":  data.Netto,
 		"image":  path,
 		"type":   data.Type,
 	})
@@ -158,6 +161,7 @@ func (P *ProductModel) Update(id string, data forms.Product) (err error) {
 			"stock":  data.Stoct,
 			"point":  data.Point,
 			"weight": data.Weight,
+			"netto":  data.Netto,
 			"desc":   data.Desc,
 			"image":  path,
 		},

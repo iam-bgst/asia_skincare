@@ -4,9 +4,12 @@ import (
 	"addon"
 	"controllers"
 	"expvar"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	exp_gin "github.com/gin-contrib/expvar"
 	"github.com/gin-gonic/gin"
 	cors "github.com/itsjamie/gin-cors"
@@ -54,7 +57,7 @@ func Middleware() {
 		ValidateHeaders: false,
 	}))
 	router.Static("/public", directory+"/vendor/assets/")
-
+	gin.BasicAuth()
 	// Index
 	router.GET("/", HandleCounter, func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -63,11 +66,22 @@ func Middleware() {
 		})
 	})
 
+	// ExpVar
+	router.GET("/debug/vars", exp_gin.Handler())
+
 	// Account
 	account := router.Group("/account")
 	{
 		account.POST("/register", HandleCounter, accountcontroll.Register)
 		account.GET("/checkaccount", HandleCounter, accountcontroll.CheckAccount)
+		account.POST("/auth", HandleCounter, accountcontroll.Auth)
+	}
+
+	// Validator Jwt
+	// router.Use(HandleAuth())
+
+	{
+
 		account.PUT("/update/:id", HandleCounter, accountcontroll.Update)
 		account.GET("/get/:id", HandleCounter, accountcontroll.Get)
 		account.PUT("/nonactive/:id", HandleCounter, accountcontroll.NonActiveAccount)
@@ -148,9 +162,41 @@ func Middleware() {
 		membership.GET("/listall", HandleCounter, membershipcontroll.ListAll)
 	}
 
-	// ExpVar
-	router.GET("/debug/vars", exp_gin.Handler())
 	router.Run(port)
+}
+
+func HandleAuth() gin.HandlerFunc {
+	valid := func(c *gin.Context) {
+		auth := c.Request.Header.Get("Authorization")
+		Bearer := strings.Split(auth, " ")
+		if Bearer[0] != "Bearer" {
+			c.JSON(401, gin.H{
+				"error": "Authorization do not use Bearer",
+			})
+			c.Abort()
+		}
+		token, err := jwt.Parse(Bearer[1], func(token *jwt.Token) (interface{}, error) {
+			if jwt.GetSigningMethod("HS256") != token.Method {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte("secret"), nil
+		})
+
+		if token != nil && err == nil {
+			claims := jwt.MapClaims{}
+			_, _ = jwt.ParseWithClaims(Bearer[1], claims, func(token *jwt.Token) (interface{}, error) {
+				return []byte("secret"), nil
+			})
+
+		} else {
+			c.JSON(401, gin.H{
+				"error":   err.Error(),
+				"message": "Authorization is empty",
+			})
+			c.Abort()
+		}
+	}
+	return valid
 }
 
 func HandleCounter(c *gin.Context) {

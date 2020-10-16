@@ -58,6 +58,7 @@ func RandomCode(length int, origin bool) string {
 	if origin {
 		b := make([]rune, length)
 		for i := range b {
+			rand.Seed(time.Now().UnixNano())
 			b[i] = letterRune[rand.Intn(len(letterRune))]
 		}
 		return string(b)
@@ -65,6 +66,7 @@ func RandomCode(length int, origin bool) string {
 		letterRune = append(letterRune, []rune("0123456789")...)
 		b := make([]rune, length)
 		for i := range b {
+			rand.Seed(time.Now().UnixNano())
 			b[i] = letterRune[rand.Intn(len(letterRune))]
 		}
 		return string(b)

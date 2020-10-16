@@ -8,4 +8,5 @@ var (
 	discount_model   = new(DiscountModel)
 	delivery_model   = new(DeliveryModels)
 	metode_model     = new(MetodeModels)
+	payment_model    = new(PaymentModels)
 )

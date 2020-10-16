@@ -27,6 +27,7 @@ var (
 	transactioncontroll = new(controllers.TransactionControll)
 	deliverycontroll    = new(controllers.DeliveryControll)
 	metodecontroll      = new(controllers.MetodeControll)
+	paymentcontroll     = new(controllers.PaymentControll)
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -81,7 +82,7 @@ func Middleware() {
 	// router.Use(HandleAuth())
 
 	{
-
+		account.POST("/addpayment/:id", HandleCounter, accountcontroll.AddPayment)
 		account.PUT("/update/:id", HandleCounter, accountcontroll.Update)
 		account.GET("/get/:id", HandleCounter, accountcontroll.Get)
 		account.PUT("/nonactive/:id", HandleCounter, accountcontroll.NonActiveAccount)
@@ -126,13 +127,14 @@ func Middleware() {
 	}
 
 	// Metode
-	metode := router.Group("/metode")
+	payment := router.Group("/payment")
 	{
-		metode.POST("/add", HandleCounter, metodecontroll.Create)
-		metode.GET("/list", HandleCounter, metodecontroll.List)
-		metode.PUT("/update/:id", HandleCounter, metodecontroll.Update)
-		metode.GET("/get/:id", HandleCounter, metodecontroll.Get)
-		metode.DELETE("/delete/:id", HandleCounter, metodecontroll.Delete)
+		payment.POST("/add", HandleCounter, paymentcontroll.Create)
+		payment.GET("/list", HandleCounter, paymentcontroll.List)
+		payment.PUT("/update/:id", HandleCounter, paymentcontroll.Update)
+		payment.GET("/get/:id", HandleCounter, paymentcontroll.Get)
+		payment.DELETE("/delete/:id", HandleCounter, paymentcontroll.Delete)
+		payment.GET("/listonaccount/:id", HandleCounter, paymentcontroll.ListOnAccount)
 	}
 
 	// Transaction

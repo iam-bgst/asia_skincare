@@ -20,6 +20,26 @@ type Payload struct {
 	Jwt jwt.StandardClaims
 }
 
+func (A *AccountControll) AddPayment(c *gin.Context) {
+	var data forms.AddPayment
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{"error": "error binding json"})
+	} else {
+		id := c.Param("id")
+		err := accountmodels.AddPayment(id, data)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "added payment",
+				"status":  "ok",
+			})
+		}
+	}
+}
+
 func (A *AccountControll) Auth(c *gin.Context) {
 	var auth struct {
 		Number int `json:"number"`

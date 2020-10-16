@@ -14,3 +14,8 @@ type Address struct {
 	City     int    `json:"city"`
 	Detail   string `json:"detail"`
 }
+
+type AddPayment struct {
+	Id     string `json:"_id"`
+	Number string `json:"number"`
+}

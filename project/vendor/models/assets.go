@@ -8,6 +8,7 @@ import (
 func InitialAssets() {
 	delivery_model.InitialDelivery()
 	membership_model.InitMembership()
+	payment_model.InitialPayment()
 }
 
 func ServicePoint() {

@@ -11,4 +11,5 @@ var (
 	transactionmodels = new(models.TransactionModel)
 	deliverymodels    = new(models.DeliveryModels)
 	metodemodels      = new(models.MetodeModels)
+	paymentmodels     = new(models.PaymentModels)
 )

@@ -39,19 +39,26 @@ type Point struct {
 }
 
 type Account2 struct {
-	Id          string     `json:"_id" bson:"_id,omitempty"`
-	Name        string     `json:"name" bson:"name"`
-	Email       string     `json:"email" bson:"email"`
-	PhoneNumber int        `json:"phonenumber" bson:"phonenumber"`
-	Membership  Membership `json:"membership" bson:"membership"`
-	Image       string     `json:"image" bson:"image"`
-	Status      string     `json:"status" bson:"status"`
-	Qris        Qris       `json:"qris" bson:"qris"`
+	Id          string         `json:"_id" bson:"_id,omitempty"`
+	Name        string         `json:"name" bson:"name"`
+	Email       string         `json:"email" bson:"email"`
+	PhoneNumber int            `json:"phonenumber" bson:"phonenumber"`
+	Membership  Membership     `json:"membership" bson:"membership"`
+	Image       string         `json:"image" bson:"image"`
+	Status      string         `json:"status" bson:"status"`
+	Payment     PaymentAccount `json:"payment" bson:"payment"`
 }
-type Qris struct {
-	Name  string `json:"name" bson:"name"`
-	NMID  string `json:"nmid" bson:"nmid"`
-	Image string `json:"image" bson:"image"`
+type PaymentAccount struct {
+	Id     string `json:"_id" bson:"_id"`
+	Number string `json:"number" bson:"number"`
+}
+type PaymentAccount2 struct {
+	Id     string `json:"_id" bson:"_id,omitempty"`
+	Name   string `json:"name" bson:"name"`
+	Desc   string `json:"desc" bson:"desc"`
+	Type   Type   `json:"type" bson:"type"`
+	Active bool   `json:"active" bson:"active"`
+	Number string `json:"number" bson:"number"`
 }
 type AccountList struct {
 	Id            string `json:"_id" bson:"_id,omitempty"`
@@ -69,15 +76,15 @@ type Address struct {
 	Default  bool     `json:"default" bson:"default"`
 }
 type AccountTransaction struct {
-	Id          string     `json:"_id" bson:"_id,omitempty"`
-	Name        string     `json:"name" bson:"name"`
-	Email       string     `json:"email" bson:"email"`
-	PhoneNumber int        `json:"phonenumber" bson:"phonenumber"`
-	Address     string     `json:"address" bson:"address"`
-	Image       string     `json:"image" bson:"image"`
-	Qris        Qris       `json:"qris" bson:"qris"`
-	Membership  Membership `json:"membership" bson:"membership"`
-	Status      string     `json:"statut" bson:"status"`
+	Id          string         `json:"_id" bson:"_id,omitempty"`
+	Name        string         `json:"name" bson:"name"`
+	Email       string         `json:"email" bson:"email"`
+	PhoneNumber int            `json:"phonenumber" bson:"phonenumber"`
+	Address     string         `json:"address" bson:"address"`
+	Image       string         `json:"image" bson:"image"`
+	Payment     PaymentAccount `json:"payment" bson:"payment"`
+	Membership  Membership     `json:"membership" bson:"membership"`
+	Status      string         `json:"statut" bson:"status"`
 }
 
 type AccountModel struct{}
@@ -129,8 +136,9 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 			"value": 0,
 			"exp":   timeAccount.AddDate(2, 0, 0),
 		},
-		"image":  path,
-		"status": "active",
+		"image":   path,
+		"status":  "active",
+		"payment": []interface{}{},
 	})
 	err = db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
 		"$addToSet": bson.M{
@@ -228,6 +236,93 @@ func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
 	})
 	return
 }
+
+func (A *AccountModel) ListPayment(account, filter, sort string, pageNo, perPage int) (data []PaymentAccount2, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "date"
+		order = -1
+	}
+
+	regex_next := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"_id": account,
+		}},
+		{"$unwind": "$payment"},
+		{"$lookup": bson.M{
+			"from":         "payment",
+			"localField":   "payment._id",
+			"foreignField": "_id",
+			"as":           "pay",
+		}},
+		{"$unwind": "$pay"},
+		{"$project": bson.M{
+			"_id":    "$pay._id",
+			"name":   "$pay.name",
+			"desc":   "$pay.desc",
+			"type":   "$pay.type",
+			"active": "$pay.active",
+			"number": "$payment.number",
+		}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"name": regex_next},
+			},
+		}},
+	}
+	data_non_fix := []bson.M{}
+	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)
+	count = len(data_non_fix)
+	pipeline = append(pipeline,
+		bson.M{"$sort": bson.M{sorting: order}},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$skip": (pageNo - 1) * perPage},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$limit": perPage},
+	)
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
+	return
+}
+func (A *AccountModel) GetPayment(id_account, id_payment string) (data PaymentAccount2, err error) {
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"_id": id_account,
+		}},
+		{"$unwind": "$payment"},
+		{"$lookup": bson.M{
+			"from":         "payment",
+			"localField":   "payment._id",
+			"foreignField": "_id",
+			"as":           "pay",
+		}},
+		{"$unwind": "$pay"},
+		{"$project": bson.M{
+			"_id":    "$pay._id",
+			"name":   "$pay.name",
+			"desc":   "$pay.desc",
+			"type":   "$pay.type",
+			"active": "$pay.active",
+			"number": "$payment.number",
+		}},
+		{"$match": bson.M{
+			"_id": id_payment,
+		}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).One(&data)
+	return
+}
+
 func (A *AccountModel) CheckAccount(phonenumber int) (data Account, err error) {
 	err = db.Collection["account"].Find(bson.M{
 		"phonenumber": phonenumber,
@@ -285,6 +380,21 @@ func (A *AccountModel) GetId(id string) (data Account, err error) {
 	}).One(&data)
 	return
 }
+
+func (A *AccountModel) AddPayment(id_account string, data forms.AddPayment) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id_account,
+	}, bson.M{
+		"$addToSet": bson.M{
+			"payment": bson.M{
+				"_id":    data.Id,
+				"number": data.Number,
+			},
+		},
+	})
+	return
+}
+
 func (A *AccountModel) GetByMembership(membership string, prov, city int) (available bool) {
 	err := db.Collection["account"].Find(bson.M{
 		"membership._id": membership,

@@ -6,7 +6,7 @@ type Transaction struct {
 	Product  []ProductTransaction `json:"product" bson:"product"`
 	Discount []string             `json:"discount" bson:"discount"`
 	Delivery Delivery             `json:"delivery" bson:"delivery"`
-	Metode   string               `json:"metode" bson:"metode"`
+	Payment  string               `json:"payment"`
 	Subtotal int                  `json:"subtotal" bson:"subtotal"`
 	To       To                   `json:"to" bson:"to"`
 	From     From                 `json:"from" bson:"from"`

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"forms"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -39,10 +40,10 @@ type Transaction struct {
 	3. Done
 	4. Cenceled
 	*/
-	Metode   Metode   `json:"metode" bson:"metode"`
-	Evidence Evidence `json:"evidence" bson:"evidence"`
-	To       To       `json:"to" bson:"to"`
-	From     From     `json:"from" bson:"from"`
+	Payment  PaymentAccount2 `json:"payment" bson:"payment"`
+	Evidence Evidence        `json:"evidence" bson:"evidence"`
+	To       To              `json:"to" bson:"to"`
+	From     From            `json:"from" bson:"from"`
 }
 
 type Metode struct {
@@ -93,10 +94,10 @@ func (T *TransactionModel) GetStatus(status_code int) (status string) {
 func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err error) {
 	id := uuid.New()
 
-	// Get Metode
-
-	data_metode, err0 := metode_model.Get(data.Metode)
+	// Get Payment from account
+	data_payment, err0 := account_model.GetPayment(data.From.Account, data.Payment)
 	if err0 != nil {
+		log.Println("line 101")
 		err = err0
 		return
 	}
@@ -104,12 +105,14 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	// Get Account From
 	data_account_from, err1 := account_model.Get(data.From.Account)
 	if err1 != nil {
+		log.Println("line 109")
 		err = err1
 		return
 	}
 	// Get Account To
 	data_account_to, err2 := account_model.Get(data.To.Account)
 	if err2 != nil {
+		log.Println("line 116")
 		err = err2
 		return
 	}
@@ -217,7 +220,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		Product:  prod,
 	}
 
-	ret.Metode = data_metode
+	ret.Payment = data_payment
 
 	// From
 	ret.From = From{
@@ -229,7 +232,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 			Membership:  data_account_from.Membership,
 			PhoneNumber: data_account_from.PhoneNumber,
 			Status:      data_account_from.Status,
-			Qris:        data_account_from.Qris,
+			Payment:     data_account_from.Payment,
 		},
 		Address: data.From.Address,
 		Name:    data.From.Name,
@@ -283,38 +286,6 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	ret.Status_code = 0
 	// Insert into mongo
 	err = db.Collection["transaction"].Insert(ret)
-	// err = db.Collection["transaction"].Insert(bson.M{
-	// 	"_id":      id,
-	// 	"date":     time.Now(),
-	// 	"account":  data_account,
-	// 	"product":  prod,
-	// 	"paket":    paket,
-	// 	"discount": dis,
-	// 	"from": bson.M{
-	// 		"account": bson.M{
-	// 			"_id":         data_account_from.Id,
-	// 			"name":        data_account_from.Name,
-	// 			"email":       data_account_from.Email,
-	// 			"phonenumber": data_account_from.PhoneNumber,
-	// 			"membership":  data_account_from.Membership,
-	// 			"image":       data_account_from.Image,
-	// 			"status":      data_account_from.Status,
-	// 		},
-	// 		"name":    data.From.Name,
-	// 		"number":  data.From.Number,
-	// 		"address": data.From.Address,
-	// 	},
-	// 	"to": data.To,
-	// 	"delivery": bson.M{
-	// 		"courier": data.Delivery.Courier,
-	// 		"service": data.Delivery.Service,
-	// 		"resi":    "",
-	// 		"price":   price,
-	// 		"code":    data.Delivery.Code,
-	// 	},
-	// 	"status":      T.GetStatus(0),
-	// 	"status_code": 0,
-	// })
 	if err != nil {
 		return
 	}

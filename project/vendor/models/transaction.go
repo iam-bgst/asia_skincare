@@ -17,6 +17,7 @@ import (
 
 const (
 	NOTPAYED = iota
+	PAYED
 	PACKED
 	SENT
 	DONE
@@ -35,10 +36,11 @@ type Transaction struct {
 	Status_code      int                  `json:"status_code" bson:"status_code"`
 	/* Status
 	0. NotPayed
-	1. Packed
-	2. Sent
-	3. Done
-	4. Cenceled
+	1. Payed
+	2. Packed
+	3. Sent
+	4. Done
+	5. Cenceled
 	*/
 	Payment  PaymentAccount2 `json:"payment" bson:"payment"`
 	Evidence Evidence        `json:"evidence" bson:"evidence"`
@@ -79,6 +81,8 @@ func (T *TransactionModel) GetStatus(status_code int) (status string) {
 	switch status_code {
 	case NOTPAYED:
 		status = "NotPayed"
+	case PAYED:
+		status = "Payed"
 	case PACKED:
 		status = "Packed"
 	case SENT:
@@ -356,6 +360,10 @@ func (T *TransactionModel) AddPicturePay(id_trans string, data forms.Evidence) (
 			},
 		},
 	})
+	err = T.UpdateStatus(id_trans, PAYED)
+	if err != nil {
+		return
+	}
 	return
 }
 

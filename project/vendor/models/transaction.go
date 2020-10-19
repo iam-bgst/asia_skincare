@@ -17,11 +17,9 @@ import (
 
 const (
 	NOTPAYED = iota
-	PAYED
 	PACKED
 	SENT
-	DONE
-	CENCELED
+	DONE_CENCELED
 )
 
 type Transaction struct {
@@ -36,11 +34,9 @@ type Transaction struct {
 	Status_code      int                  `json:"status_code" bson:"status_code"`
 	/* Status
 	0. NotPayed
-	1. Payed
-	2. Packed
-	3. Sent
-	4. Done
-	5. Cenceled
+	1. Packed
+	2. Sent
+	3. Done & Cencel
 	*/
 	Payment  PaymentAccount2 `json:"payment" bson:"payment"`
 	Evidence Evidence        `json:"evidence" bson:"evidence"`
@@ -81,16 +77,12 @@ func (T *TransactionModel) GetStatus(status_code int) (status string) {
 	switch status_code {
 	case NOTPAYED:
 		status = "NotPayed"
-	case PAYED:
-		status = "Payed"
 	case PACKED:
 		status = "Packed"
 	case SENT:
 		status = "Sent"
-	case DONE:
-		status = "Done"
-	case CENCELED:
-		status = "Cenceled"
+	case DONE_CENCELED:
+		status = "Done & Cenceled"
 	}
 	return
 }
@@ -360,10 +352,6 @@ func (T *TransactionModel) AddPicturePay(id_trans string, data forms.Evidence) (
 			},
 		},
 	})
-	err = T.UpdateStatus(id_trans, PAYED)
-	if err != nil {
-		return
-	}
 	return
 }
 
@@ -375,23 +363,20 @@ func (T *TransactionModel) Get(id string) (data Transaction, err error) {
 }
 
 func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) {
-	if status_code == DONE {
-		transaction_data, err1 := T.Get(id)
-		for _, t := range transaction_data.Product {
-			produck_data, _ := product_model.Get(t.Id)
-			account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
-		}
-
-		if err1 != nil {
-			err = errors.New("error whee getting transaction")
-			return
-		}
-	}
 	if status_code == SENT {
 		transaction_data, err1 := T.Get(id)
 		for _, t := range transaction_data.Product {
+
+			// Getting Product
 			produck_data, _ := product_model.Get(t.Id)
+
+			// add point to account
+			account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
+
+			// add solded
 			product_model.UpdateSolded(t.Id, t.Qty)
+
+			// update stock
 			account_model.UpdateStockProduct(transaction_data.From.Account.Id, produck_data.Id, t.Qty)
 		}
 

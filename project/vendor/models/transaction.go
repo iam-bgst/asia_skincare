@@ -446,8 +446,16 @@ func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pa
 	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	// pn, _ := strconv.Atoi(pageNo)
 	// pp, _ := strconv.Atoi(perPage)
+	status_code := []int{}
+	if status == DONE {
+		status_code = []int{DONE, 4}
+	} else {
+		status_code = []int{status}
+	}
 	err = db.Collection["transaction"].Find(bson.M{
-		"status_code":    status,
+		"status_code": bson.M{
+			"$in": status_code,
+		},
 		"to.account._id": id_account,
 		"$or": []interface{}{
 			bson.M{"product.name": regex},
@@ -457,7 +465,9 @@ func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pa
 		return
 	}
 	count, err = db.Collection["transaction"].Find(bson.M{
-		"status_code":    status,
+		"status_code": bson.M{
+			"$in": status_code,
+		},
 		"to.account._id": id_account,
 		"$or": []interface{}{
 			bson.M{"product.name": regex},

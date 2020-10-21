@@ -72,6 +72,7 @@ type AccountList struct {
 type Address struct {
 	Name     string   `json:"name" bson:"name"`
 	ZipCode  string   `json:"zipcode" bson:"zipcode"`
+	Number   int      `json:"number" bson:"number"`
 	Province Province `json:"province" bson:"province"`
 	City     City     `json:"city" bson:"city"`
 	Detail   string   `json:"detail" bson:"detail"`
@@ -146,6 +147,7 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 		"$addToSet": bson.M{
 			"address": bson.M{
 				"name":     data.Name,
+				"number":   phone,
 				"zipcode":  "",
 				"province": prov,
 				"city":     city,
@@ -233,6 +235,7 @@ func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
 			"address": bson.M{
 				"name":     data.Name,
 				"zipcode":  data.ZipCode,
+				"number":   data.Number,
 				"province": prov,
 				"city":     city,
 				"detail":   data.Detail,

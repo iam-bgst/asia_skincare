@@ -9,6 +9,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pborman/uuid"
@@ -19,7 +20,8 @@ const (
 	NOTPAYED = iota
 	PACKED
 	SENT
-	DONE_CENCELED
+	DONE
+	CENCELED
 )
 
 type Transaction struct {
@@ -36,7 +38,8 @@ type Transaction struct {
 	0. NotPayed
 	1. Packed
 	2. Sent
-	3. Done & Cencel
+	3. Done
+	4. Cencel
 	*/
 	Payment  PaymentAccount2 `json:"payment" bson:"payment"`
 	Evidence Evidence        `json:"evidence" bson:"evidence"`
@@ -81,13 +84,16 @@ func (T *TransactionModel) GetStatus(status_code int) (status string) {
 		status = "Packed"
 	case SENT:
 		status = "Sent"
-	case DONE_CENCELED:
-		status = "Done & Cenceled"
+	case DONE:
+		status = "Done"
+	case CENCELED:
+		status = "Cenceled"
 	}
 	return
 }
 
-func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err error) {
+func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (ret Transaction, err error) {
+	defer wg.Done()
 	id := uuid.New()
 
 	// Get Payment from account
@@ -113,6 +119,20 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	if err2 != nil {
 		log.Println("line 116")
 		err = err2
+		return
+	}
+
+	address_to, err3 := account_model.GetAddress(data.To.Account, data.To.Address)
+	if err3 != nil {
+		log.Println("line 123")
+		err = err3
+		return
+	}
+
+	address_from, err4 := account_model.GetAddressDefault(data.From.Account)
+	if err4 != nil {
+		log.Println("line 130")
+		err = err4
 		return
 	}
 
@@ -233,9 +253,9 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 			Status:      data_account_from.Status,
 			Payment:     data_account_from.Payment,
 		},
-		Address: data.From.Address,
-		Name:    data.From.Name,
-		Number:  data.From.Number,
+		Address: address_from.Detail,
+		Name:    address_from.Name,
+		Number:  address_from.Number,
 	}
 
 	// To
@@ -249,9 +269,9 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 			PhoneNumber: data_account_to.PhoneNumber,
 			Status:      data_account_to.Status,
 		},
-		Address: data.To.Address,
-		Name:    data.To.Name,
-		Number:  data.To.Number,
+		Address: address_to.Detail,
+		Name:    address_to.Name,
+		Number:  address_to.Number,
 	}
 
 	// Proses Subtotal
@@ -445,5 +465,10 @@ func (T *TransactionModel) HistoyTransaction(id_account, filter, sort string, pa
 	if err != nil {
 		return
 	}
+	return
+}
+
+func (T *TransactionModel) All() (data []Transaction) {
+	db.Collection["transaction"].Find(bson.M{}).All(&data)
 	return
 }

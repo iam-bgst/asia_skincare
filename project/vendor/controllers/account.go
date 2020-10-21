@@ -81,6 +81,45 @@ func (A *AccountControll) Auth(c *gin.Context) {
 	}
 }
 
+func (A *AccountControll) UpdateAddress(c *gin.Context) {
+	var data forms.Address
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{
+			"error": "Error binding json",
+		})
+	} else {
+		id_account := c.Param("account")
+		id_address := c.Param("address")
+		err := accountmodels.UpdateAddress(id_account, id_address, data)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "address updated",
+				"status":  "ok",
+			})
+		}
+	}
+}
+
+func (A *AccountControll) DeleteAddress(c *gin.Context) {
+	id_account := c.Param("account")
+	id_address := c.Param("address")
+	err := accountmodels.DeleteAddress(id_account, id_address)
+	if err != nil {
+		c.JSON(406, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "address deleted",
+			"status":  "ok",
+		})
+	}
+}
+
 func (A *AccountControll) Register(c *gin.Context) {
 	log.Println("post from ip", c.ClientIP())
 	var data forms.Account

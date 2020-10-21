@@ -2,6 +2,7 @@ package models
 
 import (
 	"addon"
+	"sync"
 	"time"
 )
 
@@ -9,6 +10,7 @@ func InitialAssets() {
 	delivery_model.InitialDelivery()
 	membership_model.InitMembership()
 	payment_model.InitialPayment()
+
 }
 
 func ServicePoint() {
@@ -28,6 +30,27 @@ func ServicePoint() {
 					continue
 				}
 			}
+		}
+	}()
+}
+
+func ServiceTransaction() {
+	go func() {
+		wg := &sync.WaitGroup{}
+		for {
+			wg.Add(1)
+			data := transaction_model.All()
+			for _, d := range data {
+				sub := time.Now().Sub(d.Date).Hours()
+				if sub > 24.0 && d.Evidence == (Evidence{}) {
+					// fmt.Println(d.Id)
+					transaction_model.UpdateStatus(d.Id, CENCELED)
+				} else {
+					continue
+				}
+			}
+			wg.Done()
+			wg.Wait()
 		}
 	}()
 }

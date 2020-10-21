@@ -90,6 +90,11 @@ func Middleware() {
 		account.GET("/list", HandleCounter, accountcontroll.ListAccount)
 		account.POST("/adaddress/:id", HandleCounter, accountcontroll.AddAddress)
 		account.POST("/qris/add/:id", HandleCounter, accountcontroll.AddQris)
+		address := account.Group("/address")
+		{
+			address.PUT("/update/:account/:address", HandleCounter, accountcontroll.UpdateAddress)
+			address.DELETE("/delete/:account/:address", HandleCounter, accountcontroll.DeleteAddress)
+		}
 	}
 
 	// Product

@@ -32,16 +32,11 @@ type ProductTransaction struct {
 
 type To struct {
 	Account string `json:"account"`
-	Name    string `json:"name" bson:"name"`
-	Number  string `json:"number" bson:"number"`
 	Address string `json:"address" bson:"address"`
 }
 
 type From struct {
 	Account string `json:"account"`
-	Name    string `json:"name" bson:"name"`
-	Number  string `json:"number" bson:"number"`
-	Address string `json:"address" bson:"address"`
 }
 
 type Delivery struct {

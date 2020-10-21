@@ -70,6 +70,7 @@ type AccountList struct {
 }
 
 type Address struct {
+	Id       string   `json:"_id" bson:"_id,omitempty"`
 	Name     string   `json:"name" bson:"name"`
 	ZipCode  string   `json:"zipcode" bson:"zipcode"`
 	Number   string   `json:"number" bson:"number"`
@@ -143,9 +144,11 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 		"status":  "active",
 		"payment": []interface{}{},
 	})
+	id_address := uuid.New()
 	err = db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
 		"$addToSet": bson.M{
 			"address": bson.M{
+				"_id":      id_address,
 				"name":     data.Name,
 				"number":   data.PhoneNumber,
 				"zipcode":  "",
@@ -217,6 +220,7 @@ func (A *AccountModel) AddQris(id_account, qris, name, nmid string) (err error) 
 }
 
 func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
+	id_address := uuid.New()
 	prov, err1 := delivery_model.GetProvince(data.Province)
 	if err1 != nil {
 		err = err1
@@ -233,6 +237,7 @@ func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
 	}, bson.M{
 		"$addToSet": bson.M{
 			"address": bson.M{
+				"_id":      id_address,
 				"name":     data.Name,
 				"zipcode":  data.ZipCode,
 				"number":   data.Number,
@@ -242,6 +247,44 @@ func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
 				"default":  false,
 			},
 		},
+	})
+	return
+}
+
+func (A *AccountModel) UpdateAddress(id_account, id_address string, data forms.Address) (err error) {
+	prov, err1 := delivery_model.GetProvince(data.Province)
+	if err1 != nil {
+		err = err1
+		return
+	}
+	city, err2 := delivery_model.GetCityByProv(data.Province, data.City)
+	if err2 != nil {
+		err = err2
+		return
+	}
+
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         id_account,
+		"address._id": id_address,
+	}, bson.M{
+		"$set": bson.M{
+			"address.$.name":     data.Name,
+			"address.$.zipcode":  data.ZipCode,
+			"address.$.number":   data.Number,
+			"address.$.province": prov,
+			"address.$.city":     city,
+			"address.$.detail":   data.Detail,
+			"address.$.default":  false,
+		},
+	})
+	return
+}
+
+func (A *AccountModel) DeleteAddress(id_account, id_address string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id_account,
+	}, bson.M{
+		"$pull": bson.M{"address": bson.M{"_id": id_address}},
 	})
 	return
 }
@@ -303,6 +346,55 @@ func (A *AccountModel) ListPayment(account, filter, sort string, pageNo, perPage
 	err = db.Collection["account"].Pipe(pipeline).All(&data)
 	return
 }
+
+func (A *AccountModel) GetAddressDefault(id_account string) (data Address, err error) {
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"_id": id_account,
+		}},
+		{"$unwind": "$address"},
+		{"$match": bson.M{
+			"address.default": true,
+		}},
+		{"$project": bson.M{
+			"_id":      "$address._id",
+			"name":     "$address.name",
+			"zipcode":  "$address.zipcode",
+			"number":   "$address.number",
+			"province": "$address.province",
+			"city":     "$address.city",
+			"detail":   "$address.detail",
+			"default":  "$address.default",
+		}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).One(&data)
+	return
+}
+
+func (A *AccountModel) GetAddress(id_account, id_address string) (data Address, err error) {
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"_id": id_account,
+		}},
+		{"$unwind": "$address"},
+		{"$match": bson.M{
+			"address._id": id_address,
+		}},
+		{"$project": bson.M{
+			"_id":      "$address._id",
+			"name":     "$address.name",
+			"zipcode":  "$address.zipcode",
+			"number":   "$address.number",
+			"province": "$address.province",
+			"city":     "$address.city",
+			"detail":   "$address.detail",
+			"default":  "$address.default",
+		}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).One(&data)
+	return
+}
+
 func (A *AccountModel) GetPayment(id_account, id_payment string, ch_payment chan PaymentAccount2, ch_payment_err chan error) {
 	var data PaymentAccount2
 	pipeline := []bson.M{

@@ -20,6 +20,9 @@ func init() {
 	// Service Point
 	models.ServicePoint()
 
+	// Service Transaction
+	models.ServiceTransaction()
+
 }
 
 func main() {

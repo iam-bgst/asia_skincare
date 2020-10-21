@@ -86,7 +86,7 @@ func (P *PaymentModels) Delete(id string) (err error) {
 	return
 }
 
-func (P *PaymentModels) List(sort, pageNo, perPage string) (data []Payment, err error) {
+func (P *PaymentModels) List(sort, pageNo, perPage string) (data []Payment, count int, err error) {
 	sorting := sort
 	if strings.Contains(sort, "asc") {
 		sorting = strings.Replace(sort, "|asc", "", -1)
@@ -99,5 +99,6 @@ func (P *PaymentModels) List(sort, pageNo, perPage string) (data []Payment, err 
 	pn, _ := strconv.Atoi(pageNo)
 	pp, _ := strconv.Atoi(perPage)
 	err = db.Collection["payment"].Find(bson.M{}).Sort(sorting).Skip((pn - 1) * pp).Limit(pp).All(&data)
+	count, _ = db.Collection["payment"].Find(bson.M{}).Count()
 	return
 }

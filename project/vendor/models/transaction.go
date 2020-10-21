@@ -91,10 +91,13 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 	id := uuid.New()
 
 	// Get Payment from account
-	data_payment, err0 := account_model.GetPayment(data.From.Account, data.Payment)
-	if err0 != nil {
-		log.Println("line 101")
-		err = err0
+	ch_payment := make(chan PaymentAccount2)
+	ch_payment_err := make(chan error)
+	go account_model.GetPayment(data.From.Account, data.Payment, ch_payment, ch_payment_err)
+
+	if <-ch_payment_err != nil {
+		log.Println("line 109")
+		err = <-ch_payment_err
 		return
 	}
 
@@ -216,7 +219,7 @@ func (T *TransactionModel) Create(data forms.Transaction) (ret Transaction, err 
 		Product:  prod,
 	}
 
-	ret.Payment = data_payment
+	ret.Payment = <-ch_payment
 
 	// From
 	ret.From = From{

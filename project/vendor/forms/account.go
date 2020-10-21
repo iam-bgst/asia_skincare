@@ -10,6 +10,8 @@ type Account struct {
 }
 
 type Address struct {
+	Name     string `json:"name"`
+	ZipCode  string `json:"zipcode"`
 	Province int    `json:"province"`
 	City     int    `json:"city"`
 	Detail   string `json:"detail"`

@@ -96,16 +96,18 @@ func (D *DiscountControll) List(c *gin.Context) {
 	}
 	pp, _ := strconv.Atoi(perPage)
 	pn, _ := strconv.Atoi(pageNo)
-	data, err := discountmodels.List(sort, pageNo, perPage)
-	lastPage := float64(len(data)) / float64(pp)
+
+	data, count, err := discountmodels.List(sort, pageNo, perPage)
+
+	lastPage := float64(count) / float64(pp)
 	if pp != 0 {
-		if len(data)%pp == 0 {
+		if count%pp == 0 {
 			lastPage = lastPage
 		} else {
 			lastPage = lastPage + 1
 		}
 	} else {
-		lastPage = float64(len(data)) / float64(5)
+		lastPage = float64(count) / float64(5)
 	}
 	if err != nil {
 		c.JSON(404, gin.H{
@@ -114,18 +116,35 @@ func (D *DiscountControll) List(c *gin.Context) {
 		})
 		c.Abort()
 	} else {
-		c.JSON(200, gin.H{
-			"total":        len(data),
-			"per_page":     pp,
-			"current_page": pn,
-			"last_page":    int(lastPage),
-			"next_page":    "",
-			"prev_page":    "",
-			"from":         ((pn * pp) - pp) + 1,
-			"to":           pn * pp,
-			"data":         data,
-			"status":       "Ok",
-		})
-		c.Abort()
+		if count == 0 {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     pp,
+				"current_page": pn,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pn * pp) - pp) + 1,
+				"to":           pn * pp,
+				"data":         []interface{}{},
+				"status":       "Ok",
+			})
+			c.Abort()
+		} else {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     pp,
+				"current_page": pn,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pn * pp) - pp) + 1,
+				"to":           pn * pp,
+				"data":         data,
+				"status":       "Ok",
+			})
+			c.Abort()
+		}
+
 	}
 }

@@ -85,7 +85,7 @@ func (D *DiscountModel) Delete(id string) (err error) {
 	return
 }
 
-func (D *DiscountModel) List(sort, pageNo, perPage string) (data []Discount, err error) {
+func (D *DiscountModel) List(sort, pageNo, perPage string) (data []Discount, count int, err error) {
 	sorting := sort
 	if strings.Contains(sort, "asc") {
 		sorting = strings.Replace(sort, "|asc", "", -1)
@@ -98,5 +98,6 @@ func (D *DiscountModel) List(sort, pageNo, perPage string) (data []Discount, err
 	pn, _ := strconv.Atoi(pageNo)
 	pp, _ := strconv.Atoi(perPage)
 	err = db.Collection["discount"].Find(bson.M{}).Sort(sorting).Skip((pn - 1) * pp).Limit(pp).All(&data)
+	count, _ = db.Collection["discount"].Find(bson.M{}).Count()
 	return
 }

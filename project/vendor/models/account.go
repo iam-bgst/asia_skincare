@@ -70,6 +70,8 @@ type AccountList struct {
 }
 
 type Address struct {
+	Name     string   `json:"name" bson:"name"`
+	ZipCode  string   `json:"zipcode" bson:"zipcode"`
 	Province Province `json:"province" bson:"province"`
 	City     City     `json:"city" bson:"city"`
 	Detail   string   `json:"detail" bson:"detail"`
@@ -143,6 +145,8 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 	err = db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
 		"$addToSet": bson.M{
 			"address": bson.M{
+				"name":     data.Name,
+				"zipcode":  "",
 				"province": prov,
 				"city":     city,
 				"detail":   data.Address.Detail,
@@ -227,6 +231,8 @@ func (A *AccountModel) AddAddress(id string, data forms.Address) (err error) {
 	}, bson.M{
 		"$addToSet": bson.M{
 			"address": bson.M{
+				"name":     data.Name,
+				"zipcode":  data.ZipCode,
 				"province": prov,
 				"city":     city,
 				"detail":   data.Detail,
@@ -294,7 +300,8 @@ func (A *AccountModel) ListPayment(account, filter, sort string, pageNo, perPage
 	err = db.Collection["account"].Pipe(pipeline).All(&data)
 	return
 }
-func (A *AccountModel) GetPayment(id_account, id_payment string) (data PaymentAccount2, err error) {
+func (A *AccountModel) GetPayment(id_account, id_payment string, ch_payment chan PaymentAccount2, ch_payment_err chan error) {
+	var data PaymentAccount2
 	pipeline := []bson.M{
 		{"$match": bson.M{
 			"_id": id_account,
@@ -319,7 +326,8 @@ func (A *AccountModel) GetPayment(id_account, id_payment string) (data PaymentAc
 			"_id": id_payment,
 		}},
 	}
-	err = db.Collection["account"].Pipe(pipeline).One(&data)
+	ch_payment_err <- db.Collection["account"].Pipe(pipeline).One(&data)
+	ch_payment <- data
 	return
 }
 

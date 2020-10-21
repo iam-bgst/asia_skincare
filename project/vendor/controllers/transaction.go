@@ -95,19 +95,36 @@ func (T *TransactionControll) ListTransactionOnagent(c *gin.Context) {
 		})
 		c.Abort()
 	} else {
-		c.JSON(200, gin.H{
-			"total":        count,
-			"per_page":     perPage,
-			"current_page": pageNo,
-			"last_page":    int(lastPage),
-			"next_page":    "",
-			"prev_page":    "",
-			"from":         ((pageNo * perPage) - perPage) + 1,
-			"to":           pageNo * perPage,
-			"data":         data,
-			"status":       "Ok",
-		})
-		c.Abort()
+		if count == 0 {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         []interface{}{},
+				"status":       "Ok",
+			})
+			c.Abort()
+		} else {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         data,
+				"status":       "Ok",
+			})
+			c.Abort()
+		}
+
 	}
 }
 
@@ -153,19 +170,36 @@ func (T *TransactionControll) ListHistory(c *gin.Context) {
 		})
 		c.Abort()
 	} else {
-		c.JSON(200, gin.H{
-			"total":        count,
-			"per_page":     perPage,
-			"current_page": pageNo,
-			"last_page":    int(lastPage),
-			"next_page":    "",
-			"prev_page":    "",
-			"from":         ((pageNo * perPage) - perPage) + 1,
-			"to":           pageNo * perPage,
-			"data":         data,
-			"status":       "Ok",
-		})
-		c.Abort()
+		if count == 0 {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         []interface{}{},
+				"status":       "Ok",
+			})
+			c.Abort()
+		} else {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         data,
+				"status":       "Ok",
+			})
+			c.Abort()
+		}
+
 	}
 }
 

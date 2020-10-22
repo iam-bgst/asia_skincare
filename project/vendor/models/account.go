@@ -290,6 +290,14 @@ func (A *AccountModel) DeleteAddress(id_account, id_address string) (err error) 
 	return
 }
 
+func (A *AccountModel) DeletePayment(id_account, id_payment string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id_account,
+	}, bson.M{
+		"$pull": bson.M{"payment": bson.M{"_id": id_payment}},
+	})
+	return
+}
 func (A *AccountModel) ListPayment(account, filter, sort string, pageNo, perPage int) (data []PaymentAccount2, count int, err error) {
 	sorting := sort
 	order := 0
@@ -348,6 +356,19 @@ func (A *AccountModel) ListPayment(account, filter, sort string, pageNo, perPage
 	return
 }
 
+func (A *AccountModel) UpdatePayment(id_account, id_payment string, data forms.AddPayment) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         id_account,
+		"payment._id": id_payment,
+	}, bson.M{
+		"$set": bson.M{
+			"payment.$._id":    data.Id,
+			"payment.$.number": data.Number,
+		},
+	})
+	return
+}
+
 func (A *AccountModel) GetAddressDefault(id_account string) (data Address, err error) {
 	pipeline := []bson.M{
 		{"$match": bson.M{
@@ -396,8 +417,7 @@ func (A *AccountModel) GetAddress(id_account, id_address string) (data Address, 
 	return
 }
 
-func (A *AccountModel) GetPayment(id_account, id_payment string, ch_payment chan PaymentAccount2, ch_payment_err chan error) (data PaymentAccount2, err error) {
-
+func (A *AccountModel) GetPayment(id_account, id_payment string) (data PaymentAccount2, err error) {
 	pipeline := []bson.M{
 		{"$match": bson.M{
 			"_id": id_account,

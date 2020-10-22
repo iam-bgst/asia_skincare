@@ -82,7 +82,7 @@ func Middleware() {
 	// router.Use(HandleAuth())
 
 	{
-		account.POST("/addpayment/:id", HandleCounter, accountcontroll.AddPayment)
+
 		account.PUT("/update/:id", HandleCounter, accountcontroll.Update)
 		account.GET("/get/:id", HandleCounter, accountcontroll.Get)
 		account.PUT("/nonactive/:id", HandleCounter, accountcontroll.NonActiveAccount)
@@ -94,6 +94,15 @@ func Middleware() {
 		{
 			address.PUT("/update/:account/:address", HandleCounter, accountcontroll.UpdateAddress)
 			address.DELETE("/delete/:account/:address", HandleCounter, accountcontroll.DeleteAddress)
+		}
+
+		payment_a := account.Group("/payment")
+		{
+			payment_a.GET("/list/:account", HandleCounter, accountcontroll.ListPayment)
+			payment_a.POST("/add/:id", HandleCounter, accountcontroll.AddPayment)
+			payment_a.GET("/get/:account/:payment", HandleCounter, accountcontroll.GetPayment)
+			payment_a.PUT("/update/:account/:payment", HandleCounter, accountcontroll.UpdatePayment)
+			payment_a.DELETE("/delete/:account/:payment", HandleCounter, accountcontroll.DeletePayment)
 		}
 	}
 

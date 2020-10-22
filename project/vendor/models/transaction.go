@@ -97,13 +97,11 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 	id := uuid.New()
 
 	// Get Payment from account
-	ch_payment := make(chan PaymentAccount2)
-	ch_payment_err := make(chan error)
-	go account_model.GetPayment(data.From.Account, data.Payment, ch_payment, ch_payment_err)
+	payment, err0 := account_model.GetPayment(data.From.Account, data.Payment)
 
-	if <-ch_payment_err != nil {
+	if err0 != nil {
 		log.Println("line 109")
-		err = <-ch_payment_err
+		err = err0
 		return
 	}
 
@@ -239,7 +237,7 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 		Product:  prod,
 	}
 
-	ret.Payment = <-ch_payment
+	ret.Payment = payment
 
 	// From
 	ret.From = From{

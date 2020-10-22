@@ -28,8 +28,8 @@ type Account struct {
 	Qris          string     `json:"qris" bson:"qris"`
 	Discount_used []Discount `json:"discount_used" bson:"discount_used"`
 	Product       []struct {
-		Id    string `json:"_id"`
-		Stock int    `json:"stock"`
+		Id    string `json:"_id" bson:"_id,omitempty"`
+		Stock int    `json:"stock" bson:"stock"`
 	} `json:"product"`
 }
 
@@ -481,6 +481,9 @@ func (A *AccountModel) GetId(id string) (data Account, err error) {
 	err = db.Collection["account"].Find(bson.M{
 		"_id": id,
 	}).One(&data)
+	if len(data.Discount_used) == 0 {
+		data.Discount_used = ([]Discount{})
+	}
 	return
 }
 

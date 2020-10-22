@@ -354,6 +354,7 @@ func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage i
 			"weight":     "$product_docs.weight",
 			"point":      "$product_docs.point",
 			"prices":     "$product_docs.pricing",
+			"netto":      "$product_docs.netto",
 		}},
 		{"$addFields": bson.M{
 			"pricing": bson.M{

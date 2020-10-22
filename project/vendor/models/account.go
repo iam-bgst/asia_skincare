@@ -15,18 +15,19 @@ import (
 )
 
 type Account struct {
-	Id            string     `json:"_id" bson:"_id,omitempty"`
-	Name          string     `json:"name" bson:"name"`
-	Email         string     `json:"email" bson:"email"`
-	PhoneNumber   int        `json:"phonenumber" bson:"phonenumber"`
-	Point         Point      `json:"point" bson:"point"`
-	RegiteredAt   time.Time  `json:"registeredAt" bson:"registeredAt"`
-	Address       []Address  `json:"address" bson:"address"`
-	Membership    Membership `json:"membership" bson:"membership"`
-	Image         string     `json:"image" bson:"image"`
-	Status        string     `json:"status" bson:"status"`
-	Qris          string     `json:"qris" bson:"qris"`
-	Discount_used []Discount `json:"discount_used" bson:"discount_used"`
+	Id            string           `json:"_id" bson:"_id,omitempty"`
+	Name          string           `json:"name" bson:"name"`
+	Email         string           `json:"email" bson:"email"`
+	PhoneNumber   int              `json:"phonenumber" bson:"phonenumber"`
+	Point         Point            `json:"point" bson:"point"`
+	RegiteredAt   time.Time        `json:"registeredAt" bson:"registeredAt"`
+	Address       []Address        `json:"address" bson:"address"`
+	Payment       []PaymentAccount `json:"payment" bson:"payment"`
+	Membership    Membership       `json:"membership" bson:"membership"`
+	Image         string           `json:"image" bson:"image"`
+	Status        string           `json:"status" bson:"status"`
+	Qris          string           `json:"qris" bson:"qris"`
+	Discount_used []Discount       `json:"discount_used" bson:"discount_used"`
 	Product       []struct {
 		Id    string `json:"_id" bson:"_id,omitempty"`
 		Stock int    `json:"stock" bson:"stock"`
@@ -395,8 +396,8 @@ func (A *AccountModel) GetAddress(id_account, id_address string) (data Address, 
 	return
 }
 
-func (A *AccountModel) GetPayment(id_account, id_payment string, ch_payment chan PaymentAccount2, ch_payment_err chan error) {
-	var data PaymentAccount2
+func (A *AccountModel) GetPayment(id_account, id_payment string, ch_payment chan PaymentAccount2, ch_payment_err chan error) (data PaymentAccount2, err error) {
+
 	pipeline := []bson.M{
 		{"$match": bson.M{
 			"_id": id_account,
@@ -421,8 +422,7 @@ func (A *AccountModel) GetPayment(id_account, id_payment string, ch_payment chan
 			"_id": id_payment,
 		}},
 	}
-	ch_payment_err <- db.Collection["account"].Pipe(pipeline).One(&data)
-	ch_payment <- data
+	err = db.Collection["account"].Pipe(pipeline).One(&data)
 	return
 }
 
@@ -481,8 +481,9 @@ func (A *AccountModel) GetId(id string) (data Account, err error) {
 	err = db.Collection["account"].Find(bson.M{
 		"_id": id,
 	}).One(&data)
-	if len(data.Discount_used) == 0 {
+	if len(data.Discount_used) == 0 && len(data.Payment) == 0 {
 		data.Discount_used = ([]Discount{})
+		data.Payment = ([]PaymentAccount{})
 	}
 	return
 }

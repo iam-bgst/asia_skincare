@@ -32,6 +32,7 @@ type Account struct {
 		Id    string `json:"_id" bson:"_id,omitempty"`
 		Stock int    `json:"stock" bson:"stock"`
 	} `json:"product"`
+	Rewards []Rewards `json:"rewards" bson:"rewards"`
 }
 
 type Point struct {
@@ -356,6 +357,26 @@ func (A *AccountModel) ListPayment(account, filter, sort string, pageNo, perPage
 	return
 }
 
+func (A *AccountModel) ListPoint(filter, sort string, pageNo, perPage int) (data []Account, count int, err error) {
+	sorting := sort
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = "-" + sorting
+
+	} else {
+		sorting = "date"
+	}
+
+	err = db.Collection["account"].Find(bson.M{
+		"point.value": bson.M{"$gt": 0},
+	}).Sort(sorting).Skip((pageNo - 1) * perPage).Limit(perPage).All(&data)
+	count, _ = db.Collection["account"].Find(bson.M{"point.value": bson.M{"$gt": 0}}).Count()
+	return
+}
+
 func (A *AccountModel) UpdatePayment(id_account, id_payment string, data forms.AddPayment) (err error) {
 	err = db.Collection["account"].Update(bson.M{
 		"_id":         id_account,
@@ -667,5 +688,91 @@ func (A *AccountModel) ListAccount(filter, sort string, pageNo, perPage int) (da
 	}
 	err = db.Collection["account"].Pipe(pipeline).All(&data)
 	count, _ = db.Collection["account"].Find(bson.M{}).Count()
+	return
+}
+
+func (A *AccountModel) GetRewardClaimed(account, reward string) (data Rewards, err error) {
+	pipeline := []bson.M{
+		{"$match": bson.M{"_id": account}},
+		{"$lookup": bson.M{
+			"from":         "rewards",
+			"localField":   "rewards._id",
+			"foreignField": "_id",
+			"as":           "rew",
+		}},
+		{"$unwind": "$rew"},
+		{"$project": bson.M{
+			"_id":        "$rew._id",
+			"name":       "$rew.name",
+			"des":        "$rew.desc",
+			"pricepoint": "$rew.pricepoint",
+			"image":      "$rew.image",
+			"start":      "$rew.start",
+			"end":        "$rew.end",
+		}},
+		{"$match": bson.M{"_id": reward}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).One(&data)
+	return
+}
+
+func (A *AccountModel) ClaimReward(account, reward string) (err error) {
+	rew, _ := A.GetRewardClaimed(account, reward)
+	if rew != (Rewards{}) {
+		err = errors.New("The reward has been claimed")
+		return
+	}
+	err = db.Collection["account"].Update(bson.M{
+		"_id": account,
+	}, bson.M{
+		"$addToSet": bson.M{
+			"rewards": bson.M{
+				"_id": reward,
+			},
+		},
+	})
+	err = A.UpdatePoint(account, rew.PricePoint-(rew.PricePoint*2))
+	return
+}
+
+func (A *AccountModel) ListAccountRewardClaim(filter, sort, reward string, pageNo, perPage int) (data []Account, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "date"
+		order = -1
+	}
+	pipeline := []bson.M{
+		{"$lookup": bson.M{
+			"from":         "rewards",
+			"localField":   "rewards._id",
+			"foreignField": "_id",
+			"as":           "rew",
+		}},
+		{"$unwind": "$rew"},
+		{"$match": bson.M{"rew._id": reward}},
+	}
+	data_non_fix := []bson.M{}
+
+	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)
+	count = len(data_non_fix)
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
+	pipeline = append(pipeline,
+		bson.M{"$sort": bson.M{sorting: order}},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$skip": (pageNo - 1) * perPage},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$limit": perPage},
+	)
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
 	return
 }

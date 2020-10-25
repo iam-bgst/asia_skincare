@@ -10,4 +10,5 @@ var (
 	metode_model      = new(MetodeModels)
 	payment_model     = new(PaymentModels)
 	transaction_model = new(TransactionModel)
+	reward_models     = new(RewardsModels)
 )

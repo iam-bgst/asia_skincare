@@ -12,4 +12,5 @@ var (
 	deliverymodels    = new(models.DeliveryModels)
 	metodemodels      = new(models.MetodeModels)
 	paymentmodels     = new(models.PaymentModels)
+	rewardmodels      = new(models.RewardsModels)
 )

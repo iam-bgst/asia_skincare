@@ -3,8 +3,8 @@ package controllers
 import (
 	"fmt"
 	"forms"
+	"models"
 	"strconv"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,16 +12,17 @@ import (
 type TransactionControll struct{}
 
 func (T *TransactionControll) Add(c *gin.Context) {
-	wg := &sync.WaitGroup{}
 	var data forms.Transaction
 	if c.BindJSON(&data) != nil {
 		c.JSON(405, gin.H{
 			"error": "error binding json",
 		})
 	} else {
-		wg.Add(1)
-		da, err := transactionmodels.Create(data, wg)
-		wg.Wait()
+		ch_return := make(chan models.Transaction)
+		ch_err := make(chan error)
+		go transactionmodels.Create(data, ch_return, ch_err)
+		err := <-ch_err
+
 		if err != nil {
 			c.JSON(405, gin.H{
 				"error": err.Error(),
@@ -30,7 +31,7 @@ func (T *TransactionControll) Add(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"status":  "ok",
 				"message": "Transaction Created",
-				"data":    da,
+				"data":    <-ch_return,
 			})
 		}
 	}

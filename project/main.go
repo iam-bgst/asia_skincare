@@ -8,7 +8,18 @@ import (
 
 func init() {
 	// Collection
-	collection := []string{"reseller", "membership", "product", "payment", "delivery", "account", "paket", "discount", "transaction", "metode", "reward"}
+	collection := []string{
+		"reseller",
+		"membership",
+		"product",
+		"payment",
+		"delivery",
+		"account",
+		"paket",
+		"discount",
+		"transaction",
+		"metode",
+		"rewards"}
 
 	// Mongodb
 	db.NewConnection()

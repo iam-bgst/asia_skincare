@@ -28,6 +28,7 @@ var (
 	deliverycontroll    = new(controllers.DeliveryControll)
 	metodecontroll      = new(controllers.MetodeControll)
 	paymentcontroll     = new(controllers.PaymentControll)
+	rewardcontroll      = new(controllers.RewardControll)
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -82,7 +83,7 @@ func Middleware() {
 	// router.Use(HandleAuth())
 
 	{
-
+		account.GET("/account_point", HandleCounter, accountcontroll.ListAccountPoint)
 		account.PUT("/update/:id", HandleCounter, accountcontroll.Update)
 		account.GET("/get/:id", HandleCounter, accountcontroll.Get)
 		account.PUT("/nonactive/:id", HandleCounter, accountcontroll.NonActiveAccount)
@@ -90,6 +91,14 @@ func Middleware() {
 		account.GET("/list", HandleCounter, accountcontroll.ListAccount)
 		account.POST("/adaddress/:id", HandleCounter, accountcontroll.AddAddress)
 		account.POST("/qris/add/:id", HandleCounter, accountcontroll.AddQris)
+		product_a := account.Group("/product")
+		{
+			product_a.PUT("/update/:account/:product", HandleCounter, accountcontroll.UpdateStock)
+		}
+		reward_a := account.Group("/reward")
+		{
+			reward_a.GET("/list/:reward", HandleCounter, accountcontroll.ListAccountClaimReward)
+		}
 		address := account.Group("/address")
 		{
 			address.PUT("/update/:account/:address", HandleCounter, accountcontroll.UpdateAddress)
@@ -176,6 +185,17 @@ func Middleware() {
 	{
 		membership.POST("/add", HandleCounter, membershipcontroll.Create)
 		membership.GET("/listall", HandleCounter, membershipcontroll.ListAll)
+	}
+
+	// Reward
+	reward := router.Group("/reward")
+	{
+		reward.POST("/add", HandleCounter, rewardcontroll.Create)
+		reward.GET("/get/:id", HandleCounter, rewardcontroll.Get)
+		reward.PUT("/update/:id", HandleCounter, rewardcontroll.Update)
+		reward.GET("/list", HandleCounter, rewardcontroll.List)
+		reward.DELETE("/delete/:id", HandleCounter, rewardcontroll.Delete)
+		reward.PUT("/claim/:account/:reward", HandleCounter, rewardcontroll.ClaimReward)
 	}
 
 	router.Run(port)

@@ -3,6 +3,7 @@ package controllers
 import (
 	"forms"
 	"log"
+	"models"
 	"net/http"
 	"strconv"
 	"time"
@@ -36,6 +37,73 @@ func (A *AccountControll) AddPayment(c *gin.Context) {
 				"message": "added payment",
 				"status":  "ok",
 			})
+		}
+	}
+}
+
+func (A *AccountControll) ListAccountPoint(c *gin.Context) {
+	sort := c.Query("sort")
+	pageNo, _ := strconv.Atoi(c.Query("page"))
+	perPage, _ := strconv.Atoi(c.Query("per_page"))
+	filter := c.Query("filter")
+	if sort == "" {
+		sort = "_id"
+	}
+	if pageNo == 0 {
+		pageNo = 1
+	}
+	if perPage == 0 {
+		perPage = 5
+	}
+	// pp, _ := perPage)
+	// pn, _ := strconv.Atoi(pageNo)
+
+	data, count, err := accountmodels.ListPoint(filter, sort, pageNo, perPage)
+	lastPage := float64(count) / float64(perPage)
+	if perPage != 0 {
+		if count%perPage == 0 {
+			lastPage = lastPage
+		} else {
+			lastPage = lastPage + 1
+		}
+	} else {
+		lastPage = float64(count) / float64(5)
+	}
+	if err != nil {
+		c.JSON(404, gin.H{
+			"message": "terjadi kesalahan",
+			"error":   err.Error(),
+		})
+		c.Abort()
+	} else {
+		if count == 0 {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         []interface{}{},
+				"status":       "Ok",
+			})
+			c.Abort()
+		} else {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         data,
+				"status":       "Ok",
+			})
+			c.Abort()
 		}
 	}
 }
@@ -466,5 +534,103 @@ func (A *AccountControll) Get(c *gin.Context) {
 			"data":   data,
 			"status": "ok",
 		})
+	}
+}
+
+func (A *AccountControll) UpdateStock(c *gin.Context) {
+	account := c.Param("account")
+	product := c.Param("product")
+	var data struct {
+		Stock int `json:"stock"`
+	}
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{
+			"error": "error binding json",
+		})
+	} else {
+		err := accountmodels.UpdateStockOnAccount(account, product, data.Stock)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "stock updated",
+				"status":  "ok",
+			})
+		}
+	}
+
+}
+
+func (A *AccountControll) ListAccountClaimReward(c *gin.Context) {
+	sort := c.Query("sort")
+	pageNo, _ := strconv.Atoi(c.Query("page"))
+	perPage, _ := strconv.Atoi(c.Query("per_page"))
+	filter := c.Query("filter")
+	reward := c.Param("reward")
+
+	if sort == "" {
+		sort = "name"
+	}
+	if pageNo == 0 {
+		pageNo = 1
+	}
+	if perPage == 0 {
+		perPage = 5
+	}
+	var data []models.Account
+	var count int
+	var err error
+
+	data, count, err = accountmodels.ListAccountRewardClaim(filter, sort, reward, pageNo, perPage)
+
+	lastPage := float64(count) / float64(perPage)
+	if perPage != 0 {
+		if len(data)%perPage == 0 {
+			lastPage = lastPage
+		} else {
+			lastPage = lastPage + 1
+		}
+	} else {
+		lastPage = float64(count) / float64(5)
+	}
+	if err != nil {
+		c.JSON(404, gin.H{
+			"message": "terjadi kesalahan",
+			"error":   err.Error(),
+		})
+		c.Abort()
+	} else {
+		if count == 0 {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         []interface{}{},
+				"status":       "Ok",
+			})
+			c.Abort()
+		} else {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         data,
+				"status":       "Ok",
+			})
+			c.Abort()
+		}
+
 	}
 }

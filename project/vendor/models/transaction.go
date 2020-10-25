@@ -9,7 +9,6 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/pborman/uuid"
@@ -92,46 +91,45 @@ func (T *TransactionModel) GetStatus(status_code int) (status string) {
 	return
 }
 
-func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (ret Transaction, err error) {
-	defer wg.Done()
+func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transaction, ch_err chan error) {
 	id := uuid.New()
 
 	// Get Payment from account
 	payment, err0 := account_model.GetPayment(data.From.Account, data.Payment)
 
 	if err0 != nil {
-		log.Println("line 109")
-		err = err0
-		return
+		log.Println("line 102")
+		ch_err <- err0
+		// return
 	}
 
 	// Get Account From
 	data_account_from, err1 := account_model.Get(data.From.Account)
 	if err1 != nil {
 		log.Println("line 109")
-		err = err1
-		return
+		ch_err <- err1
+		// return
 	}
 	// Get Account To
 	data_account_to, err2 := account_model.Get(data.To.Account)
 	if err2 != nil {
 		log.Println("line 116")
-		err = err2
-		return
+		ch_err <- err2
+		// return
 	}
 
 	address_to, err3 := account_model.GetAddress(data.To.Account, data.To.Address)
 	if err3 != nil {
 		log.Println("line 123")
-		err = err3
-		return
+		ch_err <- err3
+		// return
 	}
 
 	address_from, err4 := account_model.GetAddressDefault(data.From.Account)
 	if err4 != nil {
 		log.Println("line 130")
-		err = err4
-		return
+		ch_err <- err4
+		// return
 	}
 
 	// Getting the Product
@@ -142,23 +140,22 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 		if len(data.Product) == 0 {
 			prod = nil
 		} else {
-
 			_, err1 := account_model.GetDiscountUsed(data.To.Account, p.Discount)
 			if err1 == nil {
-				err = errors.New("discount is used on previous product")
-				return
+				ch_err <- errors.New("discount is used on previous product")
+				// return
 			}
 			data_p, err1 := product_model.Detail(p.Product, data.From.Account)
 			if err1 != nil {
-				err = errors.New("Product id " + p.Product + " " + err1.Error())
-				return
+				ch_err <- errors.New("Product id " + p.Product + " " + err1.Error())
+				// return
 			}
 			if i > 0 {
 				if p.Discount == "" {
 					data_d = Discount{}
 				} else if p.Discount == discount_i {
-					err = errors.New("discount used on product " + data.Product[i-1].Product)
-					return
+					ch_err <- errors.New("discount used on product " + data.Product[i-1].Product)
+					// return
 				}
 			}
 
@@ -167,14 +164,14 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 			} else {
 				data_d, err1 = discount_model.Get(p.Discount)
 				if err1 != nil {
-					err = errors.New("Discount Product id " + p.Discount + " " + err1.Error())
-					return
+					ch_err <- errors.New("Discount Product id " + p.Discount + " " + err1.Error())
+					// return
 				}
 				err2 := account_model.AddDiscounUsed(data_account_to.Id, p.Discount)
 				if err2 != nil {
 					fmt.Println("log on line 96")
-					err = err2
-					return
+					ch_err <- err2
+					// return
 				}
 			}
 
@@ -202,8 +199,8 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 	for _, d := range data.Discount {
 		_, err1 := account_model.GetDiscountUsed(data.To.Account, d)
 		if err1 == nil {
-			err = errors.New("discount is used on your account")
-			return
+			ch_err <- errors.New("discount is used on your account")
+			// return
 		}
 
 		if len(data.Discount) == 0 {
@@ -211,8 +208,8 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 		} else {
 			data_discount, err1 := discount_model.Get(d)
 			if err1 != nil {
-				err = errors.New("Discount id " + d + " " + err1.Error())
-				return
+				ch_err <- errors.New("Discount id " + d + " " + err1.Error())
+				// return
 			}
 			dis = append(dis, Discount{
 				Id:           data_discount.Id,
@@ -225,11 +222,12 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 			err2 := account_model.AddDiscounUsed(data.To.Account, d)
 			if err2 != nil {
 				fmt.Println("log on line 145")
-				err = err2
-				return
+				ch_err <- err2
+				// return
 			}
 		}
 	}
+	var ret Transaction
 	ret = Transaction{
 		Id:       id,
 		Date:     time.Now(),
@@ -237,6 +235,7 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 		Product:  prod,
 	}
 
+	// Payment
 	ret.Payment = payment
 
 	// From
@@ -302,12 +301,11 @@ func (T *TransactionModel) Create(data forms.Transaction, wg *sync.WaitGroup) (r
 	ret.Status = T.GetStatus(0)
 	ret.Status_code = 0
 	// Insert into mongo
-	err = db.Collection["transaction"].Insert(ret)
-	if err != nil {
-		return
-	}
-
-	return
+	ch_err <- db.Collection["transaction"].Insert(ret)
+	// if <-ch_err != nil {
+	// 	return
+	// }
+	ch_return <- ret
 }
 
 func (T *TransactionModel) TransactionOnAgent(id_account, filter, sort string, pageNo, perPage, status int) (data []Transaction, count int, err error) {

@@ -66,9 +66,14 @@ type ListProducFix struct {
 	Netto      string     `json:"netto" bson:"netto"`
 	Image      string     `json:"image" bson:"image"`
 	Desc       string     `json:"desc" bson:"desc"`
-	From       Address    `json:"from" bson:"from"`
-	Account    string     `json:"account" bson:"account"`
-	Type       int        `json:"type" bson:"type"`
+	From       struct {
+		Province Province `json:"province" bson:"province"`
+		City     City     `json:"city" bson:"city"`
+		Detail   string   `json:"detail" bson:"detail"`
+		Default  bool     `json:"default" bson:"default"`
+	} `json:"from" bson:"from"`
+	Account string `json:"account" bson:"account"`
+	Type    int    `json:"type" bson:"type"`
 }
 
 type Pricing struct {
@@ -195,31 +200,80 @@ func (P *ProductModel) All() (data []Product) {
 
 func (P *ProductModel) List(filter, sort string, pageNo, perPage int) (data []ListProducFix, count int, err error) {
 	sorting := sort
-	// order := 0
+	order := 0
 	if strings.Contains(sort, "asc") {
 		sorting = strings.Replace(sort, "|asc", "", -1)
-		// order = 1
+		order = 1
 	} else if strings.Contains(sort, "desc") {
 		sorting = strings.Replace(sort, "|desc", "", -1)
 		sorting = sorting
-		// order = -1
+		order = -1
 	} else {
 		sorting = "date"
-		// order = -1
+		order = -1
 	}
 	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	pipeline := []bson.M{
+		{"$match": bson.M{"membership.code": 0}},
+		{"$unwind": "$product"},
+		{"$unwind": "$address"},
+		{"$match": bson.M{"address.default": true}},
+		{"$lookup": bson.M{
+			"from":         "product",
+			"localField":   "product._id",
+			"foreignField": "_id",
+			"as":           "product_docs",
+		}},
+		{"$unwind": "$product_docs"},
+		{"$project": bson.M{
+			"_id":        "$product._id",
+			"stock":      "$product.stock",
+			"desc":       "$product_docs.desc",
+			"from":       "$address",
+			"account":    "$_id",
+			"membership": "$membership",
+			"name":       "$product_docs.name",
+			"image":      "$product_docs.image",
+			"weight":     "$product_docs.weight",
+			"point":      "$product_docs.point",
+			"prices":     "$product_docs.pricing",
+			"netto":      "$product_docs.netto",
+		}},
+		{"$addFields": bson.M{
+			"pricing": bson.M{
+				"$arrayElemAt": []interface{}{
+					bson.M{"$filter": bson.M{
+						"input": "$prices",
+						"as":    "pri",
+						"cond": bson.M{
+							"$eq": []string{"$$pri.membership._id", "$membership._id"},
+						},
+					},
+					}, 0,
+				},
+			},
+		}},
 		{"$match": bson.M{
 			"$or": []interface{}{
 				bson.M{"name": regex},
 			},
 		}},
-		{"$sort": bson.M{"solded": -1}},
-		{"$skip": (pageNo - 1) * perPage},
-		{"$limit": perPage},
 	}
-	err = db.Collection["product"].Pipe(pipeline).All(&data)
-	count, _ = db.Collection["product"].Find(bson.M{}).Count()
+	data_non_fix := []bson.M{}
+
+	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)
+	count = len(data_non_fix)
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
+	pipeline = append(pipeline,
+		bson.M{"$sort": bson.M{sorting: order}},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$skip": (pageNo - 1) * perPage},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$limit": perPage},
+	)
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
 	return
 }
 

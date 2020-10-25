@@ -80,14 +80,14 @@ func (R *RewardsModels) List(filter, sort string, pageNo, perPage int) (data []R
 		sorting = "-" + sorting
 
 	} else {
-		sorting = "date"
+		sorting = "start"
 	}
-	regex := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
+	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	err = db.Collection["rewards"].Find(bson.M{
 		"$or": []interface{}{
 			bson.M{"name": regex},
 		},
 	}).Sort(sorting).Skip((pageNo - 1) * perPage).Limit(perPage).All(&data)
-	count, _ = db.Collection["rewards"].Find(bson.M{"point.value": bson.M{"$gt": 0}}).Count()
+	count, _ = db.Collection["rewards"].Find(bson.M{}).Count()
 	return
 }

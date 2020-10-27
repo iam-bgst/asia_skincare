@@ -61,6 +61,50 @@ type CheckCost struct {
 	Courier     string
 }
 
+func (D *DeliveryModels) CheckOngkirCourir(origin, destination, weight, account string) (data_result []Result) {
+	var data_cost []Costs
+	apiUrl := "https://api.rajaongkir.com/starter/cost?key=8c24e11e7261144361a9a5a86d30314f"
+
+	data := url.Values{}
+	data.Set("origin", origin)
+	data.Set("destination", destination)
+	data.Set("weight", weight)
+
+	client := &http.Client{}
+	kurir, _ := account_model.GetCourierMany(account)
+	for _, s := range kurir {
+		data.Set("courier", s.Code)
+		r, _ := http.NewRequest("POST", apiUrl, strings.NewReader(data.Encode()))
+		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		r.Header.Add("key", "8c24e11e7261144361a9a5a86d30314f")
+
+		resp, _ := client.Do(r)
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		name := gjson.Get(string(bodyBytes), "rajaongkir.results.0.name").String()
+
+		value := gjson.Get(string(bodyBytes), "rajaongkir.results.0.costs.#.service").Array()
+		for i, s := range value {
+			ii := strconv.Itoa(i)
+			cost := gjson.Get(string(bodyBytes), "rajaongkir.results.0.costs."+ii+".cost.0.value").Int()
+			etd := gjson.Get(string(bodyBytes), "rajaongkir.results.0.costs."+ii+".cost.0.etd").String()
+
+			data_cost = append(data_cost, Costs{
+				Id:       uuid.New(),
+				Name:     s.String(),
+				Cost:     int(cost),
+				Estimate: etd,
+			})
+		}
+		data_result = append(data_result, Result{
+			Id:   s.Id,
+			Code: s.Code,
+			Name: name,
+			Cost: data_cost,
+		})
+	}
+	return
+}
+
 func (D *DeliveryModels) CheckOngkir(origin, destination, weight string) (data_result []Result) {
 	// var data_result []Delivery
 	var data_cost []Costs

@@ -29,6 +29,7 @@ var (
 	metodecontroll      = new(controllers.MetodeControll)
 	paymentcontroll     = new(controllers.PaymentControll)
 	rewardcontroll      = new(controllers.RewardControll)
+	couriercontroll     = new(controllers.CourierControll)
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -113,6 +114,14 @@ func Middleware() {
 			payment_a.PUT("/update/:account/:payment", HandleCounter, accountcontroll.UpdatePayment)
 			payment_a.DELETE("/delete/:account/:payment", HandleCounter, accountcontroll.DeletePayment)
 		}
+		courier_a := account.Group("/courier")
+		{
+			courier_a.POST("/add/:account", HandleCounter, accountcontroll.AddCourier)
+			courier_a.PUT("/update/:account/:courier", HandleCounter, accountcontroll.UpdateCourier)
+			courier_a.PUT("/change/:account/:courier", HandleCounter, accountcontroll.ActiveCourier)
+			courier_a.DELETE("/delete/:account/:courier", HandleCounter, accountcontroll.RemoveCourier)
+			courier_a.GET("/list/:account", HandleCounter, accountcontroll.ListCourier)
+		}
 	}
 
 	// Product
@@ -196,6 +205,15 @@ func Middleware() {
 		reward.GET("/list", HandleCounter, rewardcontroll.List)
 		reward.DELETE("/delete/:id", HandleCounter, rewardcontroll.Delete)
 		reward.PUT("/claim/:account/:reward", HandleCounter, rewardcontroll.ClaimReward)
+	}
+
+	courier := router.Group("/courier")
+	{
+		courier.GET("/list", HandleCounter, couriercontroll.List)
+		courier.POST("/add", HandleCounter, couriercontroll.Create)
+		courier.GET("/get/:id", HandleCounter, couriercontroll.Get)
+		courier.PUT("/update/:id", HandleCounter, couriercontroll.Update)
+		courier.DELETE("/delete/:id", HandleCounter, couriercontroll.Delete)
 	}
 
 	router.Run(port)

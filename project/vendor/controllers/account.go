@@ -225,7 +225,7 @@ func (A *AccountControll) DeletePayment(c *gin.Context) {
 		})
 	} else {
 		c.JSON(200, gin.H{
-			"message": "address deleted",
+			"message": "payment deleted",
 			"status":  "ok",
 		})
 	}
@@ -632,5 +632,156 @@ func (A *AccountControll) ListAccountClaimReward(c *gin.Context) {
 			c.Abort()
 		}
 
+	}
+}
+
+// :COURIER
+func (A *AccountControll) AddCourier(c *gin.Context) {
+	var data forms.AddCourier
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{
+			"error": "error binding json",
+		})
+	} else {
+		account := c.Param("account")
+		err := accountmodels.AddCourier(account, data)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "courier added",
+				"status":  "ok",
+			})
+		}
+	}
+}
+
+func (A *AccountControll) UpdateCourier(c *gin.Context) {
+	var data forms.AddCourier
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{
+			"error": "error binding json",
+		})
+	} else {
+		account := c.Param("account")
+		courier := c.Param("courier")
+		err := accountmodels.UpdateCourier(account, courier, data)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "courier updated",
+				"status":  "ok",
+			})
+		}
+	}
+}
+
+func (A *AccountControll) ActiveCourier(c *gin.Context) {
+	account := c.Param("account")
+	courier := c.Param("courier")
+	active, _ := strconv.ParseBool(c.Query("active"))
+
+	err := accountmodels.ActiveCourier(account, courier, active)
+	if err != nil {
+		c.JSON(406, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "courier updated",
+			"status":  "ok",
+		})
+	}
+
+}
+
+func (A *AccountControll) RemoveCourier(c *gin.Context) {
+	account := c.Param("account")
+	courier := c.Param("courier")
+
+	err := accountmodels.RemoveCourier(account, courier)
+	if err != nil {
+		c.JSON(406, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "courier deleted",
+			"status":  "ok",
+		})
+	}
+}
+
+func (A *AccountControll) ListCourier(c *gin.Context) {
+	sort := c.Query("sort")
+	pageNo, _ := strconv.Atoi(c.Query("page"))
+	perPage, _ := strconv.Atoi(c.Query("per_page"))
+	filter := c.Query("filter")
+	account := c.Param("account")
+	active, _ := strconv.ParseBool(c.Query("active"))
+	if sort == "" {
+		sort = "_id"
+	}
+	if pageNo == 0 {
+		pageNo = 1
+	}
+	if perPage == 0 {
+		perPage = 5
+	}
+	// pp, _ := perPage)
+	// pn, _ := strconv.Atoi(pageNo)
+
+	data, count, err := accountmodels.ListCourier(account, filter, sort, pageNo, perPage, active)
+	lastPage := float64(count) / float64(perPage)
+	if perPage != 0 {
+		if count%perPage == 0 {
+			lastPage = lastPage
+		} else {
+			lastPage = lastPage + 1
+		}
+	} else {
+		lastPage = float64(count) / float64(5)
+	}
+	if err != nil {
+		c.JSON(404, gin.H{
+			"message": "terjadi kesalahan",
+			"error":   err.Error(),
+		})
+		c.Abort()
+	} else {
+		if count == 0 {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         []interface{}{},
+				"status":       "Ok",
+			})
+			c.Abort()
+		} else {
+			c.JSON(200, gin.H{
+				"total":        count,
+				"per_page":     perPage,
+				"current_page": pageNo,
+				"last_page":    int(lastPage),
+				"next_page":    "",
+				"prev_page":    "",
+				"from":         ((pageNo * perPage) - perPage) + 1,
+				"to":           pageNo * perPage,
+				"data":         data,
+				"status":       "Ok",
+			})
+			c.Abort()
+		}
 	}
 }

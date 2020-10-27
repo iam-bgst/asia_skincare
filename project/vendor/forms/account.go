@@ -20,5 +20,10 @@ type Address struct {
 
 type AddPayment struct {
 	Id     string `json:"_id"`
+	An     string `json:"an"`
 	Number string `json:"number"`
+}
+
+type AddCourier struct {
+	Id string `json:"_id"`
 }

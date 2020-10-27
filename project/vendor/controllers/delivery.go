@@ -183,7 +183,8 @@ func (D *DeliveryControll) CheckOngkir(c *gin.Context) {
 	origin := c.Query("origin")
 	destination := c.Query("destination")
 	weight := c.Query("weight")
-	data := deliverymodels.CheckOngkir(origin, destination, weight)
+	kurir := c.Query("account")
+	data := deliverymodels.CheckOngkirCourir(origin, destination, weight, kurir)
 	c.JSON(200, gin.H{
 		"data":   data,
 		"status": "ok",

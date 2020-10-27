@@ -11,4 +11,5 @@ var (
 	payment_model     = new(PaymentModels)
 	transaction_model = new(TransactionModel)
 	reward_models     = new(RewardsModels)
+	courier_model     = new(CourierModel)
 )

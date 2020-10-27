@@ -23,6 +23,7 @@ type Account struct {
 	RegiteredAt   time.Time        `json:"registeredAt" bson:"registeredAt"`
 	Address       []Address        `json:"address" bson:"address"`
 	Payment       []PaymentAccount `json:"payment" bson:"payment"`
+	Courier       []CourierAccount `json:"courier" bson:"courier"`
 	Membership    Membership       `json:"membership" bson:"membership"`
 	Image         string           `json:"image" bson:"image"`
 	Status        string           `json:"status" bson:"status"`
@@ -49,10 +50,25 @@ type Account2 struct {
 	Image       string         `json:"image" bson:"image"`
 	Status      string         `json:"status" bson:"status"`
 	Payment     PaymentAccount `json:"payment" bson:"payment"`
+	Courier     CourierAccount `json:"courier" bson:"courier"`
 }
 type PaymentAccount struct {
 	Id     string `json:"_id" bson:"_id"`
 	Number string `json:"number" bson:"number"`
+	An     string `json:"an" bson:"an"`
+}
+
+type CourierAccount struct {
+	Id     string `json:"_id" bson:"_id"`
+	Active bool   `json:"active" bson:"active"`
+}
+
+type CourierAccount2 struct {
+	Id     string `json:"_id" bson:"_id"`
+	Name   string `json:"name" bson:"name"`
+	Code   string `json:"code" bson:"code"`
+	Desc   string `json:"desc" bson:"desc"`
+	Active bool   `json:"active" bson:"active"`
 }
 type PaymentAccount2 struct {
 	Id     string `json:"_id" bson:"_id,omitempty"`
@@ -60,6 +76,7 @@ type PaymentAccount2 struct {
 	Desc   string `json:"desc" bson:"desc"`
 	Type   Type   `json:"type" bson:"type"`
 	Active bool   `json:"active" bson:"active"`
+	An     string `json:"an" bson:"an"`
 	Number string `json:"number" bson:"number"`
 }
 type AccountList struct {
@@ -89,6 +106,7 @@ type AccountTransaction struct {
 	Address     string         `json:"address" bson:"address"`
 	Image       string         `json:"image" bson:"image"`
 	Payment     PaymentAccount `json:"payment" bson:"payment"`
+	Courier     CourierAccount `json:"courier" bson:"courier"`
 	Membership  Membership     `json:"membership" bson:"membership"`
 	Status      string         `json:"statut" bson:"status"`
 }
@@ -107,7 +125,6 @@ func (A *AccountModel) CheckAdmin() (found bool) {
 }
 
 func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) {
-
 	id := uuid.New()
 	data_membership, _ := membership_model.GetOneMembership(data.Membership)
 	if data_membership.Code == STAFF && A.CheckAdmin() == false {
@@ -145,6 +162,7 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 		"image":   path,
 		"status":  "active",
 		"payment": []interface{}{},
+		"courier": ([]Courier{}),
 	})
 	id_address := uuid.New()
 	err = db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
@@ -161,17 +179,29 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 			},
 		},
 	})
-	product := product_model.All()
-	for _, p := range product {
-		db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
-			"$addToSet": bson.M{
-				"product": bson.M{
-					"_id":   p.Id,
-					"stock": 0,
+	go func() {
+		product := product_model.All()
+		for _, p := range product {
+			db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
+				"$addToSet": bson.M{
+					"product": bson.M{
+						"_id":   p.Id,
+						"stock": 0,
+					},
 				},
-			},
-		})
-	}
+			})
+		}
+	}()
+
+	go func() {
+		kurir := courier_model.All()
+		for _, c := range kurir {
+			A.AddCourier(id, forms.AddCourier{
+				Id: c.Id,
+			})
+		}
+	}()
+
 	err = db.Collection["account"].Find(bson.M{
 		"_id": id,
 	}).One(&data_ret)
@@ -293,7 +323,8 @@ func (A *AccountModel) DeleteAddress(id_account, id_address string) (err error) 
 
 func (A *AccountModel) DeletePayment(id_account, id_payment string) (err error) {
 	err = db.Collection["account"].Update(bson.M{
-		"_id": id_account,
+		"_id":         id_account,
+		"payment._id": id_payment,
 	}, bson.M{
 		"$pull": bson.M{"payment": bson.M{"_id": id_payment}},
 	})
@@ -334,6 +365,7 @@ func (A *AccountModel) ListPayment(account, filter, sort string, pageNo, perPage
 			"type":   "$pay.type",
 			"active": "$pay.active",
 			"number": "$payment.number",
+			"an":     "$payment.an",
 		}},
 		{"$match": bson.M{
 			"$or": []interface{}{
@@ -384,6 +416,7 @@ func (A *AccountModel) UpdatePayment(id_account, id_payment string, data forms.A
 	}, bson.M{
 		"$set": bson.M{
 			"payment.$._id":    data.Id,
+			"payment.$.an":     data.An,
 			"payment.$.number": data.Number,
 		},
 	})
@@ -458,6 +491,7 @@ func (A *AccountModel) GetPayment(id_account, id_payment string) (data PaymentAc
 			"type":   "$pay.type",
 			"active": "$pay.active",
 			"number": "$payment.number",
+			"an":     "$payment.an",
 		}},
 		{"$match": bson.M{
 			"_id": id_payment,
@@ -536,6 +570,7 @@ func (A *AccountModel) AddPayment(id_account string, data forms.AddPayment) (err
 		"$addToSet": bson.M{
 			"payment": bson.M{
 				"_id":    data.Id,
+				"an":     data.An,
 				"number": data.Number,
 			},
 		},
@@ -764,6 +799,171 @@ func (A *AccountModel) ListAccountRewardClaim(filter, sort, reward string, pageN
 	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)
 	count = len(data_non_fix)
 	err = db.Collection["account"].Pipe(pipeline).All(&data)
+	pipeline = append(pipeline,
+		bson.M{"$sort": bson.M{sorting: order}},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$skip": (pageNo - 1) * perPage},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$limit": perPage},
+	)
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
+	return
+}
+
+/* Courier Inside Account
+courier in this account functions to store data
+for couriers that support the area around the account,
+for the initial creation of the account it will be automatically
+filled in according to what the system has
+*/
+func (A *AccountModel) AddCourier(account string, data forms.AddCourier) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": account,
+	}, bson.M{
+		"$addToSet": bson.M{
+			"courier": bson.M{
+				"_id":    data.Id,
+				"active": false,
+			},
+		},
+	})
+	return
+}
+
+func (A *AccountModel) UpdateCourier(account, courier string, data forms.AddCourier) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         account,
+		"courier._id": courier,
+	}, bson.M{
+		"$set": bson.M{
+			"courier.$._id":    data.Id,
+			"courier.$.active": false,
+		},
+	})
+	return
+}
+
+func (A *AccountModel) ActiveCourier(account, courier string, active bool) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         account,
+		"courier._id": courier,
+	}, bson.M{
+		"$set": bson.M{
+			"courier.$.active": active,
+		},
+	})
+	return
+}
+
+func (A *AccountModel) RemoveCourier(account, courier string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         account,
+		"courier._id": courier,
+	}, bson.M{
+		"$pull": bson.M{"courier": bson.M{"_id": courier}},
+	})
+	return
+}
+func (A *AccountModel) GetCourierMany(account string) (data []CourierAccount2, err error) {
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"_id": account,
+		}},
+		{"$unwind": "$courier"},
+		{"$lookup": bson.M{
+			"from":         "courier",
+			"localField":   "courier._id",
+			"foreignField": "_id",
+			"as":           "kurir",
+		}},
+		{"$unwind": "$kurir"},
+		{"$project": bson.M{
+			"_id":    "$kurir._id",
+			"name":   "$kurir.name",
+			"code":   "$kurir.code",
+			"desc":   "$kurir.desc",
+			"active": "$courier.active",
+		}},
+		{"$match": bson.M{
+			"active": true,
+		}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
+	return
+}
+func (A *AccountModel) GetCourier(account, courier string) (data CourierAccount2, err error) {
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"_id": account,
+		}},
+		{"$unwind": "$courier"},
+		{"$lookup": bson.M{
+			"from":         "courier",
+			"localField":   "courier._id",
+			"foreignField": "_id",
+			"as":           "kurir",
+		}},
+		{"$unwind": "$kurir"},
+		{"$project": bson.M{
+			"_id":    "$kurir._id",
+			"name":   "$kurir.name",
+			"code":   "$kurir.code",
+			"desc":   "$kurir.desc",
+			"active": "$courier.active",
+		}},
+		{"$match": bson.M{
+			"_id": courier,
+		}},
+	}
+	err = db.Collection["account"].Pipe(pipeline).One(&data)
+	return
+}
+func (A *AccountModel) ListCourier(account, filter, sort string, pageNo, perPage int, active bool) (data []CourierAccount2, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		order = -1
+	} else {
+		sorting = "date"
+		order = -1
+	}
+
+	regex_next := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"_id": account,
+		}},
+		{"$unwind": "$courier"},
+		{"$lookup": bson.M{
+			"from":         "courier",
+			"localField":   "courier._id",
+			"foreignField": "_id",
+			"as":           "kurir",
+		}},
+		{"$unwind": "$kurir"},
+		{"$project": bson.M{
+			"_id":    "$kurir._id",
+			"name":   "$kurir.name",
+			"code":   "$kurir.code",
+			"desc":   "$kurir.desc",
+			"active": "$courier.active",
+		}},
+		{"$match": bson.M{
+			"active": active,
+			"$or": []interface{}{
+				bson.M{"name": regex_next},
+			},
+		}},
+	}
+	data_non_fix := []bson.M{}
+	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)
+	count = len(data_non_fix)
 	pipeline = append(pipeline,
 		bson.M{"$sort": bson.M{sorting: order}},
 	)

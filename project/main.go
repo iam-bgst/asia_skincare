@@ -19,7 +19,9 @@ func init() {
 		"discount",
 		"transaction",
 		"metode",
-		"rewards"}
+		"rewards",
+		"courier",
+	}
 
 	// Mongodb
 	db.NewConnection()

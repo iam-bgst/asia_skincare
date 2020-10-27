@@ -42,7 +42,7 @@ func ServiceTransaction() {
 			data := transaction_model.All()
 			for _, d := range data {
 				sub := time.Now().Sub(d.Date).Hours()
-				if sub > 24.0 && d.Evidence == (Evidence{}) {
+				if sub > 24.0 && d.Evidence == (Evidence{}) && d.Status_code == 0 {
 					// fmt.Println(d.Id)
 					transaction_model.UpdateStatus(d.Id, CENCELED)
 				} else {

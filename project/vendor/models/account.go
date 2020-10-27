@@ -32,7 +32,7 @@ type Account struct {
 		Id    string `json:"_id" bson:"_id,omitempty"`
 		Stock int    `json:"stock" bson:"stock"`
 	} `json:"product"`
-	Rewards []Rewards `json:"rewards" bson:"rewards"`
+	Rewards []Rewards `json:"rewards,omitempty" bson:"rewards,omitempty"`
 }
 
 type Point struct {

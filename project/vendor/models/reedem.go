@@ -67,7 +67,7 @@ func (R *RedeemModel) Get(id string) (data Redeem, err error) {
 	return
 }
 
-func (R *RedeemModel) List(filter, sort string, pageNo, perPage int, valid bool, account string) (data Redeem, count int, err error) {
+func (R *RedeemModel) List(filter, sort string, pageNo, perPage int, valid bool, account string) (data []Redeem, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {

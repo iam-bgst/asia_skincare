@@ -753,10 +753,20 @@ func (A *AccountModel) GetRewardClaimed(account, reward string) (data Rewards, e
 }
 
 func (A *AccountModel) ClaimReward(account, reward string) (err error) {
-	_, err = redeem_model.Create(forms.Redeem{
-		Account: account,
-		Reward:  reward,
-	})
+	acc, _ := account_model.GetId(account)
+	rw, _ := reward_models.Get(reward)
+	fmt.Println("Point", acc.Point.Value)
+	fmt.Println("Price Point", rw.PricePoint)
+	if acc.Point.Value < rw.PricePoint {
+		err = errors.New("point on account not enough")
+		return
+	} else {
+		_, err = redeem_model.Create(forms.Redeem{
+			Account: account,
+			Reward:  reward,
+		})
+	}
+
 	return
 }
 

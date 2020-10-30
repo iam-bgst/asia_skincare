@@ -14,7 +14,7 @@ import (
 type Rewards struct {
 	Id         string    `json:"_id" bson:"_id,omitempty"`
 	Name       string    `json:"name" bson:"name"`
-	PricePoint int       `json:"pricepoint" bson:"pricepoint"`
+	PricePoint int       `json:"pricepoint" bson:"pricePoint"`
 	Desc       string    `json:"desc" bson:"desc"`
 	Image      string    `json:"image" bson:"image"`
 	Start      time.Time `json:"start" bson:"start"`

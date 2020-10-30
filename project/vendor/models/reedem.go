@@ -133,6 +133,7 @@ func (R *RedeemModel) List(filter, sort string, pageNo, perPage int, valid bool,
 
 func (R *RedeemModel) Valid(id string) (err error) {
 	data, _ := R.Get(id)
+
 	err = db.Collection["redeem"].Update(bson.M{
 		"_id": id,
 	}, bson.M{

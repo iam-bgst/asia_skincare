@@ -21,6 +21,7 @@ func init() {
 		"metode",
 		"rewards",
 		"courier",
+		"redeem",
 	}
 
 	// Mongodb

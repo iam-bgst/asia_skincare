@@ -33,13 +33,14 @@ type Account struct {
 		Id    string `json:"_id" bson:"_id,omitempty"`
 		Stock int    `json:"stock" bson:"stock"`
 	} `json:"product"`
-	Rewards []Rewards `json:"rewards,omitempty" bson:"rewards,omitempty"`
 }
 
 type Point struct {
 	Value int       `json:"value" bson:"value"`
 	Exp   time.Time `json:"exp" bson:"exp"`
 }
+
+type RewardAccount struct{}
 
 type Account2 struct {
 	Id          string         `json:"_id" bson:"_id,omitempty"`
@@ -752,21 +753,10 @@ func (A *AccountModel) GetRewardClaimed(account, reward string) (data Rewards, e
 }
 
 func (A *AccountModel) ClaimReward(account, reward string) (err error) {
-	rew, _ := A.GetRewardClaimed(account, reward)
-	if rew != (Rewards{}) {
-		err = errors.New("The reward has been claimed")
-		return
-	}
-	err = db.Collection["account"].Update(bson.M{
-		"_id": account,
-	}, bson.M{
-		"$addToSet": bson.M{
-			"rewards": bson.M{
-				"_id": reward,
-			},
-		},
+	_, err = redeem_model.Create(forms.Redeem{
+		Account: account,
+		Reward:  reward,
 	})
-	err = A.UpdatePoint(account, rew.PricePoint-(rew.PricePoint*2))
 	return
 }
 

@@ -30,6 +30,7 @@ var (
 	paymentcontroll     = new(controllers.PaymentControll)
 	rewardcontroll      = new(controllers.RewardControll)
 	couriercontroll     = new(controllers.CourierControll)
+	redeemcontroll      = new(controllers.RedeemControll)
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -216,9 +217,16 @@ func Middleware() {
 		courier.DELETE("/delete/:id", HandleCounter, couriercontroll.Delete)
 	}
 
+	redeem := router.Group("/redeem")
+	{
+		redeem.POST("/add", HandleCounter, redeemcontroll.Create)
+		redeem.GET("/list", HandleCounter, redeemcontroll.List)
+		redeem.GET("/get/:id", HandleCounter, redeemcontroll.Get)
+		redeem.PUT("/valid/:id", HandleCounter, redeemcontroll.Valid)
+	}
+
 	router.Run(port)
 }
-
 func HandleAuth() gin.HandlerFunc {
 	valid := func(c *gin.Context) {
 		auth := c.Request.Header.Get("Authorization")

@@ -14,4 +14,5 @@ var (
 	paymentmodels     = new(models.PaymentModels)
 	rewardmodels      = new(models.RewardsModels)
 	couriermodels     = new(models.CourierModel)
+	redeemmodels      = new(models.RedeemModel)
 )

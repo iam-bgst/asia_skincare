@@ -12,4 +12,5 @@ var (
 	transaction_model = new(TransactionModel)
 	reward_models     = new(RewardsModels)
 	courier_model     = new(CourierModel)
+	redeem_model      = new(RedeemModel)
 )

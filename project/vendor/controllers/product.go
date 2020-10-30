@@ -30,7 +30,7 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	perPage, _ := strconv.Atoi(c.Query("per_page"))
 	filter := c.Query("filter")
 	agent := c.Query("agent")
-
+	archive, _ := strconv.ParseBool(c.Query("archive"))
 	if sort == "" {
 		sort = "name"
 	}
@@ -44,7 +44,7 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	var count int
 	var err error
 
-	data, count, err = productmodels.ListProductOnAgent(filter, sort, pageNo, perPage, agent)
+	data, count, err = productmodels.ListProductOnAgent(filter, sort, pageNo, perPage, agent, archive)
 
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {
@@ -242,6 +242,7 @@ func (P *ProductControll) ListProductOnAgent(c *gin.Context) {
 	perPage, _ := strconv.Atoi(c.Query("per_page"))
 	filter := c.Query("filter")
 	agent := c.Query("agent")
+	archive, _ := strconv.ParseBool(c.Query("archive"))
 	if sort == "" {
 		sort = "name"
 	}
@@ -252,7 +253,7 @@ func (P *ProductControll) ListProductOnAgent(c *gin.Context) {
 		perPage = 5
 	}
 
-	data, count, err := productmodels.ListProductOnAgent(filter, sort, pageNo, perPage, agent)
+	data, count, err := productmodels.ListProductOnAgent(filter, sort, pageNo, perPage, agent, archive)
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {
 		if count%perPage == 0 {

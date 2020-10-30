@@ -24,6 +24,7 @@ type Product struct {
 	Image   string  `json:"image" bson:"image"`
 	Desc    string  `json:"desc" bson:"desc"`
 	Type    int     `json:"type" bson:"type"`
+	Archive bool    `json:"archive" bson:"archive"`
 }
 type Product1 struct {
 	Id      string    `json:"_id" bson:"_id,omitempty"`
@@ -74,6 +75,7 @@ type ListProducFix struct {
 	} `json:"from" bson:"from"`
 	Account string `json:"account" bson:"account"`
 	Type    int    `json:"type" bson:"type"`
+	Archive bool   `json:"archive" bson:"archive"`
 }
 
 type Pricing struct {
@@ -93,15 +95,16 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 		return
 	}
 	err = db.Collection["product"].Insert(bson.M{
-		"_id":    id,
-		"name":   data.Name,
-		"stock":  data.Stoct,
-		"point":  data.Point,
-		"desc":   data.Desc,
-		"weight": data.Weight,
-		"netto":  data.Netto,
-		"image":  path,
-		"type":   data.Type,
+		"_id":     id,
+		"name":    data.Name,
+		"stock":   data.Stoct,
+		"point":   data.Point,
+		"desc":    data.Desc,
+		"weight":  data.Weight,
+		"netto":   data.Netto,
+		"image":   path,
+		"type":    data.Type,
+		"archive": false,
 	})
 	for _, pricing := range data.Pricing {
 		data_membership, _ := membership_model.GetOneMembership(pricing.Membership)
@@ -360,7 +363,7 @@ func (R *ProductModel) GetByMembershipAndProvCity(membership, filter, sort, page
 	return
 }
 
-func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage int, agent string) (data []ListProducFix, count int, err error) {
+func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage int, agent string, archive bool) (data []ListProducFix, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -409,7 +412,9 @@ func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage i
 			"point":      "$product_docs.point",
 			"prices":     "$product_docs.pricing",
 			"netto":      "$product_docs.netto",
+			"archive":    "$product_docs.archive",
 		}},
+		{"$match": bson.M{"archive": archive}},
 		{"$addFields": bson.M{
 			"pricing": bson.M{
 				"$arrayElemAt": []interface{}{
@@ -491,5 +496,16 @@ func (P *ProductModel) Detail(id_product, id_account string) (data ListProducFix
 		}},
 	}
 	err = db.Collection["account"].Pipe(pipeline).One(&data)
+	return
+}
+
+func (P *ProductModel) Archive(id string) (err error) {
+	err = db.Collection["product"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
+			"archive": true,
+		},
+	})
 	return
 }

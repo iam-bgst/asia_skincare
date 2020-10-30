@@ -955,7 +955,6 @@ func (A *AccountModel) ListCourier(account, filter, sort string, pageNo, perPage
 			"active": "$courier.active",
 		}},
 		{"$match": bson.M{
-			"active": active,
 			"$or": []interface{}{
 				bson.M{"name": regex_next},
 			},

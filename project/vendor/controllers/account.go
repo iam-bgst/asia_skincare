@@ -295,6 +295,22 @@ func (A *AccountControll) UpdateAddress(c *gin.Context) {
 	}
 }
 
+func (A *AccountControll) ChangeToDefault(c *gin.Context) {
+	account := c.Param("account")
+	address := c.Param("address")
+	err := accountmodels.ChangeToDefault(account, address)
+	if err != nil {
+		c.JSON(406, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "address changed to default",
+			"status":  "ok",
+		})
+	}
+}
+
 func (A *AccountControll) DeleteAddress(c *gin.Context) {
 	id_account := c.Param("account")
 	id_address := c.Param("address")

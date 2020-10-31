@@ -105,6 +105,7 @@ func Middleware() {
 		{
 			address.PUT("/update/:account/:address", HandleCounter, accountcontroll.UpdateAddress)
 			address.DELETE("/delete/:account/:address", HandleCounter, accountcontroll.DeleteAddress)
+			address.PUT("/changetodefault/:account/:address", HandleCounter, accountcontroll.ChangeToDefault)
 		}
 
 		payment_a := account.Group("/payment")

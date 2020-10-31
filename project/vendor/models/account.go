@@ -312,6 +312,25 @@ func (A *AccountModel) UpdateAddress(id_account, id_address string, data forms.A
 	})
 	return
 }
+func (A *AccountModel) ChangeToDefault(id_account, id_address string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":             id_account,
+		"address.default": true,
+	}, bson.M{
+		"$set": bson.M{
+			"address.$.default": false,
+		},
+	})
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         id_account,
+		"address._id": id_address,
+	}, bson.M{
+		"$set": bson.M{
+			"address.$.default": true,
+		},
+	})
+	return
+}
 
 func (A *AccountModel) DeleteAddress(id_account, id_address string) (err error) {
 	err = db.Collection["account"].Update(bson.M{

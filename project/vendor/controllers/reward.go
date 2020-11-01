@@ -88,6 +88,8 @@ func (R *RewardControll) List(c *gin.Context) {
 	pageNo, _ := strconv.Atoi(c.Query("page"))
 	perPage, _ := strconv.Atoi(c.Query("per_page"))
 	filter := c.Query("filter")
+	active, _ := strconv.ParseBool(c.Query("active"))
+	archive, _ := strconv.ParseBool(c.Query("archive"))
 	if sort == "" {
 		sort = "id"
 	}
@@ -97,7 +99,7 @@ func (R *RewardControll) List(c *gin.Context) {
 	if perPage == 0 {
 		perPage = 5
 	}
-	data, count, err := rewardmodels.List(filter, sort, pageNo, perPage)
+	data, count, err := rewardmodels.List(filter, sort, pageNo, perPage, active, archive)
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {
 		if count%perPage == 0 {
@@ -159,6 +161,34 @@ func (R *RewardControll) ClaimReward(c *gin.Context) {
 	} else {
 		c.JSON(200, gin.H{
 			"message": "claimmed",
+			"status":  "ok",
+		})
+	}
+}
+func (R *RewardControll) Archive(c *gin.Context) {
+	id := c.Param("id")
+	err := rewardmodels.Archive(id)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "Archived Reward",
+			"status":  "ok",
+		})
+	}
+}
+func (R *RewardControll) UnArchive(c *gin.Context) {
+	id := c.Param("id")
+	err := rewardmodels.UnArchive(id)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "Unarchived Reward",
 			"status":  "ok",
 		})
 	}

@@ -509,3 +509,13 @@ func (P *ProductModel) Archive(id string) (err error) {
 	})
 	return
 }
+func (P *ProductModel) UnArchive(id string) (err error) {
+	err = db.Collection["product"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
+			"archive": false,
+		},
+	})
+	return
+}

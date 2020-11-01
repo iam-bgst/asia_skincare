@@ -2,6 +2,7 @@ package models
 
 import (
 	"addon"
+	"bytes"
 	"db"
 	"encoding/json"
 	"io/ioutil"
@@ -9,6 +10,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pborman/uuid"
 	"github.com/tidwall/gjson"
@@ -59,6 +61,116 @@ type CheckCost struct {
 	Destination string
 	Wieght      string
 	Courier     string
+}
+
+/*
+:CEK RESI
+*/
+type Result_resi struct {
+	Data TrackingDirect `json:"data"`
+}
+type TrackingDirect struct {
+	TrackingDirect []Data1 `json:"trackingDirect"`
+}
+type Data1 struct {
+	ReferenceCourier string    `json:"referenceCourier"`
+	ReferenceNo      string    `json:"referenceNo"`
+	Logistic         Logistic  `json:"logistic"`
+	ShipmentDate     string    `json:"shipmentDate"`
+	Details          []Details `json:"details"`
+}
+type Logistic struct {
+	Id       string `json:"id"`
+	TypeName string `json:"__typename"`
+}
+
+type Details struct {
+	Datetime       time.Time      `json:"datetime"`
+	LogisticStatus LogisticStatus `json:"logisticStatus"`
+}
+type LogisticStatus struct {
+	Name     string `json:"name"`
+	Desc     string `json:"description"`
+	TypeName string `json:"__typename"`
+}
+
+/*
+:CEK RESI POST
+*/
+type Payload struct {
+	OperationName string    `json:"operationName"`
+	Variables     Variables `json:"variables"`
+	Query         string    `json:"query"`
+}
+
+type Payload1 struct {
+	ReferenceNo []string `json:"referenceNo"`
+	LogisticID  int      `json:"logisticId"`
+}
+type Variables struct {
+	Payload Payload1 `json:"payload"`
+}
+
+func (D *DeliveryModels) GetCodeCourier(courier string) (code int) {
+	switch strings.ToUpper(courier) {
+	case "JNE":
+		code = 1
+	case "TIKI":
+		code = 6
+	case "POS":
+		code = 4
+	}
+	return
+}
+
+func (D *DeliveryModels) CekResi(courier, resi string) (data_ret Data1) {
+	data := Payload{
+		// fill struct
+		OperationName: "trackingDirect",
+		Variables: Variables{
+			Payload: Payload1{
+				ReferenceNo: []string{resi},
+				// LogisticID:  9, // JNT
+				// LogisticID:  6, // TIKI
+				// LogisticID:  1, // JNE
+				LogisticID: D.GetCodeCourier(courier), // POS
+			},
+		},
+		Query: "query trackingDirect($payload: TrackingDirectInput!) {\n  trackingDirect(p: $payload) {\n    referenceNo\n    logistic {\n      id\n      __typename\n    }\n    shipmentDate\n    details {\n      datetime\n      shipperStatus {\n        name\n        description\n        __typename\n      }\n      logisticStatus {\n        name\n        description\n        __typename\n      }\n      __typename\n    }\n    consigner {\n      name\n      address\n      __typename\n    }\n    consignee {\n      name\n      address\n      __typename\n    }\n    __typename\n  }\n}\n",
+	}
+	payloadBytes, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+	body := bytes.NewReader(payloadBytes)
+
+	req, err := http.NewRequest("POST", "https://gql.shipper.id/query", body)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Authority", "gql.shipper.id")
+	req.Header.Set("Accept", "*/*")
+	req.Header.Set("X-App-Version", "1.0.0")
+	req.Header.Set("X-App-Name", "shp-homepage-v5")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://shipper.id")
+	req.Header.Set("Sec-Fetch-Site", "same-site")
+	req.Header.Set("Sec-Fetch-Mode", "cors")
+	req.Header.Set("Sec-Fetch-Dest", "empty")
+	req.Header.Set("Referer", "https://shipper.id/")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9,id;q=0.8")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	var data_not_fix Result_resi
+	json.Unmarshal(bodyBytes, &data_not_fix)
+	data_not_fix.Data.TrackingDirect[0].ReferenceCourier = strings.ToUpper(courier)
+	return data_not_fix.Data.TrackingDirect[0]
 }
 
 func (D *DeliveryModels) CheckOngkirCourir(origin, destination, weight, account string) (data_result []Result) {

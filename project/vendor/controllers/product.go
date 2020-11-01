@@ -303,3 +303,33 @@ func (P *ProductControll) ListProductOnAgent(c *gin.Context) {
 
 	}
 }
+
+func (P *ProductControll) Archive(c *gin.Context) {
+	id := c.Param("id")
+	err := productmodels.Archive(id)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "Archived Product",
+			"status":  "ok",
+		})
+	}
+}
+
+func (P *ProductControll) UnArchive(c *gin.Context) {
+	id := c.Param("id")
+	err := productmodels.UnArchive(id)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "Unarchived Product",
+			"status":  "ok",
+		})
+	}
+}

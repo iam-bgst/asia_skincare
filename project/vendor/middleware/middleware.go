@@ -137,6 +137,8 @@ func Middleware() {
 		product.PUT("/update_price/:product/:membership", HandleCounter, productcontroll.UpdatePrice)
 		product.DELETE("/delete/:product", HandleCounter, productcontroll.Delete)
 		product.GET("/listonagent", HandleCounter, productcontroll.ListProductOnAgent)
+		product.PUT("/archive/:id", HandleCounter, productcontroll.Archive)
+		product.PUT("/unarchive/:id", HandleCounter, productcontroll.UnArchive)
 	}
 
 	// Paket
@@ -189,6 +191,7 @@ func Middleware() {
 		delivery.GET("/listprovince", HandleCounter, deliverycontroll.ListProvince)
 		delivery.GET("/listcity_prov/:id", HandleCounter, deliverycontroll.ListCityByProvince)
 		delivery.GET("/checkongkir", HandleCounter, deliverycontroll.CheckOngkir)
+		delivery.GET("/track_resi", HandleCounter, deliverycontroll.CekResi)
 	}
 
 	// Membership
@@ -207,6 +210,8 @@ func Middleware() {
 		reward.GET("/list", HandleCounter, rewardcontroll.List)
 		reward.DELETE("/delete/:id", HandleCounter, rewardcontroll.Delete)
 		reward.PUT("/claim/:account/:reward", HandleCounter, rewardcontroll.ClaimReward)
+		reward.PUT("/archive/:id", HandleCounter, rewardcontroll.Archive)
+		reward.PUT("/unarchive/:id", HandleCounter, rewardcontroll.UnArchive)
 	}
 
 	courier := router.Group("/courier")

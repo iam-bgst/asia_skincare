@@ -59,6 +59,15 @@ func (D *DeliveryControll) ListProvince(c *gin.Context) {
 	}
 }
 
+func (D *DeliveryControll) CekResi(c *gin.Context) {
+	kurir := c.Query("courier")
+	resi := c.Query("resi")
+	result := deliverymodels.CekResi(kurir, resi)
+	c.JSON(200, gin.H{
+		"data": result,
+	})
+}
+
 func (D *DeliveryControll) ListCityByProvince(c *gin.Context) {
 	sort := c.Query("sort")
 	pageNo, _ := strconv.Atoi(c.Query("page"))

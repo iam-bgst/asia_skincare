@@ -19,6 +19,7 @@ type Rewards struct {
 	Image      string    `json:"image" bson:"image"`
 	Start      time.Time `json:"start" bson:"start"`
 	End        time.Time `json:"end" bson:"end"`
+	Archive    bool      `json:"archive" bson:"archive"`
 }
 
 type RewardsModels struct{}
@@ -70,7 +71,7 @@ func (R *RewardsModels) Delete(id string) (err error) {
 	return
 }
 
-func (R *RewardsModels) List(filter, sort string, pageNo, perPage int) (data []Rewards, count int, err error) {
+func (R *RewardsModels) List(filter, sort string, pageNo, perPage int, active, archive bool) (data []Rewards, count int, err error) {
 	sorting := sort
 	if strings.Contains(sort, "asc") {
 		sorting = strings.Replace(sort, "|asc", "", -1)
@@ -83,11 +84,47 @@ func (R *RewardsModels) List(filter, sort string, pageNo, perPage int) (data []R
 		sorting = "start"
 	}
 	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
-	err = db.Collection["rewards"].Find(bson.M{
-		"$or": []interface{}{
-			bson.M{"name": regex},
+	var query bson.M
+	if active {
+		query = bson.M{
+			"start": bson.M{"$lt": time.Now()},
+			"end":   bson.M{"$gt": time.Now()},
+			"$or": []interface{}{
+				bson.M{"name": regex},
+			},
+			"archive": false,
+		}
+	} else {
+		query = bson.M{
+			"$or": []interface{}{
+				bson.M{"name": regex},
+			},
+		}
+	}
+
+	err = db.Collection["rewards"].Find(query).Sort(sorting).Skip((pageNo - 1) * perPage).Limit(perPage).All(&data)
+	count, _ = db.Collection["rewards"].Find(query).Count()
+	return
+}
+
+func (R *RewardsModels) Archive(id string) (err error) {
+	err = db.Collection["rewards"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
+			"archive": true,
 		},
-	}).Sort(sorting).Skip((pageNo - 1) * perPage).Limit(perPage).All(&data)
-	count, _ = db.Collection["rewards"].Find(bson.M{}).Count()
+	})
+	return
+}
+
+func (R *RewardsModels) UnArchive(id string) (err error) {
+	err = db.Collection["rewards"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
+			"archive": false,
+		},
+	})
 	return
 }

@@ -307,7 +307,6 @@ func (A *AccountModel) UpdateAddress(id_account, id_address string, data forms.A
 			"address.$.province": prov,
 			"address.$.city":     city,
 			"address.$.detail":   data.Detail,
-			"address.$.default":  false,
 		},
 	})
 	return

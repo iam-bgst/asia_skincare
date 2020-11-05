@@ -209,14 +209,14 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 	return
 }
 
-func (A *AccountModel) AddProduct(id_account, id_product string) (err error) {
+func (A *AccountModel) AddProduct(id_account, id_product string, stock int) (err error) {
 	err = db.Collection["account"].Update(bson.M{
 		"_id": id_account,
 	}, bson.M{
 		"$addToSet": bson.M{
 			"product": bson.M{
 				"_id":   id_product,
-				"stock": 0,
+				"stock": stock,
 			},
 		},
 	})

@@ -554,7 +554,8 @@ func (A *AccountControll) Get(c *gin.Context) {
 }
 func (A *AccountControll) AddProdcut(c *gin.Context) {
 	var data struct {
-		Id string `json:"_id"`
+		Id    string `json:"_id"`
+		Stock int    `json:"stock"`
 	}
 	if c.BindJSON(&data) != nil {
 		c.JSON(405, gin.H{
@@ -562,7 +563,7 @@ func (A *AccountControll) AddProdcut(c *gin.Context) {
 		})
 	} else {
 		account := c.Param("account")
-		err := accountmodels.AddProduct(account, data.Id)
+		err := accountmodels.AddProduct(account, data.Id, data.Stock)
 		if err != nil {
 			c.JSON(406, gin.H{
 				"error": err.Error(),

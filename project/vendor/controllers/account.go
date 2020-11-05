@@ -552,6 +552,29 @@ func (A *AccountControll) Get(c *gin.Context) {
 		})
 	}
 }
+func (A *AccountControll) AddProdcut(c *gin.Context) {
+	var data struct {
+		Id string `json:"_id"`
+	}
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{
+			"error": "error binding json",
+		})
+	} else {
+		account := c.Param("account")
+		err := accountmodels.AddProduct(account, data.Id)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "Product added",
+				"status":  "ok",
+			})
+		}
+	}
+}
 
 func (A *AccountControll) UpdateStock(c *gin.Context) {
 	account := c.Param("account")

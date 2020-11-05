@@ -7,6 +7,7 @@ import (
 	"forms"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pborman/uuid"
 	"gopkg.in/mgo.v2/bson"
@@ -73,9 +74,10 @@ type ListProducFix struct {
 		Detail   string   `json:"detail" bson:"detail"`
 		Default  bool     `json:"default" bson:"default"`
 	} `json:"from" bson:"from"`
-	Account string `json:"account" bson:"account"`
-	Type    int    `json:"type" bson:"type"`
-	Archive bool   `json:"archive" bson:"archive"`
+	Account  string   `json:"account" bson:"account"`
+	Type     int      `json:"type" bson:"type"`
+	Archive  bool     `json:"archive" bson:"archive"`
+	Discount Discount `json:"discount" bson:"discount"`
 }
 
 type Pricing struct {
@@ -119,10 +121,10 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 			},
 		})
 	}
-	err = account_model.AddProduct(id)
-	if err != nil {
-		return
-	}
+	// err = account_model.AddProduct(id)
+	// if err != nil {
+	// 	return
+	// }
 	return
 }
 
@@ -429,6 +431,96 @@ func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage i
 				},
 			},
 		}},
+		{"$lookup": bson.M{
+			"from": "discount",
+			"let":  bson.M{"pd_id": "$_id"},
+			"pipeline": []interface{}{
+				bson.M{"$unwind": "$product"},
+				bson.M{"$match": bson.M{
+					"$expr": bson.M{
+						"$and": []interface{}{
+							bson.M{"$eq": []interface{}{"$product._id", "$$pd_id"}},
+							bson.M{"$lt": []interface{}{"$startAt", time.Now()}},
+							bson.M{"$gt": []interface{}{"$endAt", time.Now()}},
+						},
+					},
+				}},
+			},
+			"as": "dis",
+		}},
+		{"$unwind": bson.M{
+			"path":                       "$dis",
+			"preserveNullAndEmptyArrays": true,
+		}},
+		{"$addFields": bson.M{
+			"disc": "$dis.product",
+		}},
+		{"$addFields": bson.M{
+			"code": "$membership.code",
+		}},
+		{"$addFields": bson.M{
+			"diskon": bson.M{
+				"$cond": []interface{}{
+					bson.M{"$eq": []interface{}{"$code", 0}},
+					bson.M{
+						"_id":          "$dis._id",
+						"name":         "$dis.name",
+						"discount":     "$dis.discount",
+						"discountcode": "$dis.discountcode",
+						"startAt":      "$dis.startAt",
+						"endAt":        "$dis.endAt",
+					},
+					"$diskon",
+				},
+			},
+		}},
+		{"$project": bson.M{
+			"_id":        "$_id",
+			"stock":      "$stock",
+			"desc":       "$desc",
+			"from":       "$from",
+			"account":    "$_id",
+			"membership": "$membership",
+			"name":       "$name",
+			"code":       "$code",
+			"dis":        "$dis",
+			"disko":      "$diskon",
+			"image":      "$image",
+			"weight":     "$weight",
+			"point":      "$point",
+			"netto":      "$netto",
+			"archive":    "$archive",
+			"discount": bson.M{"$cond": []interface{}{
+				bson.M{"$eq": []interface{}{"$code", 0}},
+				bson.M{
+					"_id":          "$dis._id",
+					"name":         "$dis.name",
+					"discount":     "$dis.discount",
+					"discountcode": "$dis.discountcode",
+					"startAt":      "$dis.startAt",
+					"endAt":        "$dis.endAt",
+				},
+				"$discount",
+			}},
+			"pricing": bson.M{"$cond": []interface{}{
+				bson.M{"$eq": []interface{}{"$code", 0}},
+				bson.M{
+					"membership": "$pricing.membership",
+					"price": bson.M{
+						"$subtract": []interface{}{ // Kurang
+							"$pricing.price",
+							bson.M{"$multiply": []interface{}{ // Kali
+								bson.M{"$divide": []interface{}{ // Bagi
+									"$dis.discount",
+									100}},
+								"$pricing.price",
+							}},
+						}},
+				},
+				"$pricing",
+			}},
+		}},
+
 		{"$match": bson.M{
 			"$or": []interface{}{
 				bson.M{"name": regex_next},

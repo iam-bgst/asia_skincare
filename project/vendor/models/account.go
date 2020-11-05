@@ -209,8 +209,10 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 	return
 }
 
-func (A *AccountModel) AddProduct(id_product string) (err error) {
-	_, err = db.Collection["account"].UpdateAll(bson.M{}, bson.M{
+func (A *AccountModel) AddProduct(id_account, id_product string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id_account,
+	}, bson.M{
 		"$addToSet": bson.M{
 			"product": bson.M{
 				"_id":   id_product,
@@ -701,7 +703,8 @@ func (A *AccountModel) AddDiscounUsed(id, idd string) (err error) {
 				"discount":     data_discount.Discount,
 				"discountcode": data_discount.DiscountCode,
 				"image":        data_discount.Image,
-				"expired":      data_discount.Expired,
+				"startAt":      data_discount.StartAt,
+				"endAt":        data_discount.EndAt,
 			},
 		},
 	})

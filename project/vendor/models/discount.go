@@ -18,7 +18,8 @@ type Discount struct {
 	Discount     int       `json:"discount" bson:"discount"`
 	DiscountCode string    `json:"discountcode" bson:"discountcode"`
 	Image        string    `json:"image" bson:"image"`
-	Expired      time.Time `json:"expired" bson:"expired"`
+	StartAt      time.Time `json:"startAt" bson:"startAt"`
+	EndAt        time.Time `json:"endAt" bson:"endAt"`
 }
 
 type DiscountModel struct{}
@@ -36,25 +37,39 @@ func (D *DiscountModel) Create(data forms.Discount) (err error) {
 		"name":         data.Name,
 		"discount":     data.Discount,
 		"discountcode": code,
-		"expired":      data.Expired,
+		"startAt":      data.StartAt,
+		"endAt":        data.EndAt,
+		"product":      []interface{}{},
 	})
 	if err != nil {
 		return
 	}
-	path, err := addon.Upload("discount", id, data.Image)
-	if err != nil {
-		return
+	for _, p := range data.Product {
+		err = db.Collection["discount"].Update(bson.M{
+			"_id": id,
+		}, bson.M{
+			"$addToSet": bson.M{
+				"product": bson.M{
+					"_id": p.Id,
+				},
+			},
+		})
 	}
-	err = db.Collection["discount"].Update(bson.M{
-		"_id": id,
-	}, bson.M{
-		"$set": bson.M{
-			"image": path,
-		},
-	})
-	if err != nil {
-		return
-	}
+
+	// path, err := addon.Upload("discount", id, data.Image)
+	// if err != nil {
+	// 	return
+	// }
+	// err = db.Collection["discount"].Update(bson.M{
+	// 	"_id": id,
+	// }, bson.M{
+	// 	"$set": bson.M{
+	// 		"image": path,
+	// 	},
+	// })
+	// if err != nil {
+	// 	return
+	// }
 	return
 }
 
@@ -72,7 +87,8 @@ func (D *DiscountModel) Update(id string, data forms.Discount) (err error) {
 		"$set": bson.M{
 			"name":     data.Name,
 			"discount": data.Discount,
-			"expired":  data.Expired,
+			"startAt":  data.StartAt,
+			"endAt":    data.EndAt,
 		},
 	})
 	return

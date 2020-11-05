@@ -203,7 +203,7 @@ func (P *ProductModel) All() (data []Product) {
 	return
 }
 
-func (P *ProductModel) List(filter, sort string, pageNo, perPage int) (data []ListProducFix, count int, err error) {
+func (P *ProductModel) List(filter, sort string, pageNo, perPage int, account string) (data []ListProducFix, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -218,8 +218,18 @@ func (P *ProductModel) List(filter, sort string, pageNo, perPage int) (data []Li
 		order = -1
 	}
 	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
-	pipeline := []bson.M{
-		{"$match": bson.M{"membership.code": 0}},
+	pipeline := []bson.M{}
+	if account != "" {
+		pipeline = append(pipeline,
+			bson.M{"$match": bson.M{"_id": account}},
+		)
+	} else {
+		pipeline = append(pipeline,
+			bson.M{"$match": bson.M{"membership.code": 0}},
+		)
+	}
+	pipeline = []bson.M{
+		{"$match": bson.M{"_id": account}},
 		{"$unwind": "$product"},
 		{"$unwind": "$address"},
 		{"$match": bson.M{"address.default": true}},

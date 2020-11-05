@@ -96,6 +96,7 @@ func Middleware() {
 		product_a := account.Group("/product")
 		{
 			product_a.POST("/add/:account", HandleCounter, accountcontroll.AddProdcut)
+			product_a.GET("/list/:account", HandleCounter, accountcontroll.ListProduct)
 			product_a.PUT("/update/:account/:product", HandleCounter, accountcontroll.UpdateStock)
 		}
 		reward_a := account.Group("/reward")

@@ -299,6 +299,7 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 		Price:   price,
 		Resi:    "",
 		Service: data.Delivery.Service,
+		Code:    data.Delivery.Code,
 	}
 	ret.Status = T.GetStatus(0)
 	ret.Status_code = 0

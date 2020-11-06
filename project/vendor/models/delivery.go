@@ -21,6 +21,7 @@ var city []City
 
 type Delivery struct {
 	Courier string `json:"courier" bson:"courier"`
+	Code    string `json:"code" bson:"code"`
 	Service string `json:"service" bson:"service"`
 	Resi    string `json:"resi" bson:"resi"`
 	Price   int    `json:"price" bson:"price"`

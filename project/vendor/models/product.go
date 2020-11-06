@@ -489,7 +489,7 @@ func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage i
 			"stock":      "$stock",
 			"desc":       "$desc",
 			"from":       "$from",
-			"account":    "$_id",
+			"account":    "$account",
 			"membership": "$membership",
 			"name":       "$name",
 			"code":       "$code",

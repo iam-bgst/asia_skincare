@@ -223,6 +223,20 @@ func (A *AccountModel) AddProduct(id_account, id_product string, stock int) (err
 	return
 }
 
+func (A *AccountModel) AddProductAdmin(id_product string, stock int) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"membership.code": 0,
+	}, bson.M{
+		"$addToSet": bson.M{
+			"product": bson.M{
+				"_id":   id_product,
+				"stock": stock,
+			},
+		},
+	})
+	return
+}
+
 func (A *AccountModel) UpdateStockOnAccount(account, product string, stock int) (err error) {
 	err = db.Collection["account"].Update(bson.M{
 		"_id":         account,

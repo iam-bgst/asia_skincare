@@ -121,10 +121,10 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 			},
 		})
 	}
-	// err = account_model.AddProduct(id)
-	// if err != nil {
-	// 	return
-	// }
+	err = account_model.AddProductAdmin(id, 0)
+	if err != nil {
+		return
+	}
 	return
 }
 

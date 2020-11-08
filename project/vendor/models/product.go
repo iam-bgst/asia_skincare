@@ -174,6 +174,13 @@ func (P *ProductModel) Update(id string, data forms.Product) (err error) {
 			"netto":  data.Netto,
 			"desc":   data.Desc,
 			"image":  path,
+			"discount": bson.M{
+				"name":         data.Discount.Name,
+				"discount":     data.Discount.Discount,
+				"discountcode": data.Discount.DiscountCode,
+				"startAt":      data.Discount.StartAt,
+				"endAt":        data.Discount.EndAt,
+			},
 		},
 	})
 	return
@@ -372,6 +379,146 @@ func (R *ProductModel) GetByMembershipAndProvCity(membership, filter, sort, page
 	}
 	err = db.Collection["product"].Pipe(pipeline).All(&data)
 	count, _ = db.Collection["product"].Find(bson.M{}).Count()
+	return
+}
+
+func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPage int, agent string, archive bool) (data []ListProducFix, count int, err error) {
+	sorting := sort
+	order := 0
+	if strings.Contains(sort, "asc") {
+		sorting = strings.Replace(sort, "|asc", "", -1)
+		order = 1
+	} else if strings.Contains(sort, "desc") {
+		sorting = strings.Replace(sort, "|desc", "", -1)
+		sorting = sorting
+		order = -1
+	} else {
+		sorting = "date"
+		order = -1
+	}
+
+	regex_next := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
+	var nin interface{}
+	if agent != "" {
+		nin, _ = strconv.Atoi(agent)
+	} else {
+		nin = bson.M{
+			"$nin": []int{1, 3},
+		}
+	}
+	pipeline := []bson.M{
+		{"$match": bson.M{"membership.code": nin}},
+		{"$unwind": "$product"},
+		{"$unwind": "$address"},
+		{"$match": bson.M{"address.default": true}},
+		{"$lookup": bson.M{
+			"from":         "product",
+			"localField":   "product._id",
+			"foreignField": "_id",
+			"as":           "product_docs",
+		}},
+		{"$unwind": "$product_docs"},
+		{"$project": bson.M{
+			"_id":        "$product._id",
+			"stock":      "$product.stock",
+			"desc":       "$product_docs.desc",
+			"from":       "$address",
+			"account":    "$_id",
+			"membership": "$membership",
+			"name":       "$product_docs.name",
+			"image":      "$product_docs.image",
+			"weight":     "$product_docs.weight",
+			"point":      "$product_docs.point",
+			"prices":     "$product_docs.pricing",
+			"netto":      "$product_docs.netto",
+			"archive":    "$product_docs.archive",
+			"discount": bson.M{"$cond": []interface{}{
+				bson.M{"$and": []interface{}{
+					bson.M{"$eq": []interface{}{"$membership.code", 0}},
+					bson.M{"$lt": []interface{}{"$product_docs.discount.startAt", time.Now()}},
+					bson.M{"$gt": []interface{}{"$product_docs.discount.endAt", time.Now()}},
+				}},
+				bson.M{
+					"_id":          "$product_docs.discount._id",
+					"name":         "$product_docs.discount.name",
+					"discount":     "$product_docs.discount.discount",
+					"discountcode": "$product_docs.discount.discountcode",
+					"startAt":      "$product_docs.discount.startAt",
+					"endAt":        "$product_docs.discount.endAt",
+				},
+				"$discount",
+			}},
+		}},
+		{"$match": bson.M{"archive": archive}},
+		{"$addFields": bson.M{
+			"pricing": bson.M{
+				"$arrayElemAt": []interface{}{
+					bson.M{"$filter": bson.M{
+						"input": "$prices",
+						"as":    "pri",
+						"cond": bson.M{
+							"$eq": []string{"$$pri.membership._id", "$membership._id"},
+						},
+					},
+					}, 0,
+				},
+			},
+		}},
+		{"$project": bson.M{
+			"_id":        "$_id",
+			"stock":      "$stock",
+			"desc":       "$desc",
+			"from":       "$from",
+			"account":    "$account",
+			"membership": "$membership",
+			"name":       "$name",
+			"code":       "$code",
+			"dis":        "$dis",
+			"disko":      "$diskon",
+			"image":      "$image",
+			"weight":     "$weight",
+			"point":      "$point",
+			"netto":      "$netto",
+			"archive":    "$archive",
+			"discount":   "$discount",
+			"pricing": bson.M{"$cond": []interface{}{
+				bson.M{"$eq": []interface{}{"$membership.code", 0}},
+				bson.M{
+					"membership": "$pricing.membership",
+					"price": bson.M{
+						"$subtract": []interface{}{ // Kurang
+							"$pricing.price",
+							bson.M{"$multiply": []interface{}{ // Kali
+								bson.M{"$divide": []interface{}{ // Bagi
+									"$discount.discount",
+									100}},
+								"$pricing.price",
+							}},
+						}},
+				},
+				"$pricing",
+			}},
+		}},
+		{"$match": bson.M{
+			"$or": []interface{}{
+				bson.M{"name": regex_next},
+			},
+		}},
+	}
+	data_non_fix := []bson.M{}
+	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)
+	count = len(data_non_fix)
+
+	pipeline = append(pipeline,
+		bson.M{"$sort": bson.M{sorting: order}},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$skip": (pageNo - 1) * perPage},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$limit": perPage},
+	)
+	err = db.Collection["account"].Pipe(pipeline).All(&data)
 	return
 }
 

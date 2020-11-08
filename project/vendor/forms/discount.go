@@ -9,7 +9,4 @@ type Discount struct {
 	// Image        string    `json:"image"`
 	StartAt time.Time `json:"startAt"`
 	EndAt   time.Time `json:"endAt"`
-	Product []struct {
-		Id string `json:"_id"`
-	}
 }

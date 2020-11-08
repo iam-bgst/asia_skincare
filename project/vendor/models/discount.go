@@ -44,17 +44,17 @@ func (D *DiscountModel) Create(data forms.Discount) (err error) {
 	if err != nil {
 		return
 	}
-	for _, p := range data.Product {
-		err = db.Collection["discount"].Update(bson.M{
-			"_id": id,
-		}, bson.M{
-			"$addToSet": bson.M{
-				"product": bson.M{
-					"_id": p.Id,
-				},
-			},
-		})
-	}
+	// for _, p := range data.Product {
+	// 	err = db.Collection["discount"].Update(bson.M{
+	// 		"_id": id,
+	// 	}, bson.M{
+	// 		"$addToSet": bson.M{
+	// 			"product": bson.M{
+	// 				"_id": p.Id,
+	// 			},
+	// 		},
+	// 	})
+	// }
 
 	// path, err := addon.Upload("discount", id, data.Image)
 	// if err != nil {

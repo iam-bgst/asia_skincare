@@ -23,6 +23,7 @@ func (P *ProductControll) Create(c *gin.Context) {
 		}
 	}
 }
+func (P *ProductControll) ListByMembershipFix(c *gin.Context) {}
 
 func (P *ProductControll) ListByMembership(c *gin.Context) {
 	sort := c.Query("sort")
@@ -44,7 +45,7 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	var count int
 	var err error
 
-	data, count, err = productmodels.ListProductOnAgent(filter, sort, pageNo, perPage, agent, archive)
+	data, count, err = productmodels.ListProductOnAgentFix(filter, sort, pageNo, perPage, agent, archive)
 
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {
@@ -191,7 +192,7 @@ func (P *ProductControll) Update(c *gin.Context) {
 		err := productmodels.Update(id, forms)
 		if err != nil {
 			c.JSON(406, gin.H{
-				"error": "error update product",
+				"error": err.Error(),
 			})
 		} else {
 			c.JSON(200, gin.H{

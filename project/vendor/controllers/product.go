@@ -23,8 +23,6 @@ func (P *ProductControll) Create(c *gin.Context) {
 		}
 	}
 }
-func (P *ProductControll) ListByMembershipFix(c *gin.Context) {}
-
 func (P *ProductControll) ListByMembership(c *gin.Context) {
 	sort := c.Query("sort")
 	pageNo, _ := strconv.Atoi(c.Query("page"))
@@ -197,6 +195,26 @@ func (P *ProductControll) Update(c *gin.Context) {
 		} else {
 			c.JSON(200, gin.H{
 				"message": "success update product",
+				"status":  "ok",
+			})
+		}
+	}
+}
+
+func (P *ProductControll) UpdateDiscount(c *gin.Context) {
+	var forms forms.Discount
+	if c.BindJSON(&forms) != nil {
+		c.JSON(405, gin.H{"error": "Error while binding json"})
+	} else {
+		id := c.Param("id")
+		err := productmodels.UpdateDiscount(id, forms)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "success update product discount",
 				"status":  "ok",
 			})
 		}

@@ -135,6 +135,7 @@ func Middleware() {
 		product.GET("/list", HandleCounter, productcontroll.ListByMembership)
 		product.GET("/list/recomd", HandleCounter, productcontroll.ListRecomend)
 		product.PUT("/update/:id", HandleCounter, productcontroll.Update)
+		product.PUT("/updateDiscount/:id", HandleCounter, productcontroll.UpdateDiscount)
 		product.GET("/get/:id", HandleCounter, productcontroll.Get)
 		product.PUT("/update_price/:product/:membership", HandleCounter, productcontroll.UpdatePrice)
 		product.DELETE("/delete/:product", HandleCounter, productcontroll.Delete)

@@ -174,12 +174,21 @@ func (P *ProductModel) Update(id string, data forms.Product) (err error) {
 			"netto":  data.Netto,
 			"desc":   data.Desc,
 			"image":  path,
+		},
+	})
+	return
+}
+func (P *ProductModel) UpdateDiscount(id string, data forms.Discount) (err error) {
+	err = db.Collection["product"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
 			"discount": bson.M{
-				"name":         data.Discount.Name,
-				"discount":     data.Discount.Discount,
-				"discountcode": data.Discount.DiscountCode,
-				"startAt":      data.Discount.StartAt,
-				"endAt":        data.Discount.EndAt,
+				"name":         data.Name,
+				"discount":     data.Discount,
+				"discountcode": data.DiscountCode,
+				"startAt":      data.StartAt,
+				"endAt":        data.EndAt,
 			},
 		},
 	})

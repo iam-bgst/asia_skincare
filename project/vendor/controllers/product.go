@@ -324,8 +324,9 @@ func (P *ProductControll) ListProductOnAgent(c *gin.Context) {
 }
 
 func (P *ProductControll) Archive(c *gin.Context) {
-	id := c.Param("id")
-	err := productmodels.Archive(id)
+	product := c.Param("product")
+	account := c.Param("account")
+	err := productmodels.Archive(account, product)
 	if err != nil {
 		c.JSON(405, gin.H{
 			"error": err.Error(),
@@ -339,8 +340,9 @@ func (P *ProductControll) Archive(c *gin.Context) {
 }
 
 func (P *ProductControll) UnArchive(c *gin.Context) {
-	id := c.Param("id")
-	err := productmodels.UnArchive(id)
+	product := c.Param("product")
+	account := c.Param("account")
+	err := productmodels.UnArchive(account, product)
 	if err != nil {
 		c.JSON(405, gin.H{
 			"error": err.Error(),

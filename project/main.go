@@ -32,10 +32,10 @@ func init() {
 	models.InitialAssets()
 
 	// Service Point
-	models.ServicePoint()
+	// models.ServicePoint()
 
 	// Service Transaction
-	models.ServiceTransaction()
+	// models.ServiceTransaction()
 
 }
 

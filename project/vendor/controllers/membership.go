@@ -28,7 +28,9 @@ func (MS *MembershipControll) Create(c *gin.Context) {
 
 func (MS *MembershipControll) ListAll(c *gin.Context) {
 	ne, _ := strconv.Atoi(c.Query("ne"))
-	data, err := membershipmodels.ListAll(ne)
+	code := c.Query("code")
+	data, err := membershipmodels.ListAll(ne, code)
+
 	if err != nil {
 		c.JSON(405, gin.H{
 			"error": "error while get list membership",

@@ -25,7 +25,6 @@ type Product struct {
 	Image   string  `json:"image" bson:"image"`
 	Desc    string  `json:"desc" bson:"desc"`
 	Type    int     `json:"type" bson:"type"`
-	Archive bool    `json:"archive" bson:"archive"`
 }
 type Product1 struct {
 	Id      string    `json:"_id" bson:"_id,omitempty"`
@@ -427,6 +426,7 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 			"as":           "product_docs",
 		}},
 		{"$unwind": "$product_docs"},
+
 		{"$project": bson.M{
 			"_id":        "$product._id",
 			"stock":      "$product.stock",
@@ -440,7 +440,7 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 			"point":      "$product_docs.point",
 			"prices":     "$product_docs.pricing",
 			"netto":      "$product_docs.netto",
-			"archive":    "$product_docs.archive",
+			"archive":    "$product.archive",
 			"discount": bson.M{"$cond": []interface{}{
 				bson.M{"$and": []interface{}{
 					bson.M{"$eq": []interface{}{"$membership.code", 0}},
@@ -465,7 +465,6 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 				},
 			}},
 		}},
-		{"$match": bson.M{"archive": archive}},
 		{"$addFields": bson.M{
 			"pricing": bson.M{
 				"$arrayElemAt": []interface{}{
@@ -480,6 +479,7 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 				},
 			},
 		}},
+		{"$match": bson.M{"archive": archive}},
 		{"$project": bson.M{
 			"_id":        "$_id",
 			"stock":      "$stock",
@@ -764,22 +764,24 @@ func (P *ProductModel) Detail(id_product, id_account string) (data ListProducFix
 	return
 }
 
-func (P *ProductModel) Archive(id string) (err error) {
-	err = db.Collection["product"].Update(bson.M{
-		"_id": id,
+func (P *ProductModel) Archive(id_account, id_product string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         id_account,
+		"product._id": id_product,
 	}, bson.M{
 		"$set": bson.M{
-			"archive": true,
+			"product.$.archive": true,
 		},
 	})
 	return
 }
-func (P *ProductModel) UnArchive(id string) (err error) {
-	err = db.Collection["product"].Update(bson.M{
-		"_id": id,
+func (P *ProductModel) UnArchive(id_account, id_product string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id":         id_account,
+		"product._id": id_product,
 	}, bson.M{
 		"$set": bson.M{
-			"archive": false,
+			"product.$.archive": false,
 		},
 	})
 	return

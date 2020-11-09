@@ -30,8 +30,9 @@ type Account struct {
 	Qris          string           `json:"qris" bson:"qris"`
 	Discount_used []Discount       `json:"discount_used" bson:"discount_used"`
 	Product       []struct {
-		Id    string `json:"_id" bson:"_id,omitempty"`
-		Stock int    `json:"stock" bson:"stock"`
+		Id      string `json:"_id" bson:"_id,omitempty"`
+		Stock   int    `json:"stock" bson:"stock"`
+		Archive bool   `json:"archive" bson:"archive"`
 	} `json:"product"`
 }
 
@@ -215,8 +216,9 @@ func (A *AccountModel) AddProduct(id_account, id_product string, stock int) (err
 	}, bson.M{
 		"$addToSet": bson.M{
 			"product": bson.M{
-				"_id":   id_product,
-				"stock": stock,
+				"_id":     id_product,
+				"stock":   stock,
+				"archive": false,
 			},
 		},
 	})

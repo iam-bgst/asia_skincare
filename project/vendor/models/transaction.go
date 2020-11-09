@@ -182,7 +182,6 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 				Pricing: data_p.Pricing.Price * p.Qty,
 				Image:   data_p.Image,
 				Discount: Discount{
-					Id:           data_d.Id,
 					Discount:     data_d.Discount,
 					DiscountCode: data_d.DiscountCode,
 					StartAt:      data_d.StartAt,
@@ -213,7 +212,6 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 				// return
 			}
 			dis = append(dis, Discount{
-				Id:           data_discount.Id,
 				Discount:     data_discount.Discount,
 				DiscountCode: data_discount.DiscountCode,
 				StartAt:      data_discount.StartAt,

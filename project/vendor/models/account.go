@@ -712,7 +712,6 @@ func (A *AccountModel) AddDiscounUsed(id, idd string) (err error) {
 	}, bson.M{
 		"$addToSet": bson.M{
 			"discount_used": bson.M{
-				"_id":          data_discount.Id,
 				"name":         data_discount.Name,
 				"discount":     data_discount.Discount,
 				"discountcode": data_discount.DiscountCode,

@@ -13,13 +13,13 @@ import (
 )
 
 type Discount struct {
-	Id           string    `json:"_id" bson:"_id,omitempty"`
 	Name         string    `json:"name" bson:"name"`
 	Discount     int       `json:"discount" bson:"discount"`
 	DiscountCode string    `json:"discountcode" bson:"discountcode"`
 	Image        string    `json:"image" bson:"image"`
 	StartAt      time.Time `json:"startAt" bson:"startAt"`
 	EndAt        time.Time `json:"endAt" bson:"endAt"`
+	Status       bool      `json:"status" bson:"status"`
 }
 
 type DiscountModel struct{}

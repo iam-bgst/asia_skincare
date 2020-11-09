@@ -444,8 +444,8 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 			"discount": bson.M{"$cond": []interface{}{
 				bson.M{"$and": []interface{}{
 					bson.M{"$eq": []interface{}{"$membership.code", 0}},
-					bson.M{"$lt": []interface{}{"$product_docs.discount.startAt", time.Now()}},
-					bson.M{"$gt": []interface{}{"$product_docs.discount.endAt", time.Now()}},
+					bson.M{"$lt": []interface{}{"$product_docs.discount.startAt", time.Now().UTC().Add(7 * time.Hour)}},
+					bson.M{"$gt": []interface{}{"$product_docs.discount.endAt", time.Now().UTC().Add(7 * time.Hour)}},
 				}},
 				bson.M{
 					"name":         "$product_docs.discount.name",

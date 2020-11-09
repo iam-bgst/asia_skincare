@@ -268,6 +268,29 @@ func (P *ProductModel) List(filter, sort string, pageNo, perPage int, account st
 			"point":      "$product_docs.point",
 			"prices":     "$product_docs.pricing",
 			"netto":      "$product_docs.netto",
+			"archive":    "product_docs.archive",
+			"discount": bson.M{"$cond": []interface{}{
+				bson.M{"$and": []interface{}{
+					bson.M{"$eq": []interface{}{"$membership.code", 0}},
+					bson.M{"$gt": []interface{}{"$product_docs.discount.discount", 0}},
+				}},
+				bson.M{
+					"name":         "$product_docs.discount.name",
+					"discount":     "$product_docs.discount.discount",
+					"discountcode": "$product_docs.discount.discountcode",
+					"startAt":      "$product_docs.discount.startAt",
+					"endAt":        "$product_docs.discount.endAt",
+					"status":       true,
+				},
+				bson.M{
+					"name":         "",
+					"discount":     0,
+					"discountcode": "",
+					"startAt":      time.Now(),
+					"endAt":        time.Now(),
+					"status":       false,
+				},
+			}},
 		}},
 		{"$addFields": bson.M{
 			"pricing": bson.M{

@@ -53,7 +53,11 @@ func (MS *MembershipModel) InitMembership() (err error) {
 
 func (MS *MembershipModel) ListAll(ne int, code string) (data []Membership, err error) {
 	if code != "" {
-		err = db.Collection["membership"].Find(bson.M{}).All(&data)
+		err = db.Collection["membership"].Find(bson.M{
+			"code": bson.M{
+				"$ne": 1,
+			},
+		}).All(&data)
 		return
 	}
 	if account_model.CheckAdmin() {

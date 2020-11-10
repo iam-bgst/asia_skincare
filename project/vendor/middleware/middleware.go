@@ -6,13 +6,16 @@ import (
 	"expvar"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	exp_gin "github.com/gin-contrib/expvar"
+	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	cors "github.com/itsjamie/gin-cors"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
@@ -69,6 +72,15 @@ func Middleware() {
 			"version": version,
 		})
 	})
+	server := http.Server{
+		Addr:    port,
+		Handler: router,
+	}
+	m := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("asia.multec-api.com:1998"),
+		Cache:      autocert.DirCache("/var/www/.cache"),
+	}
 
 	// ExpVar
 	router.GET("/debug/vars", exp_gin.Handler())
@@ -234,7 +246,8 @@ func Middleware() {
 		redeem.PUT("/valid/:id", HandleCounter, redeemcontroll.Valid)
 	}
 
-	router.Run(port)
+	// router.Run(port)
+	autotls.RunWithManager(router, &m)
 }
 func HandleAuth() gin.HandlerFunc {
 	valid := func(c *gin.Context) {

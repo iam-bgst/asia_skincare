@@ -31,6 +31,7 @@ var (
 	rewardcontroll      = new(controllers.RewardControll)
 	couriercontroll     = new(controllers.CourierControll)
 	redeemcontroll      = new(controllers.RedeemControll)
+	headercontroll      = new(controllers.HeaderControll)
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -126,6 +127,14 @@ func Middleware() {
 			courier_a.DELETE("/delete/:account/:courier", HandleCounter, accountcontroll.RemoveCourier)
 			courier_a.GET("/list/:account", HandleCounter, accountcontroll.ListCourier)
 		}
+	}
+
+	// Header
+	header := router.Group("/header")
+	{
+		header.POST("/add", HandleCounter, headercontroll.Create)
+		header.GET("/get", HandleCounter, headercontroll.Get)
+		header.PUT("/update/:id", HandleCounter, headercontroll.Update)
 	}
 
 	// Product
@@ -235,6 +244,7 @@ func Middleware() {
 	}
 
 	router.Run(port)
+	// router.RunTLS(port, "/etc/letsencrypt/live/asia.multec-api.com/fullchain.pem", "/etc/letsencrypt/live/asia.multec-api.com/privkey.pem")
 }
 func HandleAuth() gin.HandlerFunc {
 	valid := func(c *gin.Context) {

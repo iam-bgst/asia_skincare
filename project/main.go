@@ -22,6 +22,7 @@ func init() {
 		"rewards",
 		"courier",
 		"redeem",
+		"header",
 	}
 
 	// Mongodb

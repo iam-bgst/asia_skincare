@@ -15,4 +15,5 @@ var (
 	rewardmodels      = new(models.RewardsModels)
 	couriermodels     = new(models.CourierModel)
 	redeemmodels      = new(models.RedeemModel)
+	headermodels      = new(models.HeaderModel)
 )

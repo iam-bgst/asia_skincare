@@ -13,4 +13,5 @@ var (
 	reward_models     = new(RewardsModels)
 	courier_model     = new(CourierModel)
 	redeem_model      = new(RedeemModel)
+	header_model      = new(HeaderModel)
 )

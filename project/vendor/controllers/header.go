@@ -15,6 +15,18 @@ func (H *HeaderControll) Create(c *gin.Context) {
 		c.JSON(405, gin.H{
 			"error": "error binding json",
 		})
+	} else {
+		err := headermodels.Create(data)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"status":  "ok",
+				"message": "added",
+			})
+		}
 	}
 }
 

@@ -55,7 +55,7 @@ func (MS *MembershipModel) ListAll(ne int, code string) (data []Membership, err 
 	if code != "" {
 		err = db.Collection["membership"].Find(bson.M{
 			"code": bson.M{
-				"$ne": 1,
+				"$nin": []int{1, ne},
 			},
 		}).All(&data)
 		return

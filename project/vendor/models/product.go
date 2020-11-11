@@ -167,7 +167,6 @@ func (P *ProductModel) Update(id string, data forms.Product) (err error) {
 	}, bson.M{
 		"$set": bson.M{
 			"name":   data.Name,
-			"stock":  data.Stoct,
 			"point":  data.Point,
 			"weight": data.Weight,
 			"netto":  data.Netto,

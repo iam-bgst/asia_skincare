@@ -7,6 +7,7 @@ type Account struct {
 	Address     Address `json:"address" bson:"address"`
 	Membership  string  `json:"membership" bson:"membership"`
 	Image       string  `json:"image"`
+	Referral    string  `json:"referral"`
 }
 
 type Address struct {

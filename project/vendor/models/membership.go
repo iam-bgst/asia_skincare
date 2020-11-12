@@ -2,6 +2,7 @@ package models
 
 import (
 	"db"
+	"strconv"
 
 	"github.com/pborman/uuid"
 	"gopkg.in/mgo.v2/bson"
@@ -32,7 +33,7 @@ func (MS *MembershipModel) GetOneMembership(id string) (data Membership, err err
 }
 
 func (MS *MembershipModel) InitMembership() (err error) {
-	Memship = []string{"Admin", "Staff", "Agent", "Reseller"}
+	Memship = []string{"Admin", "Staff", "Distributor", "Agent", "Reseller"}
 	// fmt.Println(db.Collection["membership"])
 	// db.SetCollection("membership")
 	var data []Membership
@@ -51,32 +52,40 @@ func (MS *MembershipModel) InitMembership() (err error) {
 	return
 }
 
-func (MS *MembershipModel) ListAll(ne int, code string) (data []Membership, err error) {
+func (MS *MembershipModel) ListAll(ne, code string) (data []Membership, err error) {
+	neq := []int{}
+	nn, _ := strconv.Atoi(ne)
 	if code != "" {
+
+		if ne != "" {
+			neq = []int{1, nn}
+		} else {
+			neq = []int{1}
+		}
 		err = db.Collection["membership"].Find(bson.M{
 			"code": bson.M{
-				"$nin": []int{1, ne},
+				"$nin": neq,
 			},
-		}).All(&data)
+		}).Sort("code").All(&data)
 		return
 	}
 	if account_model.CheckAdmin() {
-		if ne > 0 {
+		if nn > 0 {
 			err = db.Collection["membership"].Find(bson.M{"code": bson.M{
-				"$nin": []int{ne, 0},
-			}}).All(&data)
+				"$nin": []int{nn, 0},
+			}}).Sort("code").All(&data)
 		} else {
 			err = db.Collection["membership"].Find(bson.M{"code": bson.M{
 				"$ne": 0,
-			}}).All(&data)
+			}}).Sort("code").All(&data)
 		}
 	} else {
-		if ne > 0 {
+		if nn > 0 {
 			err = db.Collection["membership"].Find(bson.M{"code": bson.M{
 				"$ne": ne,
-			}}).All(&data)
+			}}).Sort("code").All(&data)
 		} else {
-			err = db.Collection["membership"].Find(bson.M{}).All(&data)
+			err = db.Collection["membership"].Find(bson.M{}).Sort("code").All(&data)
 		}
 	}
 	return

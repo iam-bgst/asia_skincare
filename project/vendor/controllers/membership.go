@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"forms"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +26,7 @@ func (MS *MembershipControll) Create(c *gin.Context) {
 }
 
 func (MS *MembershipControll) ListAll(c *gin.Context) {
-	ne, _ := strconv.Atoi(c.Query("ne"))
+	ne := c.Query("ne")
 	code := c.Query("code")
 	data, err := membershipmodels.ListAll(ne, code)
 

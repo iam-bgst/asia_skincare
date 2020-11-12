@@ -127,6 +127,11 @@ func Middleware() {
 			courier_a.DELETE("/delete/:account/:courier", HandleCounter, accountcontroll.RemoveCourier)
 			courier_a.GET("/list/:account", HandleCounter, accountcontroll.ListCourier)
 		}
+		referral := account.Group("/referral")
+		{
+			referral.GET("/get/:code", HandleCounter, accountcontroll.GetByReferralCode)
+			referral.PUT("/update/:id", HandleCounter, accountcontroll.UpdateReferralCode)
+		}
 	}
 
 	// Header

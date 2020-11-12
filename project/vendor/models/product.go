@@ -412,7 +412,7 @@ func (R *ProductModel) GetByMembershipAndProvCity(membership, filter, sort, page
 	return
 }
 
-func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPage int, agent string, archive bool) (data []ListProducFix, count int, err error) {
+func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPage int, agent string, archive bool, account string) (data []ListProducFix, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -433,7 +433,7 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 		nin, _ = strconv.Atoi(agent)
 	} else {
 		nin = bson.M{
-			"$nin": []int{1, 3},
+			"$nin": []int{1, 4},
 		}
 	}
 	pipeline := []bson.M{
@@ -448,7 +448,6 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 			"as":           "product_docs",
 		}},
 		{"$unwind": "$product_docs"},
-
 		{"$project": bson.M{
 			"_id":        "$product._id",
 			"stock":      "$product.stock",
@@ -501,7 +500,12 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 				},
 			},
 		}},
-		{"$match": bson.M{"archive": archive}},
+		{"$match": bson.M{
+			"archive": archive,
+			"account": bson.M{
+				"$ne": account,
+			},
+		}},
 		{"$project": bson.M{
 			"_id":        "$_id",
 			"stock":      "$stock",
@@ -581,7 +585,7 @@ func (P *ProductModel) ListProductOnAgent(filter, sort string, pageNo, perPage i
 		nin, _ = strconv.Atoi(agent)
 	} else {
 		nin = bson.M{
-			"$nin": []int{1, 3},
+			"$nin": []int{1, 4},
 		}
 	}
 	pipeline := []bson.M{

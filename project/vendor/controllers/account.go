@@ -108,6 +108,37 @@ func (A *AccountControll) ListAccountPoint(c *gin.Context) {
 	}
 }
 
+func (A *AccountControll) GetByReferralCode(c *gin.Context) {
+	code := c.Param("code")
+	data, err := accountmodels.GetByReferralCode(code)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"data":   data,
+			"status": "ok",
+		})
+	}
+}
+
+func (A *AccountControll) UpdateReferralCode(c *gin.Context) {
+	code := c.Query("code")
+	id_account := c.Param("id")
+	err := accountmodels.UpdateReferralCode(id_account, code)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"status":  "ok",
+			"message": "updated referral code",
+		})
+	}
+}
+
 func (A *AccountControll) ListPayment(c *gin.Context) {
 	sort := c.Query("sort")
 	pageNo, _ := strconv.Atoi(c.Query("page"))

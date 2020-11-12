@@ -27,8 +27,14 @@ type Account struct {
 	Membership    Membership       `json:"membership" bson:"membership"`
 	Image         string           `json:"image" bson:"image"`
 	Status        string           `json:"status" bson:"status"`
-	Qris          string           `json:"qris" bson:"qris"`
 	Discount_used []Discount       `json:"discount_used" bson:"discount_used"`
+	Referral      struct {
+		Code     string    `json:"code" bson:"code"`
+		Edited   bool      `json:"edited" bson:"edited"`
+		EditedAt time.Time `json:"edited_at" bson:"edited_at"`
+	} `json:"referral" bson:"referral"`
+
+	Referral_from string `json:"referral_from" bson:"referral_from"`
 	Product       []struct {
 		Id      string `json:"_id" bson:"_id,omitempty"`
 		Stock   int    `json:"stock" bson:"stock"`
@@ -149,6 +155,13 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 		err = err2
 		return
 	}
+	refferal := ""
+	if data_membership.Code == 2 { // Distributor
+		refferal = addon.RandomCode(10, false)
+
+	} else if data_membership.Code > 2 {
+		refferal = ""
+	}
 	timeAccount := time.Now()
 	err = db.Collection["account"].Insert(bson.M{
 		"_id":          id,
@@ -165,6 +178,12 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 		"status":  "active",
 		"payment": []interface{}{},
 		"courier": ([]Courier{}),
+		"referral": bson.M{
+			"code":      refferal,
+			"edited":    false,
+			"edited_at": time.Now().UTC().Add(7 * time.Hour),
+		},
+		"referral_from": data.Referral,
 	})
 	id_address := uuid.New()
 	err = db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
@@ -181,19 +200,6 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 			},
 		},
 	})
-	go func() {
-		product := product_model.All()
-		for _, p := range product {
-			db.Collection["account"].Update(bson.M{"_id": id}, bson.M{
-				"$addToSet": bson.M{
-					"product": bson.M{
-						"_id":   p.Id,
-						"stock": 0,
-					},
-				},
-			})
-		}
-	}()
 
 	go func() {
 		kurir := courier_model.All()
@@ -222,6 +228,31 @@ func (A *AccountModel) AddProduct(id_account, id_product string, stock int) (err
 			},
 		},
 	})
+	return
+}
+func (A *AccountModel) GetByReferralCode(referral_code string) (data Account, err error) {
+	err = db.Collection["account"].Find(bson.M{
+		"referral.code": referral_code,
+	}).One(&data)
+	return
+}
+func (A *AccountModel) UpdateReferralCode(id_account string, code string) (err error) {
+	data, _ := A.GetId(id_account)
+	if data.Referral.Edited {
+		err = errors.New("Referral code cannot edit, because Referral code has been edited at " + data.Referral.EditedAt.String())
+	} else {
+		err = db.Collection["account"].Update(bson.M{
+			"_id": id_account,
+		}, bson.M{
+			"$set": bson.M{
+				"referral": bson.M{
+					"code":      strings.ToUpper(code),
+					"edited":    true,
+					"edited_at": time.Now().UTC().Add(7 * time.Hour),
+				},
+			},
+		})
+	}
 	return
 }
 

@@ -391,10 +391,13 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 			produck_data, _ := product_model.Get(t.Id)
 
 			// add point to account
-			account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
+			if transaction_data.From.Account.Membership.Code == 0 {
+				// add point to account
+				account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
 
-			// add solded
-			product_model.UpdateSolded(t.Id, t.Qty)
+				// add solded
+				product_model.UpdateSolded(t.Id, t.Qty)
+			}
 
 			// update stock
 			account_model.UpdateStockProduct(transaction_data.From.Account.Id, produck_data.Id, t.Qty)

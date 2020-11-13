@@ -433,7 +433,7 @@ func (R *ProductModel) GetByMembershipAndProvCity(membership, filter, sort, page
 	return
 }
 
-func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPage int, agent string, archive bool, account string) (data []ListProducFix, count int, err error) {
+func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPage, tipe int, agent string, archive bool, account string) (data []ListProducFix, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -481,6 +481,7 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 			"weight":     "$product_docs.weight",
 			"point":      "$product_docs.point",
 			"prices":     "$product_docs.pricing",
+			"type":       "$product_docs.type",
 			"netto":      "$product_docs.netto",
 			"archive":    "$product.archive",
 			"discount": bson.M{"$cond": []interface{}{
@@ -522,6 +523,7 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 			},
 		}},
 		{"$match": bson.M{
+			"type":    tipe,
 			"archive": archive,
 			"account": bson.M{
 				"$ne": account,
@@ -541,6 +543,7 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 			"image":      "$image",
 			"weight":     "$weight",
 			"point":      "$point",
+			"type":       "$type",
 			"netto":      "$netto",
 			"archive":    "$archive",
 			"discount":   "$discount",

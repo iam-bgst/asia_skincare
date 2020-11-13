@@ -30,6 +30,7 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	filter := c.Query("filter")
 	agent := c.Query("agent")
 	archive, _ := strconv.ParseBool(c.Query("archive"))
+	tipe, _ := strconv.Atoi(c.Query("tipe"))
 	account := c.Query("account")
 	if sort == "" {
 		sort = "name"
@@ -44,7 +45,7 @@ func (P *ProductControll) ListByMembership(c *gin.Context) {
 	var count int
 	var err error
 
-	data, count, err = productmodels.ListProductOnAgentFix(filter, sort, pageNo, perPage, agent, archive, account)
+	data, count, err = productmodels.ListProductOnAgentFix(filter, sort, pageNo, perPage, tipe, agent, archive, account)
 
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {

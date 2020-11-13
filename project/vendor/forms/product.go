@@ -11,6 +11,9 @@ type Product struct {
 	Image    string    `json:"image"`
 	Type     int       `json:"type"`
 	Discount Discount  `json:"discount"`
+	Product  []struct {
+		Id string `json:"_id"`
+	} `json:"product"`
 }
 
 type Pricing struct {

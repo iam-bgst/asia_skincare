@@ -14,17 +14,18 @@ import (
 )
 
 type Product struct {
-	Id      string  `json:"_id" bson:"_id,omitempty"`
-	Name    string  `json:"name" bson:"name"`
-	Pricing Pricing `json:"pricing" bson:"pricing"`
-	Stoct   int     `json:"stoct" bson:"stock"`
-	Solded  int     `json:"solded" bson:"solded"`
-	Point   int     `json:"point" bson:"point"`
-	Weight  int     `json:"weight" bson:"weight"`
-	Netto   string  `json:"netto": bson:"netto"`
-	Image   string  `json:"image" bson:"image"`
-	Desc    string  `json:"desc" bson:"desc"`
-	Type    int     `json:"type" bson:"type"`
+	Id      string    `json:"_id" bson:"_id,omitempty"`
+	Name    string    `json:"name" bson:"name"`
+	Pricing Pricing   `json:"pricing" bson:"pricing"`
+	Stoct   int       `json:"stoct" bson:"stock"`
+	Solded  int       `json:"solded" bson:"solded"`
+	Point   int       `json:"point" bson:"point"`
+	Weight  int       `json:"weight" bson:"weight"`
+	Netto   string    `json:"netto": bson:"netto"`
+	Image   string    `json:"image" bson:"image"`
+	Desc    string    `json:"desc" bson:"desc"`
+	Type    int       `json:"type" bson:"type"`
+	Product []Product `json:"product" bson:"product"`
 }
 type Product1 struct {
 	Id      string    `json:"_id" bson:"_id,omitempty"`
@@ -107,6 +108,7 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 		"type":    data.Type,
 		"archive": false,
 	})
+
 	for _, pricing := range data.Pricing {
 		data_membership, _ := membership_model.GetOneMembership(pricing.Membership)
 		err = db.Collection["product"].Update(bson.M{
@@ -120,7 +122,19 @@ func (P *ProductModel) Create(data forms.Product) (err error) {
 			},
 		})
 	}
-	err = account_model.AddProductAdmin(id, 0)
+	if data.Type == 1 {
+		for _, pp := range data.Product {
+			data, _ := P.Get2(pp.Id)
+			err = db.Collection["product"].Update(bson.M{
+				"_id": id,
+			}, bson.M{
+				"$addToSet": bson.M{
+					"product": data,
+				},
+			})
+		}
+	}
+	err = account_model.AddProductAdmin(id, data.Stoct)
 	if err != nil {
 		return
 	}
@@ -151,6 +165,13 @@ func (P *ProductModel) UpdateSolded(id string, solded int) (err error) {
 }
 
 func (P *ProductModel) Get(id string) (data Product1, err error) {
+	err = db.Collection["product"].Find(bson.M{
+		"_id": id,
+	}).One(&data)
+	return
+}
+
+func (P *ProductModel) Get2(id string) (data Product2, err error) {
 	err = db.Collection["product"].Find(bson.M{
 		"_id": id,
 	}).One(&data)

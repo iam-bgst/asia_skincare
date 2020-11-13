@@ -29,9 +29,7 @@ type Account struct {
 	Status        string           `json:"status" bson:"status"`
 	Discount_used []Discount       `json:"discount_used" bson:"discount_used"`
 	Referral      struct {
-		Code     string    `json:"code" bson:"code"`
-		Edited   bool      `json:"edited" bson:"edited"`
-		EditedAt time.Time `json:"edited_at" bson:"edited_at"`
+		Code string `json:"code" bson:"code"`
 	} `json:"referral" bson:"referral"`
 
 	Referral_from string `json:"referral_from" bson:"referral_from"`
@@ -156,10 +154,10 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 		return
 	}
 	refferal := ""
-	if data_membership.Code == 2 { // Distributor
+	if data_membership.Code == 2 || data_membership.Code == 3 { // Distributor
 		refferal = addon.RandomCode(10, false)
 
-	} else if data_membership.Code > 2 {
+	} else if data_membership.Code > 3 {
 		refferal = ""
 	}
 	timeAccount := time.Now()
@@ -179,9 +177,7 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 		"payment": []interface{}{},
 		"courier": ([]Courier{}),
 		"referral": bson.M{
-			"code":      refferal,
-			"edited":    false,
-			"edited_at": time.Now().UTC().Add(7 * time.Hour),
+			"code": refferal,
 		},
 		"referral_from": data.Referral,
 	})
@@ -234,25 +230,6 @@ func (A *AccountModel) GetByReferralCode(referral_code string) (data Account, er
 	err = db.Collection["account"].Find(bson.M{
 		"referral.code": referral_code,
 	}).One(&data)
-	return
-}
-func (A *AccountModel) UpdateReferralCode(id_account string, code string) (err error) {
-	data, _ := A.GetId(id_account)
-	if data.Referral.Edited {
-		err = errors.New("Referral code cannot edit, because Referral code has been edited at " + data.Referral.EditedAt.String())
-	} else {
-		err = db.Collection["account"].Update(bson.M{
-			"_id": id_account,
-		}, bson.M{
-			"$set": bson.M{
-				"referral": bson.M{
-					"code":      strings.ToUpper(code),
-					"edited":    true,
-					"edited_at": time.Now().UTC().Add(7 * time.Hour),
-				},
-			},
-		})
-	}
 	return
 }
 

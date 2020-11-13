@@ -130,7 +130,6 @@ func Middleware() {
 		referral := account.Group("/referral")
 		{
 			referral.GET("/get/:code", HandleCounter, accountcontroll.GetByReferralCode)
-			referral.PUT("/update/:id", HandleCounter, accountcontroll.UpdateReferralCode)
 		}
 	}
 

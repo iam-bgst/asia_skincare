@@ -262,8 +262,9 @@ func (A *AccountModel) AddProductAdmin(id_product string, stock int) (err error)
 	}, bson.M{
 		"$addToSet": bson.M{
 			"product": bson.M{
-				"_id":   id_product,
-				"stock": stock,
+				"_id":     id_product,
+				"stock":   stock,
+				"archive": false,
 			},
 		},
 	})

@@ -14,18 +14,18 @@ import (
 )
 
 type Product struct {
-	Id      string    `json:"_id" bson:"_id,omitempty"`
-	Name    string    `json:"name" bson:"name"`
-	Pricing Pricing   `json:"pricing" bson:"pricing"`
-	Stoct   int       `json:"stoct" bson:"stock"`
-	Solded  int       `json:"solded" bson:"solded"`
-	Point   int       `json:"point" bson:"point"`
-	Weight  int       `json:"weight" bson:"weight"`
-	Netto   string    `json:"netto": bson:"netto"`
-	Image   string    `json:"image" bson:"image"`
-	Desc    string    `json:"desc" bson:"desc"`
-	Type    int       `json:"type" bson:"type"`
-	Product []Product `json:"product" bson:"product"`
+	Id      string     `json:"_id" bson:"_id,omitempty"`
+	Name    string     `json:"name" bson:"name"`
+	Pricing Pricing    `json:"pricing" bson:"pricing"`
+	Stoct   int        `json:"stoct" bson:"stock"`
+	Solded  int        `json:"solded" bson:"solded"`
+	Point   int        `json:"point" bson:"point"`
+	Weight  int        `json:"weight" bson:"weight"`
+	Netto   string     `json:"netto": bson:"netto"`
+	Image   string     `json:"image" bson:"image"`
+	Desc    string     `json:"desc" bson:"desc"`
+	Type    int        `json:"type" bson:"type"`
+	Product []Product2 `json:"product" bson:"product"`
 }
 type Product1 struct {
 	Id      string    `json:"_id" bson:"_id,omitempty"`

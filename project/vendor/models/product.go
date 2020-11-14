@@ -4,6 +4,7 @@ import (
 	"addon"
 	"db"
 	"errors"
+	"fmt"
 	"forms"
 	"strconv"
 	"strings"
@@ -252,6 +253,12 @@ func (P *ProductModel) List(filter, sort string, pageNo, perPage int, account st
 		sorting = "date"
 		order = -1
 	}
+	acc, _ := account_model.GetId(account)
+	if acc.Membership.Code == 1 {
+		acc2, _ := account_model.GetByCode(0)
+		account = acc2.Id
+	}
+	fmt.Println(account)
 	regex := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	pipeline := []bson.M{}
 	if account != "" {

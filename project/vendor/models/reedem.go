@@ -3,6 +3,7 @@ package models
 import (
 	"addon"
 	"db"
+	"errors"
 	"forms"
 	"strings"
 	"time"
@@ -133,7 +134,10 @@ func (R *RedeemModel) List(filter, sort string, pageNo, perPage int, valid bool,
 
 func (R *RedeemModel) Valid(id string) (err error) {
 	data, _ := R.Get(id)
-
+	if data.Valid {
+		err = errors.New("Redeem Is validated")
+		return
+	}
 	err = db.Collection["redeem"].Update(bson.M{
 		"_id": id,
 	}, bson.M{

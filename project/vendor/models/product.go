@@ -440,7 +440,7 @@ func (R *ProductModel) GetByMembershipAndProvCity(membership, filter, sort, page
 	return
 }
 
-func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPage, tipe int, agent string, archive bool, account string) (data []ListProducFix, count int, err error) {
+func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPage, tipe int, agent string, archive bool, account, discount string) (data []ListProducFix, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -577,6 +577,13 @@ func (P *ProductModel) ListProductOnAgentFix(filter, sort string, pageNo, perPag
 				bson.M{"name": regex_next},
 			},
 		}},
+	}
+	if discount != "" {
+		fmt.Println("discount")
+		ddiscount, _ := strconv.ParseBool(discount)
+		pipeline = append(pipeline,
+			bson.M{"$match": bson.M{"discount.status": ddiscount}},
+		)
 	}
 	data_non_fix := []bson.M{}
 	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)

@@ -35,7 +35,7 @@ func (R *RedeemControll) List(c *gin.Context) {
 	pageNo, _ := strconv.Atoi(c.Query("page"))
 	perPage, _ := strconv.Atoi(c.Query("per_page"))
 	filter := c.Query("filter")
-	valid, _ := strconv.ParseBool(c.Query("valid"))
+	valid := c.Query("valid")
 	account := c.Query("account")
 	if sort == "" {
 		sort = "_id"

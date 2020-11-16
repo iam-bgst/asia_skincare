@@ -5,6 +5,7 @@ import (
 	"db"
 	"errors"
 	"forms"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,7 +69,7 @@ func (R *RedeemModel) Get(id string) (data Redeem, err error) {
 	return
 }
 
-func (R *RedeemModel) List(filter, sort string, pageNo, perPage int, valid bool, account string) (data []Redeem, count int, err error) {
+func (R *RedeemModel) List(filter, sort string, pageNo, perPage int, valid, account string) (data []Redeem, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -85,9 +86,6 @@ func (R *RedeemModel) List(filter, sort string, pageNo, perPage int, valid bool,
 
 	regex_next := bson.M{"$regex": bson.RegEx{Pattern: filter, Options: "i"}}
 	pipeline := []bson.M{
-		{"$match": bson.M{
-			"valid": valid,
-		}},
 		{"$lookup": bson.M{
 			"from":         "rewards",
 			"localField":   "reward",
@@ -114,6 +112,15 @@ func (R *RedeemModel) List(filter, sort string, pageNo, perPage int, valid bool,
 				"account._id": account,
 			}},
 		)
+	}
+	if valid != "" {
+		v_valid, _ := strconv.ParseBool(valid)
+		pipeline = append(pipeline,
+			bson.M{"$match": bson.M{
+				"valid": v_valid,
+			}},
+		)
+
 	}
 
 	data_non_fix := []bson.M{}

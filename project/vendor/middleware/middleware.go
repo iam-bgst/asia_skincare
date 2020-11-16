@@ -94,6 +94,7 @@ func Middleware() {
 		account.GET("/list", HandleCounter, accountcontroll.ListAccount)
 		account.POST("/adaddress/:id", HandleCounter, accountcontroll.AddAddress)
 		account.POST("/qris/add/:id", HandleCounter, accountcontroll.AddQris)
+		account.PUT("/set_token/:id", HandleCounter, accountcontroll.SetToken)
 		product_a := account.Group("/product")
 		{
 			product_a.POST("/add/:account", HandleCounter, accountcontroll.AddProdcut)

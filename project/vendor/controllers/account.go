@@ -41,6 +41,30 @@ func (A *AccountControll) AddPayment(c *gin.Context) {
 	}
 }
 
+func (A *AccountControll) SetToken(c *gin.Context) {
+	var data struct {
+		Token string `json:"token"`
+	}
+	if c.BindJSON(&data) != nil {
+		c.JSON(405, gin.H{
+			"error": "error binding json",
+		})
+	} else {
+		id := c.Param("id")
+		err := accountmodels.SetToken(id, data.Token)
+		if err != nil {
+			c.JSON(406, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"status":  "ok",
+				"message": "success set token",
+			})
+		}
+	}
+}
+
 func (A *AccountControll) ListAccountPoint(c *gin.Context) {
 	sort := c.Query("sort")
 	pageNo, _ := strconv.Atoi(c.Query("page"))

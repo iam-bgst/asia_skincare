@@ -4,16 +4,25 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/maddevsio/fcm"
 )
 
 var (
 	Path = GetDir() + "/vendor/assets/picture/"
+)
+
+const (
+	NORMAL = fcm.PriorityNormal
+	HIGH   = fcm.PriorityHigh
 )
 
 func GetDir() string {
@@ -77,4 +86,33 @@ func DateSameOrNot(date1, date2 time.Time) bool {
 	y1, m1, d1 := date1.Date()
 	y2, m2, d2 := date2.Date()
 	return y1 == y2 && m1 == m2 && d1 == d2
+}
+
+func PushNotif(token, priority, title, body string) {
+	data := map[string]string{
+		"msg": "Hello World1",
+		"sum": "Happy Day",
+	}
+	c := fcm.NewFCM("AAAAxAsG0w8:APA91bFzjef54BSksgSaOUTf3hKk5dRmMuz-i_HgvCYEH6s8_FyyAqMldf71c-JFUNazCTiNXLE_E-lBsI9qM5uP2gEsnOpKdWy2QnIVQjihZPQyTQhCWGdW_s0sV0kjcRVbgHOqgeiL")
+	// c := fcm.NewFCM("AAAAldYRR1Y:APA91bHKQZTWlqU-X2KvCEvzlT-ukpj-siHtEIkzaKXyhenrqVzODOItXsN27j8jE_Pz8J8I7stjrYIo6mY-GoyzipnvEEscyJeV1bmKdvWihkajvBPxWK4KTmSE7Cz_gFDjsjmK95tL")
+	//token := "dx6yRgG-c_w:APA91bFfxc84LhJ1JWQORBEYujBYUDXd1IBSap4Zf8Z5jGq-xDH-enRTsMIazfVsMvCYp_uhfCIKjiMfr65BwP2X_i7mv-wLk5RRHHGyx_ilUeHnOsLiRouKxspZYqlL2bnKrG9N3lWj"
+
+	response, err := c.Send(fcm.Message{
+		Data:             data,
+		RegistrationIDs:  []string{token},
+		ContentAvailable: true,
+		Priority:         priority,
+		Notification: fcm.Notification{
+			Title: title,
+			Body:  body,
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Status Code   :", response.StatusCode)
+	fmt.Println("Success       :", response.Success)
+	fmt.Println("Fail          :", response.Fail)
+	fmt.Println("Canonical_ids :", response.CanonicalIDs)
+	fmt.Println("Topic MsgId   :", response.MsgID)
 }

@@ -38,6 +38,7 @@ type Account struct {
 		Stock   int    `json:"stock" bson:"stock"`
 		Archive bool   `json:"archive" bson:"archive"`
 	} `json:"product"`
+	TokenDevice string `json:"tokenDevice" bson:"tokenDevice"`
 }
 
 type Point struct {
@@ -57,6 +58,7 @@ type Account2 struct {
 	Status      string         `json:"status" bson:"status"`
 	Payment     PaymentAccount `json:"payment" bson:"payment"`
 	Courier     CourierAccount `json:"courier" bson:"courier"`
+	TokenDevice string         `json:"tokenDevice" bson:"tokenDevice"`
 }
 type PaymentAccount struct {
 	Id     string `json:"_id" bson:"_id"`
@@ -115,6 +117,7 @@ type AccountTransaction struct {
 	Courier     CourierAccount `json:"courier" bson:"courier"`
 	Membership  Membership     `json:"membership" bson:"membership"`
 	Status      string         `json:"statut" bson:"status"`
+	TokenDevice string         `json:"tokenDevice" bson:"tokenDevice"`
 }
 
 type AccountModel struct{}
@@ -128,6 +131,24 @@ func (A *AccountModel) CheckAdmin() (found bool) {
 	} else {
 		return true
 	}
+}
+
+func (A *AccountModel) SetToken(id, token string) (err error) {
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id,
+	}, bson.M{
+		"$set": bson.M{
+			"tokenDevice": token,
+		},
+	})
+	return
+}
+
+func (A *AccountModel) GetMembershipArray(code int) (data []Account2, err error) {
+	err = db.Collection["account"].Find(bson.M{
+		"membership.code": code,
+	}).All(&data)
+	return
 }
 
 func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) {

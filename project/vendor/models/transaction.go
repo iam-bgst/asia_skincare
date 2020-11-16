@@ -249,6 +249,7 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 			PhoneNumber: data_account_from.PhoneNumber,
 			Status:      data_account_from.Status,
 			Payment:     data_account_from.Payment,
+			TokenDevice: data_account_to.TokenDevice,
 		},
 		Address: address_from.Detail,
 		Name:    address_from.Name,
@@ -265,6 +266,7 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 			Membership:  data_account_to.Membership,
 			PhoneNumber: data_account_to.PhoneNumber,
 			Status:      data_account_to.Status,
+			TokenDevice: data_account_to.TokenDevice,
 		},
 		Address: address_to.Detail,
 		Name:    address_to.Name,
@@ -306,6 +308,13 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 	// if <-ch_err != nil {
 	// 	return
 	// }
+	if data_account_from.Membership.Code == 0 {
+		staff, _ := account_model.GetMembershipArray(1)
+		for _, s := range staff {
+			addon.PushNotif(s.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di pusat")
+		}
+	}
+	addon.PushNotif(data_account_from.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di kamu")
 	ch_return <- ret
 }
 
@@ -394,6 +403,7 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 			if transaction_data.From.Account.Membership.Code == 0 {
 				// add point to account
 				account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
+				addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.NORMAL, "Asia SkiCare | Pointing", fmt.Sprintf("Point Anda Bertambah %s", produck_data.Point))
 
 				// add solded
 				product_model.UpdateSolded(t.Id, t.Qty)
@@ -401,12 +411,19 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 
 			// update stock
 			account_model.UpdateStockProduct(transaction_data.From.Account.Id, produck_data.Id, t.Qty)
+
+			addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, "Asia SkiCare | Transaksi", fmt.Sprintf("Pesanan anda #%s dikirim", transaction_data.Transaction_code))
 		}
 
 		if err1 != nil {
 			err = errors.New("error whee getting transaction")
 			return
 		}
+	}
+	if status_code == PACKED {
+		transaction_data, _ := T.Get(id)
+		addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, "Asia SkiCare | Transaksi", fmt.Sprintf("Pesanan anda #%s diproses oleh penjual", transaction_data.Transaction_code))
+
 	}
 	err = db.Collection["transaction"].Update(bson.M{
 		"_id": id,

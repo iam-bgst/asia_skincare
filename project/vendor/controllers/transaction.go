@@ -43,19 +43,21 @@ func (T *TransactionControll) AddPicturePay(c *gin.Context) {
 		c.JSON(405, gin.H{
 			"error": "error binding json",
 		})
-	}
-	id := c.Param("id")
-	err := transactionmodels.AddPicturePay(id, data)
-	if err != nil {
-		c.JSON(405, gin.H{
-			"error": err.Error(),
-		})
 	} else {
-		c.JSON(200, gin.H{
-			"status":  "ok",
-			"message": "add picture success",
-		})
+		id := c.Param("id")
+		err := transactionmodels.AddPicturePay(id, data)
+		if err != nil {
+			c.JSON(405, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"status":  "ok",
+				"message": "add picture success",
+			})
+		}
 	}
+
 }
 
 func (T *TransactionControll) ListTransactionOnagent(c *gin.Context) {

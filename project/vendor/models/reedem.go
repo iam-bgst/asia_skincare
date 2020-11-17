@@ -152,6 +152,11 @@ func (R *RedeemModel) Valid(id string) (err error) {
 			"valid": true,
 		},
 	})
+	d_acc, _ := account_model.GetId(data.Account.Id)
+	if d_acc.Point.Value == 0 {
+		err = errors.New("Point 0")
+		return
+	}
 	account_model.UpdatePoint(data.Account.Id, data.Reward.PricePoint-(data.Reward.PricePoint*2))
 	return
 }

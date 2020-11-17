@@ -43,5 +43,4 @@ func init() {
 func main() {
 	// Open Port Gin
 	middleware.Middleware()
-
 }

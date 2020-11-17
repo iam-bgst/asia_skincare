@@ -12,7 +12,7 @@ type Transaction struct {
 	From     From                 `json:"from" bson:"from"`
 }
 type Evidence struct {
-	Total   string    `json:"total"`
+	Total   int       `json:"total"`
 	Name    string    `json:"name"`
 	Send_by string    `json:"send_by"`
 	Time    time.Time `json:"time"`

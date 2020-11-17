@@ -53,7 +53,7 @@ type Metode struct {
 }
 
 type Evidence struct {
-	Total   string    `json:"total" bson:"total"`
+	Total   int       `json:"total" bson:"total"`
 	Name    string    `json:"name" bson:"name"`
 	Send_by string    `json:"send_by" bson:"send_by"`
 	Time    time.Time `json:"time" bson:"time"`

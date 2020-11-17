@@ -621,6 +621,7 @@ func (A *AccountControll) ListProduct(c *gin.Context) {
 	pageNo, _ := strconv.Atoi(c.Query("page"))
 	perPage, _ := strconv.Atoi(c.Query("per_page"))
 	filter := c.Query("filter")
+	tipe, _ := strconv.Atoi(c.Query("tipe"))
 	account := c.Param("account")
 	if sort == "" {
 		sort = "_id"
@@ -634,7 +635,7 @@ func (A *AccountControll) ListProduct(c *gin.Context) {
 	// pp, _ := perPage)
 	// pn, _ := strconv.Atoi(pageNo)
 
-	data, count, err := productmodels.List(filter, sort, pageNo, perPage, account)
+	data, count, err := productmodels.List(filter, sort, pageNo, perPage, tipe, account)
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {
 		if count%perPage == 0 {

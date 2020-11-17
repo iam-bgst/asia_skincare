@@ -239,7 +239,7 @@ func (P *ProductModel) All() (data []Product) {
 	return
 }
 
-func (P *ProductModel) List(filter, sort string, pageNo, perPage int, account string) (data []ListProducFix, count int, err error) {
+func (P *ProductModel) List(filter, sort string, pageNo, perPage, tipe int, account string) (data []ListProducFix, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -295,6 +295,7 @@ func (P *ProductModel) List(filter, sort string, pageNo, perPage int, account st
 			"point":      "$product_docs.point",
 			"prices":     "$product_docs.pricing",
 			"netto":      "$product_docs.netto",
+			"type":       "$product_docs.type",
 			"archive":    "product_docs.archive",
 			"discount": bson.M{"$cond": []interface{}{
 				bson.M{"$and": []interface{}{
@@ -337,6 +338,9 @@ func (P *ProductModel) List(filter, sort string, pageNo, perPage int, account st
 			"$or": []interface{}{
 				bson.M{"name": regex},
 			},
+		}},
+		{"$match": bson.M{
+			"type": tipe,
 		}},
 	}
 	data_non_fix := []bson.M{}

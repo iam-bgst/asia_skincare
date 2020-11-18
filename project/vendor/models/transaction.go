@@ -311,10 +311,20 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 	if data_account_from.Membership.Code == 0 {
 		staff, _ := account_model.GetMembershipArray(1)
 		for _, s := range staff {
-			addon.PushNotif(s.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di pusat")
+			// addon.PushNotif(s.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di pusat")
+			addon.PushNotif(s.TokenDevice, addon.HIGH, addon.Data{
+				Type:  addon.TRANSACTION,
+				Title: "Asia SkinCare",
+				Body:  "ada transaksi baru nih di pusat",
+			})
 		}
 	}
-	addon.PushNotif(data_account_from.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di kamu")
+	// addon.PushNotif(data_account_from.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di kamu")
+	addon.PushNotif(data_account_from.TokenDevice, addon.HIGH, addon.Data{
+		Type:  addon.TRANSACTION,
+		Title: "Asia SkinCare",
+		Body:  "ada transaksi baru nih di kamu",
+	})
 	ch_return <- ret
 }
 
@@ -403,7 +413,11 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 			if transaction_data.From.Account.Membership.Code == 0 {
 				// add point to account
 				account_model.UpdatePoint(transaction_data.To.Account.Id, produck_data.Point)
-				addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.NORMAL, "Asia SkiCare | Pointing", fmt.Sprintf("Point Anda Bertambah %s", produck_data.Point))
+				addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, addon.Data{
+					Type:  addon.POINT,
+					Title: "Asia SkinCare",
+					Body:  fmt.Sprintf("Point Anda Bertambah %d", produck_data.Point),
+				})
 
 				// add solded
 				product_model.UpdateSolded(t.Id, t.Qty)
@@ -411,8 +425,11 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 
 			// update stock
 			account_model.UpdateStockProduct(transaction_data.From.Account.Id, produck_data.Id, t.Qty)
-
-			addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, "Asia SkiCare | Transaksi", fmt.Sprintf("Pesanan anda #%s dikirim", transaction_data.Transaction_code))
+			addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, addon.Data{
+				Type:  addon.TRANSACTION,
+				Title: "Asia SkinCare",
+				Body:  fmt.Sprintf("Pesanan anda #%s dikirim", transaction_data.Transaction_code),
+			})
 		}
 
 		if err1 != nil {
@@ -422,8 +439,11 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 	}
 	if status_code == PACKED {
 		transaction_data, _ := T.Get(id)
-		addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, "Asia SkiCare | Transaksi", fmt.Sprintf("Pesanan anda #%s diproses oleh penjual", transaction_data.Transaction_code))
-
+		addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, addon.Data{
+			Type:  addon.TRANSACTION,
+			Title: "Asia SkinCare",
+			Body:  fmt.Sprintf("Pesanan anda #%s diproses oleh penjual", transaction_data.Transaction_code),
+		})
 	}
 	err = db.Collection["transaction"].Update(bson.M{
 		"_id": id,

@@ -57,7 +57,6 @@ func (T *TransactionControll) AddPicturePay(c *gin.Context) {
 			})
 		}
 	}
-
 }
 
 func (T *TransactionControll) ListTransactionOnagent(c *gin.Context) {

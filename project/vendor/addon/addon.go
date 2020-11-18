@@ -23,6 +23,10 @@ var (
 const (
 	NORMAL = fcm.PriorityNormal
 	HIGH   = fcm.PriorityHigh
+
+	TRANSACTION = "transaction"
+	POINT       = "point"
+	REDEEM      = "redeem"
 )
 
 func GetDir() string {
@@ -88,11 +92,13 @@ func DateSameOrNot(date1, date2 time.Time) bool {
 	return y1 == y2 && m1 == m2 && d1 == d2
 }
 
-func PushNotif(token, priority, title, body string) {
-	data := map[string]string{
-		"msg": "Hello World1",
-		"sum": "Happy Day",
-	}
+type Data struct {
+	Type  string `json:"type"`
+	Title string `json:"title"`
+	Body  string `json:"body"`
+}
+
+func PushNotif(token, priority string, data Data) {
 	c := fcm.NewFCM("AAAAxAsG0w8:APA91bFzjef54BSksgSaOUTf3hKk5dRmMuz-i_HgvCYEH6s8_FyyAqMldf71c-JFUNazCTiNXLE_E-lBsI9qM5uP2gEsnOpKdWy2QnIVQjihZPQyTQhCWGdW_s0sV0kjcRVbgHOqgeiL")
 	// c := fcm.NewFCM("AAAAldYRR1Y:APA91bHKQZTWlqU-X2KvCEvzlT-ukpj-siHtEIkzaKXyhenrqVzODOItXsN27j8jE_Pz8J8I7stjrYIo6mY-GoyzipnvEEscyJeV1bmKdvWihkajvBPxWK4KTmSE7Cz_gFDjsjmK95tL")
 	//token := "dx6yRgG-c_w:APA91bFfxc84LhJ1JWQORBEYujBYUDXd1IBSap4Zf8Z5jGq-xDH-enRTsMIazfVsMvCYp_uhfCIKjiMfr65BwP2X_i7mv-wLk5RRHHGyx_ilUeHnOsLiRouKxspZYqlL2bnKrG9N3lWj"
@@ -103,8 +109,8 @@ func PushNotif(token, priority, title, body string) {
 		ContentAvailable: true,
 		Priority:         priority,
 		Notification: fcm.Notification{
-			Title: title,
-			Body:  body,
+			Title: data.Title,
+			Body:  data.Body,
 		},
 	})
 	if err != nil {

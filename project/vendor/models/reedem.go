@@ -4,6 +4,7 @@ import (
 	"addon"
 	"db"
 	"errors"
+	"fmt"
 	"forms"
 	"strconv"
 	"strings"
@@ -145,6 +146,17 @@ func (R *RedeemModel) Valid(id string) (err error) {
 		err = errors.New("Redeem Is validated")
 		return
 	}
+
+	d_acc, _ := account_model.GetId(data.Account.Id)
+	if d_acc.Point.Value <= 0 {
+		err = errors.New("Point 0 atau tidak enough")
+		addon.PushNotif(data.Account.TokenDevice, addon.HIGH, addon.Data{
+			Type:  addon.REDEEM,
+			Title: "Asia SkinCare",
+			Body:  fmt.Sprintf("Redeem %s | Point anda tidak cukup", data.Code),
+		})
+		return
+	}
 	err = db.Collection["redeem"].Update(bson.M{
 		"_id": id,
 	}, bson.M{
@@ -152,11 +164,11 @@ func (R *RedeemModel) Valid(id string) (err error) {
 			"valid": true,
 		},
 	})
-	d_acc, _ := account_model.GetId(data.Account.Id)
-	if d_acc.Point.Value <= 0 {
-		err = errors.New("Point 0 atau tidak enough")
-		return
-	}
+	addon.PushNotif(data.Account.TokenDevice, addon.HIGH, addon.Data{
+		Type:  addon.REDEEM,
+		Title: "Asia SkinCare",
+		Body:  fmt.Sprintf("Reward anda #%s tervalidasi oleh admin", data.Code),
+	})
 	account_model.UpdatePoint(data.Account.Id, data.Reward.PricePoint-(data.Reward.PricePoint*2))
 	return
 }

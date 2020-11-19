@@ -803,12 +803,39 @@ func (P *ProductModel) Detail(id_product, id_account string) (data ListProducFix
 			"stock":      "$product.stock",
 			"desc":       "$product_docs.desc",
 			"from":       "$address",
+			"account":    "$_id",
 			"membership": "$membership",
 			"name":       "$product_docs.name",
 			"image":      "$product_docs.image",
 			"weight":     "$product_docs.weight",
 			"point":      "$product_docs.point",
 			"prices":     "$product_docs.pricing",
+			"type":       "$product_docs.type",
+			"netto":      "$product_docs.netto",
+			"archive":    "$product.archive",
+			"discount": bson.M{"$cond": []interface{}{
+				bson.M{"$and": []interface{}{
+					bson.M{"$eq": []interface{}{"$membership.code", 0}},
+					bson.M{"$lt": []interface{}{"$product_docs.discount.startAt", time.Now().UTC().Add(7 * time.Hour)}},
+					bson.M{"$gt": []interface{}{"$product_docs.discount.endAt", time.Now().UTC().Add(7 * time.Hour)}},
+				}},
+				bson.M{
+					"name":         "$product_docs.discount.name",
+					"discount":     "$product_docs.discount.discount",
+					"discountcode": "$product_docs.discount.discountcode",
+					"startAt":      "$product_docs.discount.startAt",
+					"endAt":        "$product_docs.discount.endAt",
+					"status":       true,
+				},
+				bson.M{
+					"name":         "",
+					"discount":     0,
+					"discountcode": "",
+					"startAt":      time.Now(),
+					"endAt":        time.Now(),
+					"status":       false,
+				},
+			}},
 		}},
 		{"$addFields": bson.M{
 			"pricing": bson.M{
@@ -823,6 +850,42 @@ func (P *ProductModel) Detail(id_product, id_account string) (data ListProducFix
 					}, 0,
 				},
 			},
+		}},
+		{"$project": bson.M{
+			"_id":        "$_id",
+			"stock":      "$stock",
+			"desc":       "$desc",
+			"from":       "$from",
+			"account":    "$account",
+			"membership": "$membership",
+			"name":       "$name",
+			"code":       "$code",
+			"dis":        "$dis",
+			"disko":      "$diskon",
+			"image":      "$image",
+			"weight":     "$weight",
+			"point":      "$point",
+			"type":       "$type",
+			"netto":      "$netto",
+			"archive":    "$archive",
+			"discount":   "$discount",
+			"pricing": bson.M{"$cond": []interface{}{
+				bson.M{"$eq": []interface{}{"$membership.code", 0}},
+				bson.M{
+					"membership": "$pricing.membership",
+					"price": bson.M{
+						"$subtract": []interface{}{ // Kurang
+							"$pricing.price",
+							bson.M{"$multiply": []interface{}{ // Kali
+								bson.M{"$divide": []interface{}{ // Bagi
+									"$discount.discount",
+									100}},
+								"$pricing.price",
+							}},
+						}},
+				},
+				"$pricing",
+			}},
 		}},
 		{"$match": bson.M{
 			"_id": id_product,

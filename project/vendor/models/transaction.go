@@ -308,23 +308,9 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 	// if <-ch_err != nil {
 	// 	return
 	// }
-	if data_account_from.Membership.Code == 0 {
-		staff, _ := account_model.GetMembershipArray(1)
-		for _, s := range staff {
-			// addon.PushNotif(s.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di pusat")
-			addon.PushNotif(s.TokenDevice, addon.HIGH, addon.Data{
-				Type:  addon.TRANSACTION,
-				Title: "Asia SkinCare",
-				Body:  "ada transaksi baru nih di pusat",
-			}, "order|order")
-		}
-	}
+
 	// addon.PushNotif(data_account_from.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di kamu")
-	addon.PushNotif(data_account_from.TokenDevice, addon.HIGH, addon.Data{
-		Type:  addon.TRANSACTION,
-		Title: "Asia SkinCare",
-		Body:  "ada transaksi baru nih di kamu",
-	}, "order|order")
+
 	ch_return <- ret
 }
 
@@ -391,6 +377,23 @@ func (T *TransactionModel) AddPicturePay(id_trans string, data forms.Evidence) (
 			},
 		},
 	})
+	data_t, _ := T.Get(id_trans)
+	if data_t.From.Account.Membership.Code == 0 {
+		staff, _ := account_model.GetMembershipArray(1)
+		for _, s := range staff {
+			// addon.PushNotif(s.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di pusat")
+			addon.PushNotif(s.TokenDevice, addon.HIGH, addon.Data{
+				Type:  addon.TRANSACTION,
+				Title: "Asia SkinCare",
+				Body:  "ada transaksi baru nih di pusat",
+			}, "order|order")
+		}
+	}
+	addon.PushNotif(data_t.From.Account.TokenDevice, addon.HIGH, addon.Data{
+		Type:  addon.TRANSACTION,
+		Title: "Asia SkinCare",
+		Body:  "ada transaksi baru nih di kamu",
+	}, "order|order")
 	return
 }
 

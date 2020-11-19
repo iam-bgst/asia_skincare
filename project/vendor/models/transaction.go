@@ -389,7 +389,8 @@ func (T *TransactionModel) AddPicturePay(id_trans string, data forms.Evidence) (
 			}, "order|order")
 		}
 	}
-	addon.PushNotif(data_t.From.Account.TokenDevice, addon.HIGH, addon.Data{
+	acc, _ := account_model.Get(data_t.From.Account.Id)
+	addon.PushNotif(acc.TokenDevice, addon.HIGH, addon.Data{
 		Type:  addon.TRANSACTION,
 		Title: "Asia SkinCare",
 		Body:  "ada transaksi baru nih di kamu",

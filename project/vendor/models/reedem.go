@@ -35,15 +35,21 @@ func (R *RedeemModel) Create(data forms.Redeem) (data_return Redeem, err error) 
 	if err1 != nil {
 		return (Redeem{}), err1
 	}
-
+	code := addon.RandomCode(10, false)
 	err = db.Collection["redeem"].Insert(bson.M{
 		"_id":     uuid.New(),
-		"code":    addon.RandomCode(10, false),
+		"code":    code,
 		"reward":  data.Reward,
 		"account": data.Account,
 		"date":    time.Now(),
 		"valid":   false,
 	})
+	acc, _ := account_model.GetByCode(0)
+	addon.PushNotif(acc.TokenDevice, addon.HIGH, addon.Data{
+		Type:  addon.REDEEM,
+		Title: "Asia SkinCare",
+		Body:  fmt.Sprintf("Ada point yang ditukar dengan reward | %s ", code),
+	}, "redeem|data")
 	return
 }
 func (R *RedeemModel) Get(id string) (data Redeem, err error) {
@@ -153,8 +159,8 @@ func (R *RedeemModel) Valid(id string) (err error) {
 		addon.PushNotif(data.Account.TokenDevice, addon.HIGH, addon.Data{
 			Type:  addon.REDEEM,
 			Title: "Asia SkinCare",
-			Body:  fmt.Sprintf("Redeem %s | Point anda tidak cukup", data.Code),
-		})
+			Body:  fmt.Sprintf("Redeem %s | Point anda tidak cukup untuk penukaran", data.Code),
+		}, "redeem|redeem")
 		return
 	}
 	err = db.Collection["redeem"].Update(bson.M{
@@ -168,7 +174,7 @@ func (R *RedeemModel) Valid(id string) (err error) {
 		Type:  addon.REDEEM,
 		Title: "Asia SkinCare",
 		Body:  fmt.Sprintf("Reward anda #%s tervalidasi oleh admin", data.Code),
-	})
+	}, "redeem|redeem")
 	account_model.UpdatePoint(data.Account.Id, data.Reward.PricePoint-(data.Reward.PricePoint*2))
 	return
 }

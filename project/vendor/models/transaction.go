@@ -316,7 +316,7 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 				Type:  addon.TRANSACTION,
 				Title: "Asia SkinCare",
 				Body:  "ada transaksi baru nih di pusat",
-			})
+			}, "order|order")
 		}
 	}
 	// addon.PushNotif(data_account_from.TokenDevice, addon.HIGH, "Asia Skicare | Transaksi", "ada transaksi baru nih di kamu")
@@ -324,7 +324,7 @@ func (T *TransactionModel) Create(data forms.Transaction, ch_return chan Transac
 		Type:  addon.TRANSACTION,
 		Title: "Asia SkinCare",
 		Body:  "ada transaksi baru nih di kamu",
-	})
+	}, "order|order")
 	ch_return <- ret
 }
 
@@ -417,7 +417,7 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 					Type:  addon.POINT,
 					Title: "Asia SkinCare",
 					Body:  fmt.Sprintf("Point Anda Bertambah %d", produck_data.Point),
-				})
+				}, "account|profile")
 
 				// add solded
 				product_model.UpdateSolded(t.Id, t.Qty)
@@ -429,7 +429,7 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 				Type:  addon.TRANSACTION,
 				Title: "Asia SkinCare",
 				Body:  fmt.Sprintf("Pesanan anda #%s dikirim", transaction_data.Transaction_code),
-			})
+			}, "history|"+T.GetStatus(status_code))
 		}
 
 		if err1 != nil {
@@ -442,8 +442,8 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 		addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, addon.Data{
 			Type:  addon.TRANSACTION,
 			Title: "Asia SkinCare",
-			Body:  fmt.Sprintf("Pesanan anda #%s diproses oleh penjual", transaction_data.Transaction_code),
-		})
+			Body:  fmt.Sprintf("Pesanan anda #%s dikemas oleh penjual", transaction_data.Transaction_code),
+		}, "history|"+T.GetStatus(status_code))
 	}
 	err = db.Collection["transaction"].Update(bson.M{
 		"_id": id,

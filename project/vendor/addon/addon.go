@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/maddevsio/fcm"
 )
 
@@ -98,13 +99,36 @@ type Data struct {
 	Body  string `json:"body"`
 }
 
-func PushNotif(token, priority string, data Data) {
+func PushNotif(token, priority string, data Data, content ...string) {
 	c := fcm.NewFCM("AAAAxAsG0w8:APA91bFzjef54BSksgSaOUTf3hKk5dRmMuz-i_HgvCYEH6s8_FyyAqMldf71c-JFUNazCTiNXLE_E-lBsI9qM5uP2gEsnOpKdWy2QnIVQjihZPQyTQhCWGdW_s0sV0kjcRVbgHOqgeiL")
 	// c := fcm.NewFCM("AAAAldYRR1Y:APA91bHKQZTWlqU-X2KvCEvzlT-ukpj-siHtEIkzaKXyhenrqVzODOItXsN27j8jE_Pz8J8I7stjrYIo6mY-GoyzipnvEEscyJeV1bmKdvWihkajvBPxWK4KTmSE7Cz_gFDjsjmK95tL")
 	//token := "dx6yRgG-c_w:APA91bFfxc84LhJ1JWQORBEYujBYUDXd1IBSap4Zf8Z5jGq-xDH-enRTsMIazfVsMvCYp_uhfCIKjiMfr65BwP2X_i7mv-wLk5RRHHGyx_ilUeHnOsLiRouKxspZYqlL2bnKrG9N3lWj"
+	var datafix gin.H
+	if data.Type == TRANSACTION {
+		datafix = gin.H{
+			"type": data.Type,
+			"content": gin.H{
+				"navigate": content[0],
+			},
+		}
+	} else if data.Type == REDEEM {
+		datafix = gin.H{
+			"type": data.Type,
+			"content": gin.H{
+				"navigate": content[0],
+			},
+		}
+	} else if data.Type == POINT {
+		datafix = gin.H{
+			"type": data.Type,
+			"content": gin.H{
+				"navigate": content[0],
+			},
+		}
+	}
 
 	response, err := c.Send(fcm.Message{
-		Data:             data,
+		Data:             datafix,
 		RegistrationIDs:  []string{token},
 		ContentAvailable: true,
 		Priority:         priority,

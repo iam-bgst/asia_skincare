@@ -410,8 +410,30 @@ func (A *AccountControll) CheckAccount(c *gin.Context) {
 	data, err := accountmodels.CheckAccount(phone)
 	if err != nil {
 		c.JSON(406, gin.H{"error": "notfound account"})
+		c.Abort()
 	} else {
-		c.JSON(200, gin.H{"data": data, "status": "ok"})
+		payload := Payload{
+			Id:  data.Id,
+			Exp: int(time.Now().Add(time.Hour * 99999).Unix()),
+			Jwt: jwt.StandardClaims{},
+		}
+		convert := jwt.NewWithClaims(jwt.SigningMethodHS256, payload.Jwt)
+		token, err := convert.SignedString([]byte("secret"))
+		if err != nil {
+			c.JSON(406, gin.H{
+				"msg":    err.Error(),
+				"status": "ERROR",
+			})
+			c.Abort()
+		} else {
+			c.JSON(200, gin.H{
+				"data":    data,
+				"token":   token,
+				"expired": time.Now().Add(time.Minute * 99999).Unix(),
+				"status":  "ok",
+			})
+		}
+
 	}
 }
 

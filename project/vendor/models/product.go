@@ -239,7 +239,7 @@ func (P *ProductModel) All() (data []Product) {
 	return
 }
 
-func (P *ProductModel) List(filter, sort string, pageNo, perPage, tipe int, account string) (data []ListProducFix, count int, err error) {
+func (P *ProductModel) List(filter, sort string, pageNo, perPage, tipe int, account, archive string) (data []ListProducFix, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -270,6 +270,7 @@ func (P *ProductModel) List(filter, sort string, pageNo, perPage, tipe int, acco
 			bson.M{"$match": bson.M{"membership.code": 0}},
 		)
 	}
+
 	pipeline = []bson.M{
 		{"$match": bson.M{"_id": account}},
 		{"$unwind": "$product"},
@@ -342,6 +343,12 @@ func (P *ProductModel) List(filter, sort string, pageNo, perPage, tipe int, acco
 		{"$match": bson.M{
 			"type": tipe,
 		}},
+	}
+	if archive != "" {
+		a_archive, _ := strconv.ParseBool(archive)
+		pipeline = append(pipeline,
+			bson.M{"$match": bson.M{"archive": a_archive}},
+		)
 	}
 	data_non_fix := []bson.M{}
 

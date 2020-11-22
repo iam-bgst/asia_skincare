@@ -408,6 +408,7 @@ func (T *TransactionModel) Get(id string) (data Transaction, err error) {
 func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) {
 	if status_code == SENT {
 		transaction_data, err1 := T.Get(id)
+		point := 0
 		for _, t := range transaction_data.Product {
 
 			// Getting Product
@@ -428,13 +429,29 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 			}
 
 			// update stock
-			account_model.UpdateStockProduct(transaction_data.From.Account.Id, produck_data.Id, t.Qty)
+			account_model.MinStock(transaction_data.From.Account.Id, produck_data.Id, t.Qty)
 			addon.PushNotif(transaction_data.To.Account.TokenDevice, addon.HIGH, addon.Data{
 				Type:  addon.TRANSACTION,
 				Title: "Asia SkinCare",
 				Body:  fmt.Sprintf("Pesanan anda #%s dikirim", transaction_data.Transaction_code),
 			}, "history|"+T.GetStatus(status_code))
+			point += produck_data.Point
 		}
+
+		// Point Log
+		acc, _ := account_model.GetId(transaction_data.To.Account.Id)
+		pointLog_model.Create(Point_log{
+			Account: Account2{
+				Id: transaction_data.Id,
+			},
+			Desc: fmt.Sprintf("Transaksi #%s mendapatkan poin sebesar %d", transaction_data.Transaction_code, point),
+			Detail: Detail{
+				Type:         TRANSACTION,
+				Code:         transaction_data.Transaction_code,
+				Point_before: acc.Point.Value,
+				Point_after:  acc.Point.Value + point,
+			},
+		})
 
 		if err1 != nil {
 			err = errors.New("error whee getting transaction")

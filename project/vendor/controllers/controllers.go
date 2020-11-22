@@ -16,4 +16,5 @@ var (
 	couriermodels     = new(models.CourierModel)
 	redeemmodels      = new(models.RedeemModel)
 	headermodels      = new(models.HeaderModel)
+	pointLogmodels    = new(models.Point_log_Model)
 )

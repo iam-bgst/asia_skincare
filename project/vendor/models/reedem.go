@@ -176,5 +176,18 @@ func (R *RedeemModel) Valid(id string) (err error) {
 		Body:  fmt.Sprintf("Reward anda #%s tervalidasi oleh admin", data.Code),
 	}, "redeem|redeem")
 	account_model.UpdatePoint(data.Account.Id, data.Reward.PricePoint-(data.Reward.PricePoint*2))
+	// Point Log
+	pointLog_model.Create(Point_log{
+		Account: Account2{
+			Id: data.Account.Id,
+		},
+		Desc: fmt.Sprintf("Redeem dengan code #%s mengurangi poin anda sebesar %d", data.Code, data.Reward.PricePoint),
+		Detail: Detail{
+			Type:         REDEEM,
+			Code:         data.Code,
+			Point_before: d_acc.Point.Value,
+			Point_after:  d_acc.Point.Value - data.Reward.PricePoint,
+		},
+	})
 	return
 }

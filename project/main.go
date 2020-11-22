@@ -23,6 +23,7 @@ func init() {
 		"courier",
 		"redeem",
 		"header",
+		"point_log",
 	}
 
 	// Mongodb

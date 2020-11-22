@@ -32,6 +32,7 @@ var (
 	couriercontroll     = new(controllers.CourierControll)
 	redeemcontroll      = new(controllers.RedeemControll)
 	headercontroll      = new(controllers.HeaderControll)
+	pointLogcontroll    = new(controllers.PointLogControll)
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -63,8 +64,11 @@ func Middleware() {
 	}))
 	router.Static("/public", directory+"/vendor/assets/")
 
+	// Counter
+	router.Use(HandleCounter())
+
 	// Index
-	router.GET("/", HandleCounter, func(c *gin.Context) {
+	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "Server Asia SkinCare",
 			"version": version,
@@ -77,175 +81,180 @@ func Middleware() {
 	// Account
 	account := router.Group("/account")
 	{
-		account.POST("/register", HandleCounter, accountcontroll.Register)
-		account.GET("/checkaccount", HandleCounter, accountcontroll.CheckAccount)
-		account.POST("/auth", HandleCounter, accountcontroll.Auth)
+		account.POST("/register", accountcontroll.Register)
+		account.GET("/checkaccount", accountcontroll.CheckAccount)
+		account.POST("/auth", accountcontroll.Auth)
 	}
 
 	// Validator Jwt
 	router.Use(HandleAuth())
 
 	{
-		account.GET("/account_point", HandleCounter, accountcontroll.ListAccountPoint)
-		account.PUT("/update/:id", HandleCounter, accountcontroll.Update)
-		account.GET("/get/:id", HandleCounter, accountcontroll.Get)
-		account.PUT("/nonactive/:id", HandleCounter, accountcontroll.NonActiveAccount)
-		account.PUT("/active/:id", HandleCounter, accountcontroll.ActiveAccount)
-		account.GET("/list", HandleCounter, accountcontroll.ListAccount)
-		account.POST("/adaddress/:id", HandleCounter, accountcontroll.AddAddress)
-		account.POST("/qris/add/:id", HandleCounter, accountcontroll.AddQris)
-		account.PUT("/set_token/:id", HandleCounter, accountcontroll.SetToken)
+		account.GET("/account_point", accountcontroll.ListAccountPoint)
+		account.PUT("/update/:id", accountcontroll.Update)
+		account.GET("/get/:id", accountcontroll.Get)
+		account.PUT("/nonactive/:id", accountcontroll.NonActiveAccount)
+		account.PUT("/active/:id", accountcontroll.ActiveAccount)
+		account.GET("/list", accountcontroll.ListAccount)
+		account.POST("/adaddress/:id", accountcontroll.AddAddress)
+		account.POST("/qris/add/:id", accountcontroll.AddQris)
+		account.PUT("/set_token/:id", accountcontroll.SetToken)
 		product_a := account.Group("/product")
 		{
-			product_a.POST("/add/:account", HandleCounter, accountcontroll.AddProdcut)
-			product_a.GET("/list/:account", HandleCounter, accountcontroll.ListProduct)
-			product_a.PUT("/update/:account/:product", HandleCounter, accountcontroll.UpdateStock)
+			product_a.POST("/add/:account", accountcontroll.AddProdcut)
+			product_a.GET("/list/:account", accountcontroll.ListProduct)
+			product_a.PUT("/update/:account/:product", accountcontroll.UpdateStock)
 		}
 		reward_a := account.Group("/reward")
 		{
-			reward_a.GET("/list/:reward", HandleCounter, accountcontroll.ListAccountClaimReward)
+			reward_a.GET("/list/:reward", accountcontroll.ListAccountClaimReward)
 		}
 		address := account.Group("/address")
 		{
-			address.PUT("/update/:account/:address", HandleCounter, accountcontroll.UpdateAddress)
-			address.DELETE("/delete/:account/:address", HandleCounter, accountcontroll.DeleteAddress)
-			address.PUT("/changetodefault/:account/:address", HandleCounter, accountcontroll.ChangeToDefault)
+			address.PUT("/update/:account/:address", accountcontroll.UpdateAddress)
+			address.DELETE("/delete/:account/:address", accountcontroll.DeleteAddress)
+			address.PUT("/changetodefault/:account/:address", accountcontroll.ChangeToDefault)
 		}
 
 		payment_a := account.Group("/payment")
 		{
-			payment_a.GET("/list/:account", HandleCounter, accountcontroll.ListPayment)
-			payment_a.POST("/add/:id", HandleCounter, accountcontroll.AddPayment)
-			payment_a.GET("/get/:account/:payment", HandleCounter, accountcontroll.GetPayment)
-			payment_a.PUT("/update/:account/:payment", HandleCounter, accountcontroll.UpdatePayment)
-			payment_a.DELETE("/delete/:account/:payment", HandleCounter, accountcontroll.DeletePayment)
+			payment_a.GET("/list/:account", accountcontroll.ListPayment)
+			payment_a.POST("/add/:id", accountcontroll.AddPayment)
+			payment_a.GET("/get/:account/:payment", accountcontroll.GetPayment)
+			payment_a.PUT("/update/:account/:payment", accountcontroll.UpdatePayment)
+			payment_a.DELETE("/delete/:account/:payment", accountcontroll.DeletePayment)
 		}
 		courier_a := account.Group("/courier")
 		{
-			courier_a.POST("/add/:account", HandleCounter, accountcontroll.AddCourier)
-			courier_a.PUT("/update/:account/:courier", HandleCounter, accountcontroll.UpdateCourier)
-			courier_a.PUT("/change/:account/:courier", HandleCounter, accountcontroll.ActiveCourier)
-			courier_a.DELETE("/delete/:account/:courier", HandleCounter, accountcontroll.RemoveCourier)
-			courier_a.GET("/list/:account", HandleCounter, accountcontroll.ListCourier)
+			courier_a.POST("/add/:account", accountcontroll.AddCourier)
+			courier_a.PUT("/update/:account/:courier", accountcontroll.UpdateCourier)
+			courier_a.PUT("/change/:account/:courier", accountcontroll.ActiveCourier)
+			courier_a.DELETE("/delete/:account/:courier", accountcontroll.RemoveCourier)
+			courier_a.GET("/list/:account", accountcontroll.ListCourier)
 		}
 		referral := account.Group("/referral")
 		{
-			referral.GET("/get/:code", HandleCounter, accountcontroll.GetByReferralCode)
+			referral.GET("/get/:code", accountcontroll.GetByReferralCode)
 		}
 	}
 
 	// Header
 	header := router.Group("/header")
 	{
-		header.POST("/add", HandleCounter, headercontroll.Create)
-		header.GET("/get", HandleCounter, headercontroll.Get)
-		header.PUT("/update/:id", HandleCounter, headercontroll.Update)
+		header.POST("/add", headercontroll.Create)
+		header.GET("/get", headercontroll.Get)
+		header.PUT("/update/:id", headercontroll.Update)
 	}
 
 	// Product
 	product := router.Group("/product")
 	{
-		product.POST("/add", HandleCounter, productcontroll.Create)
-		product.GET("/list", HandleCounter, productcontroll.ListByMembership)
-		product.GET("/list/recomd", HandleCounter, productcontroll.ListRecomend)
-		product.PUT("/update/:id", HandleCounter, productcontroll.Update)
-		product.PUT("/updateDiscount/:id", HandleCounter, productcontroll.UpdateDiscount)
-		product.GET("/get/:id", HandleCounter, productcontroll.Get)
-		product.PUT("/update_price/:product/:membership", HandleCounter, productcontroll.UpdatePrice)
-		product.DELETE("/delete/:product", HandleCounter, productcontroll.Delete)
-		product.GET("/listonagent", HandleCounter, productcontroll.ListProductOnAgent)
-		product.PUT("/archive/:product/:account", HandleCounter, productcontroll.Archive)
-		product.PUT("/unarchive/:id/:account", HandleCounter, productcontroll.UnArchive)
+		product.POST("/add", productcontroll.Create)
+		product.GET("/list", productcontroll.ListByMembership)
+		product.GET("/list/recomd", productcontroll.ListRecomend)
+		product.PUT("/update/:id", productcontroll.Update)
+		product.PUT("/updateDiscount/:id", productcontroll.UpdateDiscount)
+		product.GET("/get/:id", productcontroll.Get)
+		product.PUT("/update_price/:product/:membership", productcontroll.UpdatePrice)
+		product.DELETE("/delete/:product", productcontroll.Delete)
+		product.GET("/listonagent", productcontroll.ListProductOnAgent)
+		product.PUT("/archive/:product/:account", productcontroll.Archive)
+		product.PUT("/unarchive/:product/:account", productcontroll.UnArchive)
 	}
 
 	// Paket
 	paket := router.Group("/paket")
 	{
-		paket.POST("/add", HandleCounter, paketcontroll.Create)
+		paket.POST("/add", paketcontroll.Create)
 		paket.GET("/list", paketcontroll.ListByMembership)
-		paket.PUT("/update/:id", HandleCounter, paketcontroll.Update)
-		paket.GET("/get/:id/:idm", HandleCounter, paketcontroll.Get)
-		paket.PUT("/update_product/:id", HandleCounter, paketcontroll.Updateproduct)
-		paket.DELETE("/delete/:id", HandleCounter, paketcontroll.Delete)
+		paket.PUT("/update/:id", paketcontroll.Update)
+		paket.GET("/get/:id/:idm", paketcontroll.Get)
+		paket.PUT("/update_product/:id", paketcontroll.Updateproduct)
+		paket.DELETE("/delete/:id", paketcontroll.Delete)
 	}
 
 	// Discount
 	discount := router.Group("/discount")
 	{
-		discount.POST("/add", HandleCounter, discountcontroll.Create)
-		discount.GET("/list", HandleCounter, discountcontroll.List)
-		discount.PUT("/update/:id", HandleCounter, discountcontroll.Update)
-		discount.GET("/get/:id", HandleCounter, discountcontroll.Get)
-		discount.DELETE("/delete/:id", HandleCounter, discountcontroll.Delete)
+		discount.POST("/add", discountcontroll.Create)
+		discount.GET("/list", discountcontroll.List)
+		discount.PUT("/update/:id", discountcontroll.Update)
+		discount.GET("/get/:id", discountcontroll.Get)
+		discount.DELETE("/delete/:id", discountcontroll.Delete)
 	}
 
 	// Metode
 	payment := router.Group("/payment")
 	{
-		payment.POST("/add", HandleCounter, paymentcontroll.Create)
-		payment.GET("/list", HandleCounter, paymentcontroll.List)
-		payment.PUT("/update/:id", HandleCounter, paymentcontroll.Update)
-		payment.GET("/get/:id", HandleCounter, paymentcontroll.Get)
-		payment.DELETE("/delete/:id", HandleCounter, paymentcontroll.Delete)
-		payment.GET("/listonaccount/:id", HandleCounter, paymentcontroll.ListOnAccount)
+		payment.POST("/add", paymentcontroll.Create)
+		payment.GET("/list", paymentcontroll.List)
+		payment.PUT("/update/:id", paymentcontroll.Update)
+		payment.GET("/get/:id", paymentcontroll.Get)
+		payment.DELETE("/delete/:id", paymentcontroll.Delete)
+		payment.GET("/listonaccount/:id", paymentcontroll.ListOnAccount)
 	}
 
 	// Transaction
 	transaction := router.Group("/transaction")
 	{
-		transaction.POST("/add", HandleCounter, transactioncontroll.Add)
-		transaction.GET("/history/:account", HandleCounter, transactioncontroll.ListHistory)
-		transaction.GET("/order/:account", HandleCounter, transactioncontroll.ListTransactionOnagent)
-		transaction.PUT("/update_status/:id", HandleCounter, transactioncontroll.UpdateStatus)
-		transaction.PUT("/add_resi/:id", HandleCounter, transactioncontroll.AddResiToTransaction)
-		transaction.PUT("/add_picture/:id", HandleCounter, transactioncontroll.AddPicturePay)
+		transaction.POST("/add", transactioncontroll.Add)
+		transaction.GET("/history/:account", transactioncontroll.ListHistory)
+		transaction.GET("/order/:account", transactioncontroll.ListTransactionOnagent)
+		transaction.PUT("/update_status/:id", transactioncontroll.UpdateStatus)
+		transaction.PUT("/add_resi/:id", transactioncontroll.AddResiToTransaction)
+		transaction.PUT("/add_picture/:id", transactioncontroll.AddPicturePay)
 	}
 
 	// Delivery
 	delivery := router.Group("/delivery")
 	{
-		delivery.GET("/listcity", HandleCounter, deliverycontroll.ListCity)
-		delivery.GET("/listprovince", HandleCounter, deliverycontroll.ListProvince)
-		delivery.GET("/listcity_prov/:id", HandleCounter, deliverycontroll.ListCityByProvince)
-		delivery.GET("/checkongkir", HandleCounter, deliverycontroll.CheckOngkir)
-		delivery.GET("/track_resi", HandleCounter, deliverycontroll.CekResi)
+		delivery.GET("/listcity", deliverycontroll.ListCity)
+		delivery.GET("/listprovince", deliverycontroll.ListProvince)
+		delivery.GET("/listcity_prov/:id", deliverycontroll.ListCityByProvince)
+		delivery.GET("/checkongkir", deliverycontroll.CheckOngkir)
+		delivery.GET("/track_resi", deliverycontroll.CekResi)
 	}
 
 	// Membership
 	membership := router.Group("/membership")
 	{
-		membership.POST("/add", HandleCounter, membershipcontroll.Create)
-		membership.GET("/listall", HandleCounter, membershipcontroll.ListAll)
+		membership.POST("/add", membershipcontroll.Create)
+		membership.GET("/listall", membershipcontroll.ListAll)
 	}
 
 	// Reward
 	reward := router.Group("/reward")
 	{
-		reward.POST("/add", HandleCounter, rewardcontroll.Create)
-		reward.GET("/get/:id", HandleCounter, rewardcontroll.Get)
-		reward.PUT("/update/:id", HandleCounter, rewardcontroll.Update)
-		reward.GET("/list", HandleCounter, rewardcontroll.List)
-		reward.DELETE("/delete/:id", HandleCounter, rewardcontroll.Delete)
-		reward.PUT("/claim/:account/:reward", HandleCounter, rewardcontroll.ClaimReward)
-		reward.PUT("/archive/:id", HandleCounter, rewardcontroll.Archive)
-		reward.PUT("/unarchive/:id", HandleCounter, rewardcontroll.UnArchive)
+		reward.POST("/add", rewardcontroll.Create)
+		reward.GET("/get/:id", rewardcontroll.Get)
+		reward.PUT("/update/:id", rewardcontroll.Update)
+		reward.GET("/list", rewardcontroll.List)
+		reward.DELETE("/delete/:id", rewardcontroll.Delete)
+		reward.PUT("/claim/:account/:reward", rewardcontroll.ClaimReward)
+		reward.PUT("/archive/:id", rewardcontroll.Archive)
+		reward.PUT("/unarchive/:id", rewardcontroll.UnArchive)
 	}
 
 	courier := router.Group("/courier")
 	{
-		courier.GET("/list", HandleCounter, couriercontroll.List)
-		courier.POST("/add", HandleCounter, couriercontroll.Create)
-		courier.GET("/get/:id", HandleCounter, couriercontroll.Get)
-		courier.PUT("/update/:id", HandleCounter, couriercontroll.Update)
-		courier.DELETE("/delete/:id", HandleCounter, couriercontroll.Delete)
+		courier.GET("/list", couriercontroll.List)
+		courier.POST("/add", couriercontroll.Create)
+		courier.GET("/get/:id", couriercontroll.Get)
+		courier.PUT("/update/:id", couriercontroll.Update)
+		courier.DELETE("/delete/:id", couriercontroll.Delete)
 	}
 
 	redeem := router.Group("/redeem")
 	{
-		redeem.POST("/add", HandleCounter, redeemcontroll.Create)
-		redeem.GET("/list", HandleCounter, redeemcontroll.List)
-		redeem.GET("/get/:id", HandleCounter, redeemcontroll.Get)
-		redeem.PUT("/valid/:id", HandleCounter, redeemcontroll.Valid)
+		redeem.POST("/add", redeemcontroll.Create)
+		redeem.GET("/list", redeemcontroll.List)
+		redeem.GET("/get/:id", redeemcontroll.Get)
+		redeem.PUT("/valid/:id", redeemcontroll.Valid)
+	}
+
+	point_log := router.Group("/pointLog")
+	{
+		point_log.GET("/list/:account", pointLogcontroll.List)
 	}
 
 	router.Run(port)
@@ -285,11 +294,12 @@ func HandleAuth() gin.HandlerFunc {
 	return valid
 }
 
-func HandleCounter(c *gin.Context) {
-	if c.Request.URL.Path[1:] == "" {
-		counter.Add("root", 1)
-	} else {
-		counter.Add(c.Request.URL.Path[1:], 1)
+func HandleCounter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Request.URL.Path[1:] == "" {
+			counter.Add("root", 1)
+		} else {
+			counter.Add(c.Request.URL.Path[1:], 1)
+		}
 	}
-
 }

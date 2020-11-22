@@ -117,7 +117,7 @@ func (P *ProductControll) ListRecomend(c *gin.Context) {
 	var count int
 	var err error
 
-	data, count, err = productmodels.List(filter, sort, pageNo, perPage, 0, "")
+	data, count, err = productmodels.List(filter, sort, pageNo, perPage, 0, "", "")
 
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {

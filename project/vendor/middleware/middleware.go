@@ -87,7 +87,7 @@ func Middleware() {
 	}
 
 	// Validator Jwt
-	router.Use(HandleAuth())
+	// router.Use(HandleAuth())
 
 	{
 		account.GET("/account_point", accountcontroll.ListAccountPoint)

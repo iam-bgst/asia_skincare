@@ -297,7 +297,7 @@ func (P *ProductModel) List(filter, sort string, pageNo, perPage, tipe int, acco
 			"prices":     "$product_docs.pricing",
 			"netto":      "$product_docs.netto",
 			"type":       "$product_docs.type",
-			"archive":    "product_docs.archive",
+			"archive":    "$product.archive",
 			"discount": bson.M{"$cond": []interface{}{
 				bson.M{"$and": []interface{}{
 					bson.M{"$eq": []interface{}{"$membership.code", 0}},

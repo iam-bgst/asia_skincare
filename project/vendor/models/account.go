@@ -235,6 +235,10 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 }
 
 func (A *AccountModel) AddProduct(id_account, id_product string, stock int) (err error) {
+	_, err1 := product_model.Detail(id_product, id_product)
+	if err != nil {
+		return err1
+	}
 	err = db.Collection["account"].Update(bson.M{
 		"_id": id_account,
 	}, bson.M{

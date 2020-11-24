@@ -44,7 +44,7 @@ func (P *Point_log_Model) Create(data Point_log) (err error) {
 	}
 	err = db.Collection["point_log"].Insert(bson.M{
 		"_id":     data.Id,
-		"date":    time.Now().UTC().Add(7 * time.Hour),
+		"date":    time.Now(),
 		"desc":    data.Desc,
 		"account": data.Account.Id,
 		"detail":  data.Detail,

@@ -33,6 +33,7 @@ var (
 	redeemcontroll      = new(controllers.RedeemControll)
 	headercontroll      = new(controllers.HeaderControll)
 	pointLogcontroll    = new(controllers.PointLogControll)
+	router              = gin.Default()
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -49,7 +50,6 @@ func Middleware() {
 	last.Set(last_update.T.String())
 
 	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
 
 	directory := addon.GetDir()
 
@@ -87,7 +87,7 @@ func Middleware() {
 	}
 
 	// Validator Jwt
-	router.Use(HandleAuth())
+	// router.Use(HandleAuth())
 
 	{
 		account.GET("/account_point", accountcontroll.ListAccountPoint)

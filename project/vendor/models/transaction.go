@@ -442,7 +442,7 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 		acc, _ := account_model.GetId(transaction_data.To.Account.Id)
 		pointLog_model.Create(Point_log{
 			Account: Account2{
-				Id: transaction_data.Id,
+				Id: transaction_data.To.Account.Id,
 			},
 			Desc: fmt.Sprintf("Transaksi #%s mendapatkan poin sebesar %d", transaction_data.Transaction_code, point),
 			Detail: Detail{

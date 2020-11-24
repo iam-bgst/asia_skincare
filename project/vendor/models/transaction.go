@@ -444,13 +444,14 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 			Account: Account2{
 				Id: transaction_data.To.Account.Id,
 			},
-			Desc: fmt.Sprintf("Transaksi #%s mendapatkan poin sebesar %d", transaction_data.Transaction_code, point),
+			Desc: fmt.Sprintf("Transaksi #%s", transaction_data.Transaction_code),
 			Detail: Detail{
 				Type:         TRANSACTION,
 				Code:         transaction_data.Transaction_code,
 				Point_before: acc.Point.Value,
 				Point_after:  acc.Point.Value + point,
 				Point:        point,
+				Valid:        false,
 			},
 		})
 

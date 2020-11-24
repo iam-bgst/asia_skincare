@@ -44,6 +44,24 @@ func (R *RedeemModel) Create(data forms.Redeem) (data_return Redeem, err error) 
 		"date":    time.Now(),
 		"valid":   false,
 	})
+
+	// Point Log
+	d_acc, _ := account_model.GetId(data.Account)
+	d_rew, _ := reward_models.Get(data.Reward)
+	pointLog_model.Create(Point_log{
+		Account: Account2{
+			Id: data.Account,
+		},
+		Desc: fmt.Sprintf("Redeem #%s ", code),
+		Detail: Detail{
+			Type:         REDEEM,
+			Code:         code,
+			Point_before: d_acc.Point.Value,
+			Point_after:  d_acc.Point.Value - d_rew.PricePoint,
+			Point:        d_rew.PricePoint,
+			Valid:        false,
+		},
+	})
 	acc, _ := account_model.GetByCode(0)
 	addon.PushNotif(acc.TokenDevice, addon.HIGH, addon.Data{
 		Type:  addon.REDEEM,
@@ -176,19 +194,9 @@ func (R *RedeemModel) Valid(id string) (err error) {
 		Body:  fmt.Sprintf("Reward anda #%s tervalidasi oleh admin", data.Code),
 	}, "redeem|redeem")
 	account_model.UpdatePoint(data.Account.Id, data.Reward.PricePoint-(data.Reward.PricePoint*2))
+
 	// Point Log
-	pointLog_model.Create(Point_log{
-		Account: Account2{
-			Id: data.Account.Id,
-		},
-		Desc: fmt.Sprintf("Redeem dengan code #%s mengurangi poin anda sebesar %d", data.Code, data.Reward.PricePoint),
-		Detail: Detail{
-			Type:         REDEEM,
-			Code:         data.Code,
-			Point_before: d_acc.Point.Value,
-			Point_after:  d_acc.Point.Value - data.Reward.PricePoint,
-			Point:        data.Reward.PricePoint,
-		},
-	})
+	pointLog_model.UpdateValid(data.Code, true)
+
 	return
 }

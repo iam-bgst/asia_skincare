@@ -41,6 +41,7 @@ var (
 )
 
 func Middleware() {
+	gin.SetMode(gin.ReleaseMode)
 	log.Println("Api Asia SkinCare Ready on port", port)
 
 	var last_update struct {
@@ -49,7 +50,7 @@ func Middleware() {
 	last_update.T = time.Now()
 	last.Set(last_update.T.String())
 
-	gin.SetMode(gin.ReleaseMode)
+	// Realese Mode
 
 	directory := addon.GetDir()
 
@@ -87,7 +88,7 @@ func Middleware() {
 	}
 
 	// Validator Jwt
-	// router.Use(HandleAuth())
+	router.Use(HandleAuth())
 
 	{
 		account.GET("/account_point", accountcontroll.ListAccountPoint)

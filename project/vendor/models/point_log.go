@@ -33,6 +33,7 @@ type Detail struct {
 	Point_after  int    `json:"point_after"`
 	Point_before int    `json:"point_before"`
 	Point        int    `json:"point"`
+	Valid        bool   `json:"valid"`
 }
 
 type Point_log_Model struct{}
@@ -94,5 +95,16 @@ func (P *Point_log_Model) List(account, filter, sort string, pageNo, perPage int
 		bson.M{"$limit": perPage},
 	)
 	err = db.Collection["point_log"].Pipe(pipeline).All(&data)
+	return
+}
+
+func (P *Point_log_Model) UpdateValid(code string, valid bool) (err error) {
+	err = db.Collection["point_log"].Update(bson.M{
+		"detail.code": code,
+	}, bson.M{
+		"$set": bson.M{
+			"detail.valid": valid,
+		},
+	})
 	return
 }

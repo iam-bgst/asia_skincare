@@ -15,7 +15,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/maddevsio/fcm"
-	"github.com/swaggo/swag"
 )
 
 var (
@@ -147,7 +146,3 @@ func PushNotif(token, priority string, data Data, content ...string) {
 	fmt.Println("Canonical_ids :", response.CanonicalIDs)
 	fmt.Println("Topic MsgId   :", response.MsgID)
 }
-
-var (
-	swagger = swag.Register("Asia Skincare")
-)

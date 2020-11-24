@@ -103,6 +103,12 @@ func init() {
 		delivery.GET("/checkongkir", deliverycontroll.CheckOngkir)
 		delivery.GET("/track_resi", deliverycontroll.CekResi)
 	}
+	// Membership
+	membership := router.Group("/membership")
+	{
+		membership.POST("/add", membershipcontroll.Create)
+		membership.GET("/listall", membershipcontroll.ListAll)
+	}
 
 	// Validator Jwt
 	router.Use(HandleAuth())
@@ -221,13 +227,6 @@ func init() {
 		transaction.PUT("/update_status/:id", transactioncontroll.UpdateStatus)
 		transaction.PUT("/add_resi/:id", transactioncontroll.AddResiToTransaction)
 		transaction.PUT("/add_picture/:id", transactioncontroll.AddPicturePay)
-	}
-
-	// Membership
-	membership := router.Group("/membership")
-	{
-		membership.POST("/add", membershipcontroll.Create)
-		membership.GET("/listall", membershipcontroll.ListAll)
 	}
 
 	// Reward

@@ -41,7 +41,7 @@ func (R *RedeemModel) Create(data forms.Redeem) (data_return Redeem, err error) 
 		"code":    code,
 		"reward":  data.Reward,
 		"account": data.Account,
-		"date":    time.Now().UTC().Add(7 * time.Hour),
+		"date":    time.Now(),
 		"valid":   false,
 	})
 

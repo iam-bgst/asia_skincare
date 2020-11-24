@@ -450,6 +450,7 @@ func (T *TransactionModel) UpdateStatus(id string, status_code int) (err error) 
 				Code:         transaction_data.Transaction_code,
 				Point_before: acc.Point.Value,
 				Point_after:  acc.Point.Value + point,
+				Point:        point,
 			},
 		})
 

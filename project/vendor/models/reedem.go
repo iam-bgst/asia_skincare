@@ -187,6 +187,7 @@ func (R *RedeemModel) Valid(id string) (err error) {
 			Code:         data.Code,
 			Point_before: d_acc.Point.Value,
 			Point_after:  d_acc.Point.Value - data.Reward.PricePoint,
+			Point:        data.Reward.PricePoint,
 		},
 	})
 	return

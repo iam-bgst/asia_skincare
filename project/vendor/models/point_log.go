@@ -32,6 +32,7 @@ type Detail struct {
 	Code         string `json:"code"`
 	Point_after  int    `json:"point_after"`
 	Point_before int    `json:"point_before"`
+	Point        int    `json:"point"`
 }
 
 type Point_log_Model struct{}

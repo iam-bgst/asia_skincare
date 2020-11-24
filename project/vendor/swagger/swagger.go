@@ -1,5 +1,14 @@
 package swagger
 
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"html/template"
+
+	"github.com/swaggo/swag"
+)
+
 type Contact struct {
 	Name  string `json:"name"`
 	URL   string `json:"url"`
@@ -20,99 +29,57 @@ type Info struct {
 	Version        string  `json:"version"`
 }
 
-type PathGET struct{
-	Get struct {
-		Description string   `json:"description"`
-		Consumes    []string `json:"consumes"`
-		Produces    []string `json:"produces"`
-		Summary     string   `json:"summary"`
-		Parameters  []struct {
-			Type        string `json:"type"`
-			Description string `json:"description"`
-			Name        string `json:"name"`
-			In          string `json:"in"`
-			Required    bool   `json:"required"`
-		} `json:"parameters"`
-		Responses struct {
-			Success struct {
-				Description string `json:"description"`
-				Schema      struct {
-					Type string `json:"type"`
-				} `json:"schema"`
-			} `json:"200"`
-			Warning struct {
-				Description string `json:"description"`
-				Schema      struct {
-					Ref string `json:"$ref"`
-				} `json:"schema"`
-			} `json:"400"`
-			Failed struct {
-				Description string `json:"description"`
-				Schema      struct {
-					Ref string `json:"$ref"`
-				} `json:"schema"`
-			} `json:"404"`
-		} `json:"get"`
-	}
-}
 type SwaggerConfig struct {
-	Schemes  []string `json:"schemes"`
-	Swagger  string   `json:"swagger"`
-	Info     Info     `json:"info"`
-	Host     string   `json:"host"`
-	BasePath string   `json:"basePath"`
-	Paths    struct {
-		TestapiGetStringByIntSomeID struct {
-			Get struct {
-				 `json:"responses"`
-			} `json:"get"`
-		} `json:"/testapi/get-string-by-int/{some_id}"`
-		TestapiGetStructArrayByStringSomeID struct {
-			Get struct {
-				Description string   `json:"description"`
-				Consumes    []string `json:"consumes"`
-				Produces    []string `json:"produces"`
-				Parameters  []struct {
-					Type        string `json:"type"`
-					Description string `json:"description"`
-					Name        string `json:"name"`
-					In          string `json:"in"`
-					Required    bool   `json:"required"`
-				} `json:"parameters"`
-				Responses struct {
-					Num200 struct {
-						Description string `json:"description"`
-						Schema      struct {
-							Type string `json:"type"`
-						} `json:"schema"`
-					} `json:"200"`
-					Num400 struct {
-						Description string `json:"description"`
-						Schema      struct {
-							Ref string `json:"$ref"`
-						} `json:"schema"`
-					} `json:"400"`
-					Num404 struct {
-						Description string `json:"description"`
-						Schema      struct {
-							Ref string `json:"$ref"`
-						} `json:"schema"`
-					} `json:"404"`
-				} `json:"responses"`
-			} `json:"get"`
-		} `json:"/testapi/get-struct-array-by-string/{some_id}"`
-	} `json:"paths"`
-	Definitions struct {
-		WebAPIError struct {
-			Type       string `json:"type"`
-			Properties struct {
-				ErrorCode struct {
-					Type string `json:"type"`
-				} `json:"errorCode"`
-				ErrorMessage struct {
-					Type string `json:"type"`
-				} `json:"errorMessage"`
-			} `json:"properties"`
-		} `json:"web.APIError"`
-	} `json:"definitions"`
+	Schemes     []string               `json:"schemes"`
+	Swagger     string                 `json:"swagger"`
+	Info        Info                   `json:"info"`
+	Host        string                 `json:"host"`
+	BasePath    string                 `json:"basePath"`
+	Paths       map[string]interface{} `json:"paths"`
+	Definitions map[string]interface{} `json:"definitions"`
+}
+
+type swaggerInfo struct {
+	Version     string
+	Host        string
+	BasePath    string
+	Schemes     []string
+	Title       string
+	Description string
+}
+
+// SwaggerInfo holds exported Swagger Info so clients can modify it
+var SwaggerInfo = swaggerInfo{Schemes: []string{}}
+var datadoc SwaggerConfig
+
+type s struct{}
+
+func (s *s) ReadDoc() string {
+
+	b, err := json.Marshal(datadoc)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(s)
+
+	t, err := template.New("swagger_info").Funcs(template.FuncMap{
+		"marshal": func(v interface{}) string {
+			a, _ := json.Marshal(v)
+			return string(a)
+		},
+	}).Parse(string(b))
+	if err != nil {
+		return string(b)
+	}
+
+	var tpl bytes.Buffer
+	if err := t.Execute(&tpl, SwaggerInfo); err != nil {
+		return string(b)
+	}
+
+	return tpl.String()
+}
+
+func init() {
+	swag.Register(swag.Name, &s{})
 }

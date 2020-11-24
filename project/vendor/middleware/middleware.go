@@ -9,10 +9,14 @@ import (
 	"strings"
 	"time"
 
+	_ "swagger"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	exp_gin "github.com/gin-contrib/expvar"
 	"github.com/gin-gonic/gin"
 	cors "github.com/itsjamie/gin-cors"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 var (
@@ -40,7 +44,7 @@ var (
 	last    = expvar.NewString("las_update")
 )
 
-func Middleware() {
+func init() {
 	gin.SetMode(gin.ReleaseMode)
 	log.Println("Api Asia SkinCare Ready on port", port)
 
@@ -63,6 +67,10 @@ func Middleware() {
 		Credentials:     true,
 		ValidateHeaders: false,
 	}))
+	// Swagger Route
+	router.GET("/doc/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Assets Route
 	router.Static("/public", directory+"/vendor/assets/")
 
 	// Counter
@@ -85,6 +93,15 @@ func Middleware() {
 		account.POST("/register", accountcontroll.Register)
 		account.GET("/checkaccount", accountcontroll.CheckAccount)
 		account.POST("/auth", accountcontroll.Auth)
+	}
+	// Delivery
+	delivery := router.Group("/delivery")
+	{
+		delivery.GET("/listcity", deliverycontroll.ListCity)
+		delivery.GET("/listprovince", deliverycontroll.ListProvince)
+		delivery.GET("/listcity_prov/:id", deliverycontroll.ListCityByProvince)
+		delivery.GET("/checkongkir", deliverycontroll.CheckOngkir)
+		delivery.GET("/track_resi", deliverycontroll.CekResi)
 	}
 
 	// Validator Jwt
@@ -206,16 +223,6 @@ func Middleware() {
 		transaction.PUT("/add_picture/:id", transactioncontroll.AddPicturePay)
 	}
 
-	// Delivery
-	delivery := router.Group("/delivery")
-	{
-		delivery.GET("/listcity", deliverycontroll.ListCity)
-		delivery.GET("/listprovince", deliverycontroll.ListProvince)
-		delivery.GET("/listcity_prov/:id", deliverycontroll.ListCityByProvince)
-		delivery.GET("/checkongkir", deliverycontroll.CheckOngkir)
-		delivery.GET("/track_resi", deliverycontroll.CekResi)
-	}
-
 	// Membership
 	membership := router.Group("/membership")
 	{
@@ -257,9 +264,9 @@ func Middleware() {
 	{
 		point_log.GET("/list/:account", pointLogcontroll.List)
 	}
-
+}
+func Middleware() {
 	router.Run(port)
-	// router.RunTLS(port, "/etc/letsencrypt/live/asia.multec-api.com/fullchain.pem", "/etc/letsencrypt/live/asia.multec-api.com/privkey.pem")
 }
 func HandleAuth() gin.HandlerFunc {
 	valid := func(c *gin.Context) {

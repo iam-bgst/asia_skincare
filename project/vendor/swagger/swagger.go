@@ -1,10 +1,7 @@
 package swagger
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"html/template"
 
 	"github.com/swaggo/swag"
 )
@@ -39,45 +36,29 @@ type SwaggerConfig struct {
 	Definitions map[string]interface{} `json:"definitions"`
 }
 
-type swaggerInfo struct {
-	Version     string
-	Host        string
-	BasePath    string
-	Schemes     []string
-	Title       string
-	Description string
+var Datadoc = SwaggerConfig{
+	Schemes: []string{},
+	Swagger: "2.0",
+	Info: Info{
+		Description: "This is documentation api of Asia Skincare.",
+		Title:       "Asia Skincare Api Swagger",
+		Contact: Contact{
+			Email: "bimagusta61@gmail.com",
+			Name:  "iam.bgst",
+		},
+	},
+	BasePath: "",
+	Paths:    make(map[string]interface{}),
 }
-
-// SwaggerInfo holds exported Swagger Info so clients can modify it
-var SwaggerInfo = swaggerInfo{Schemes: []string{}}
-var datadoc SwaggerConfig
 
 type s struct{}
 
 func (s *s) ReadDoc() string {
-
-	b, err := json.Marshal(datadoc)
+	b, err := json.Marshal(Datadoc)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
-	fmt.Println(s)
-
-	t, err := template.New("swagger_info").Funcs(template.FuncMap{
-		"marshal": func(v interface{}) string {
-			a, _ := json.Marshal(v)
-			return string(a)
-		},
-	}).Parse(string(b))
-	if err != nil {
-		return string(b)
-	}
-
-	var tpl bytes.Buffer
-	if err := t.Execute(&tpl, SwaggerInfo); err != nil {
-		return string(b)
-	}
-
-	return tpl.String()
+	return string(b)
 }
 
 func init() {

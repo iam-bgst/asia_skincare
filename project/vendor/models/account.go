@@ -253,6 +253,23 @@ func (A *AccountModel) Active(id_account string) (err error) {
 	return
 }
 
+func (A *AccountModel) InActive(id_account string) (err error) {
+	d, _ := A.Get(id_account)
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id_account,
+	}, bson.M{
+		"$set": bson.M{
+			"active": false,
+		},
+	})
+	addon.PushNotif(d.TokenDevice, addon.HIGH, addon.Data{
+		Type:  addon.USER,
+		Title: "Asia SkinCare",
+		Body:  "Akun anda sudah aktif",
+	}, "user|check")
+	return
+}
+
 func (A *AccountModel) AddProduct(id_account, id_product string, stock int) (err error) {
 	p, _ := product_model.Detail(id_product, id_product)
 	if p.Id != "" {

@@ -504,6 +504,20 @@ func (A *AccountControll) ActiveAccount(c *gin.Context) {
 	}
 }
 
+func (A *AccountControll) InactiveAccount(c *gin.Context) {
+	id := c.Param("id")
+	err := accountmodels.InActive(id)
+	if err != nil {
+		c.JSON(405, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"message": "User Is Inactive",
+			"status":  "ok",
+		})
+	}
+}
 func (A *AccountControll) CheckDiscount(c *gin.Context) {
 	id := c.Param("id")
 	id_discount := c.Param("idd")

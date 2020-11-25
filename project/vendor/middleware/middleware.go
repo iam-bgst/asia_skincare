@@ -119,6 +119,7 @@ func init() {
 		account.GET("/get/:id", accountcontroll.Get)
 		account.PUT("/nonactive/:id", accountcontroll.NonActiveAccount)
 		account.PUT("/active/:id", accountcontroll.ActiveAccount)
+		account.PUT("/active/:id", accountcontroll.InactiveAccount)
 		account.GET("/list", accountcontroll.ListAccount)
 		account.POST("/adaddress/:id", accountcontroll.AddAddress)
 		account.POST("/qris/add/:id", accountcontroll.AddQris)

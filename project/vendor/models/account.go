@@ -96,6 +96,7 @@ type AccountList struct {
 	City          string `json:"city" bson:"city"`
 	City_code     int    `json:"city_code" bson:"city_code"`
 	Active        bool   `json:"active" bson:"active"`
+	Membership    string `json:"membership" bson:"membership"`
 }
 
 type Address struct {
@@ -813,6 +814,7 @@ func (A *AccountModel) ListAccount(filter, sort string, pageNo, perPage int, act
 			"province_code": "$address.province.province_id",
 			"city_code":     "$address.city.city_id",
 			"active":        "$active",
+			"membership":    "$membership.name",
 		}},
 	}
 	if active != "" {

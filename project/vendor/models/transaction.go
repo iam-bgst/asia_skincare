@@ -320,6 +320,12 @@ func (T *TransactionModel) TransactionOnAgent(id_account, filter, sort string, p
 		err = errors.New("account not found")
 		return
 	}
+	if data_account.Active == false {
+		data = []Transaction{}
+		count = 0
+		err = nil
+		return
+	}
 	var account Account
 	if data_account.Membership.Code == 1 {
 		account, _ = account_model.GetByCode(0)

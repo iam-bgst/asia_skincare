@@ -186,16 +186,6 @@ func init() {
 		product.PUT("/unarchive/:product/:account", productcontroll.UnArchive)
 	}
 
-	// Discount
-	discount := router.Group("/discount")
-	{
-		discount.POST("/add", discountcontroll.Create)
-		discount.GET("/list", discountcontroll.List)
-		discount.PUT("/update/:id", discountcontroll.Update)
-		discount.GET("/get/:id", discountcontroll.Get)
-		discount.DELETE("/delete/:id", discountcontroll.Delete)
-	}
-
 	// Metode
 	payment := router.Group("/payment")
 	{

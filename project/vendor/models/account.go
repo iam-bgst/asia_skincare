@@ -56,7 +56,7 @@ type Account2 struct {
 	PhoneNumber int            `json:"phonenumber" bson:"phonenumber"`
 	Membership  Membership     `json:"membership" bson:"membership"`
 	Image       string         `json:"image" bson:"image"`
-	Status      string         `json:"status" bson:"status"`
+	Active      bool           `json:"active" bson:"active"`
 	Payment     PaymentAccount `json:"payment" bson:"payment"`
 	Courier     CourierAccount `json:"courier" bson:"courier"`
 	TokenDevice string         `json:"tokenDevice" bson:"tokenDevice"`
@@ -95,6 +95,7 @@ type AccountList struct {
 	Province_code int    `json:"province_id" bson:"province_code"`
 	City          string `json:"city" bson:"city"`
 	City_code     int    `json:"city_code" bson:"city_code"`
+	Active        bool   `json:"active" bson:"active"`
 }
 
 type Address struct {
@@ -117,7 +118,7 @@ type AccountTransaction struct {
 	Payment     PaymentAccount `json:"payment" bson:"payment"`
 	Courier     CourierAccount `json:"courier" bson:"courier"`
 	Membership  Membership     `json:"membership" bson:"membership"`
-	Status      string         `json:"statut" bson:"status"`
+	Active      bool           `json:"active" bson:"active"`
 	TokenDevice string         `json:"tokenDevice" bson:"tokenDevice"`
 }
 
@@ -195,7 +196,7 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 			"exp":   timeAccount.AddDate(2, 0, 0),
 		},
 		"image":   path,
-		"status":  "active",
+		"active":  false,
 		"payment": []interface{}{},
 		"courier": ([]Courier{}),
 		"referral": bson.M{
@@ -231,6 +232,23 @@ func (A *AccountModel) Create(data forms.Account) (data_ret Account, err error) 
 	err = db.Collection["account"].Find(bson.M{
 		"_id": id,
 	}).One(&data_ret)
+	return
+}
+
+func (A *AccountModel) Active(id_account string) (err error) {
+	d, _ := A.Get(id_account)
+	err = db.Collection["account"].Update(bson.M{
+		"_id": id_account,
+	}, bson.M{
+		"$set": bson.M{
+			"active": true,
+		},
+	})
+	addon.PushNotif(d.TokenDevice, addon.HIGH, addon.Data{
+		Type:  addon.USER,
+		Title: "Asia SkinCare",
+		Body:  "Akun anda sudah aktif",
+	}, "user|check")
 	return
 }
 
@@ -762,7 +780,7 @@ func (A *AccountModel) AddDiscounUsed(id, idd string) (err error) {
 	return
 }
 
-func (A *AccountModel) ListAccount(filter, sort string, pageNo, perPage int) (data []AccountList, count int, err error) {
+func (A *AccountModel) ListAccount(filter, sort string, pageNo, perPage int, active string) (data []AccountList, count int, err error) {
 	sorting := sort
 	order := 0
 	if strings.Contains(sort, "asc") {
@@ -777,10 +795,15 @@ func (A *AccountModel) ListAccount(filter, sort string, pageNo, perPage int) (da
 		order = -1
 	}
 	// pn, _ := strconv.Atoi(pageNo)
+	var actv bool
+	if active != "" {
+		actv, _ = strconv.ParseBool(active)
+	}
 	// pp, _ := strconv.Atoi(perPage)
-	regex := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
-	pipeline := []bson.M{
-		{"$match": bson.M{"membership.name": regex}},
+	// regex := bson.M{"$regex": bson.RegEx{Pattern: "agen", Options: "i"}}
+	pipeline := []bson.M{}
+	pipeline = []bson.M{
+		{"$match": bson.M{"membership.code": bson.M{"$ne": 0}}},
 		{"$unwind": "$address"},
 		{"$match": bson.M{"address.default": true}},
 		{"$project": bson.M{
@@ -789,13 +812,29 @@ func (A *AccountModel) ListAccount(filter, sort string, pageNo, perPage int) (da
 			"city":          bson.M{"$concat": []string{"$address.city.city_name", " - ", "$address.city.type"}},
 			"province_code": "$address.province.province_id",
 			"city_code":     "$address.city.city_id",
+			"active":        "$active",
 		}},
-		{"$sort": bson.M{sorting: order}},
-		{"$skip": (pageNo - 1) * perPage},
-		{"$limit": perPage},
 	}
+	if active != "" {
+		actv, _ = strconv.ParseBool(active)
+		pipeline = append(pipeline,
+			bson.M{"$match": bson.M{"active": actv}},
+		)
+	}
+	data_non_fix := []bson.M{}
+	db.Collection["account"].Pipe(pipeline).All(&data_non_fix)
+	count = len(data_non_fix)
+
+	pipeline = append(pipeline,
+		bson.M{"$sort": bson.M{sorting: order}},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$skip": (pageNo - 1) * perPage},
+	)
+	pipeline = append(pipeline,
+		bson.M{"$limit": perPage},
+	)
 	err = db.Collection["account"].Pipe(pipeline).All(&data)
-	count, _ = db.Collection["account"].Find(bson.M{}).Count()
 	return
 }
 

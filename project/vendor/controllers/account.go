@@ -41,6 +41,21 @@ func (A *AccountControll) AddPayment(c *gin.Context) {
 	}
 }
 
+type ErrorApi struct {
+	ErrorCode    int
+	ErrorMessage string
+}
+
+// @Description get struct array by ID
+// @Accept  json
+// @Produce  json
+// @Param   some_id     path    string     true        "Some ID"
+// @Param   offset     query    int     true        "Offset"
+// @Param   limit      query    int     true        "Offset"
+// @Success 200 {string} string	"ok"
+// @Failure 400 {object} ErrorApi "We need ID!!"
+// @Failure 404 {object} ErrorApi "Can not find ID"
+// @Router /testapi/get-struct-array-by-string/{some_id} [get]
 func (A *AccountControll) SetToken(c *gin.Context) {
 	var data struct {
 		Token string `json:"token"`
@@ -476,14 +491,14 @@ func (A *AccountControll) NonActiveAccount(c *gin.Context) {
 
 func (A *AccountControll) ActiveAccount(c *gin.Context) {
 	id := c.Param("id")
-	err := accountmodels.ActiveAccount(id)
+	err := accountmodels.Active(id)
 	if err != nil {
 		c.JSON(405, gin.H{
 			"error": err.Error(),
 		})
 	} else {
 		c.JSON(200, gin.H{
-			"message": "NonActived",
+			"message": "User Is Active",
 			"status":  "ok",
 		})
 	}
@@ -511,6 +526,7 @@ func (A *AccountControll) ListAccount(c *gin.Context) {
 	pageNo, _ := strconv.Atoi(c.Query("page"))
 	perPage, _ := strconv.Atoi(c.Query("per_page"))
 	filter := c.Query("filter")
+	active := c.Query("active")
 	if sort == "" {
 		sort = "_id"
 	}
@@ -523,7 +539,7 @@ func (A *AccountControll) ListAccount(c *gin.Context) {
 	// pp, _ := perPage)
 	// pn, _ := strconv.Atoi(pageNo)
 
-	data, count, err := accountmodels.ListAccount(filter, sort, pageNo, perPage)
+	data, count, err := accountmodels.ListAccount(filter, sort, pageNo, perPage, active)
 	lastPage := float64(count) / float64(perPage)
 	if perPage != 0 {
 		if count%perPage == 0 {

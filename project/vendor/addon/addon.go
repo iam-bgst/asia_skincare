@@ -28,6 +28,7 @@ const (
 	TRANSACTION = "transaction"
 	POINT       = "point"
 	REDEEM      = "redeem"
+	USER        = "user"
 )
 
 func GetDir() string {

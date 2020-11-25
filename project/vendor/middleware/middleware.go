@@ -186,17 +186,6 @@ func init() {
 		product.PUT("/unarchive/:product/:account", productcontroll.UnArchive)
 	}
 
-	// Paket
-	paket := router.Group("/paket")
-	{
-		paket.POST("/add", paketcontroll.Create)
-		paket.GET("/list", paketcontroll.ListByMembership)
-		paket.PUT("/update/:id", paketcontroll.Update)
-		paket.GET("/get/:id/:idm", paketcontroll.Get)
-		paket.PUT("/update_product/:id", paketcontroll.Updateproduct)
-		paket.DELETE("/delete/:id", paketcontroll.Delete)
-	}
-
 	// Discount
 	discount := router.Group("/discount")
 	{

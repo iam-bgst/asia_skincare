@@ -266,7 +266,7 @@ func (A *AccountModel) InActive(id_account string) (err error) {
 	addon.PushNotif(d.TokenDevice, addon.HIGH, addon.Data{
 		Type:  addon.USER,
 		Title: "Asia SkinCare",
-		Body:  "Akun anda sudah aktif",
+		Body:  "Akun anda sudah tidak aktif",
 	}, "user|check")
 	return
 }

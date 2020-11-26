@@ -37,7 +37,7 @@ var (
 	redeemcontroll      = new(controllers.RedeemControll)
 	headercontroll      = new(controllers.HeaderControll)
 	pointLogcontroll    = new(controllers.PointLogControll)
-	router              = gin.Default()
+	router              = &gin.Engine{}
 
 	// ExpVar
 	counter = expvar.NewMap("counter").Init()
@@ -46,6 +46,8 @@ var (
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
+	router = gin.Default()
+
 	log.Println("Api Asia SkinCare Ready on port", port)
 
 	var last_update struct {
@@ -245,6 +247,7 @@ func init() {
 	}
 }
 func Middleware() {
+
 	router.Run(port)
 }
 func HandleAuth() gin.HandlerFunc {

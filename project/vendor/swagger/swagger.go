@@ -47,7 +47,7 @@ var Datadoc = SwaggerConfig{
 			Name:  "iam.bgst",
 		},
 	},
-	BasePath: "",
+	BasePath: "localhost:1998/",
 	Paths:    make(map[string]interface{}),
 }
 

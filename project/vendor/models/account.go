@@ -28,6 +28,7 @@ type Account struct {
 	Membership    Membership       `json:"membership" bson:"membership"`
 	Image         string           `json:"image" bson:"image"`
 	Status        string           `json:"status" bson:"status"`
+	Active        bool             `json:"active" bson:"active"`
 	Discount_used []Discount       `json:"discount_used" bson:"discount_used"`
 	Referral      struct {
 		Code string `json:"code" bson:"code"`
